@@ -6,7 +6,6 @@ import "rxjs/add/operator/filter";
 import "rxjs/add/operator/map";
 import "rxjs/add/operator/mergeMap";
 
-import { List } from "immutable";
 import { Observable } from "rxjs/Observable";
 
 import { main } from "./core/main";
@@ -29,7 +28,7 @@ type Entity = {
 };
 
 type GameState = {
-	readonly entities: List<Entity>;
+	readonly entities: Entity[];
 	readonly score: number;
 };
 
@@ -49,7 +48,7 @@ const BallWallCollisionAction = "BallWallCollisionAction";
 
 const AppFactory = createReduxApp<GameState, AnyAction>({
 	initialState: {
-		entities: List<Entity>().push(
+		entities: [
 			{
 				id: "ball1",
 				position: Point2(0, -200),
@@ -64,7 +63,7 @@ const AppFactory = createReduxApp<GameState, AnyAction>({
 				velocity: Point2(0, 0),
 				controller: "Player"
 			}
-		),
+		],
 		score: 0
 	},
 	update: tick =>
