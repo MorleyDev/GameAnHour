@@ -16,7 +16,7 @@ import { Point2 } from "./core/models/point.model";
 import { Rectangle } from "./core/models/rectangle.model";
 import { Text2 } from "./core/models/text.model";
 import { KeyDown, KeyUp, SystemAction } from "./functional/app.actions";
-import { Frame, FrameCommand } from "./functional/frame.model";
+import { Frame } from "./functional/frame.model";
 import { createReduxApp } from "./functional/redux.app";
 
 type Entity = {
@@ -140,14 +140,14 @@ const AppFactory = createReduxApp<GameState, AnyAction>({
 });
 main(AppFactory);
 
-function DrawEntity(entity: Entity): FrameCommand {
-	return [
+function DrawEntity(entity: Entity): Frame {
+	return [[
 		"fill",
 		entity.controller == "Player"
 			? Rectangle(entity.position.x, entity.position.y, entity.size.x, entity.size.y)
 			: Circle(entity.position.x + entity.size.x / 4, entity.position.y + entity.size.y / 4, entity.size.x / 2),
 		"green"
-	];
+	]];
 }
 
 function UpdatePhysics(state: GameState, { deltaTimeS }: UpdatePhysicsAction): GameState {
