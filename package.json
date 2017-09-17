@@ -10,16 +10,18 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "ts-loader": "^2.3.7",
-    "typescript": "^2.5.2",
-    "webpack": "^3.5.6",
-    "webpack-dev-server": "^2.7.1"
+    "ts-loader": "2.3.7",
+    "typescript": "2.5.2",
+    "webpack": "3.5.6",
+    "webpack-dev-server": "2.7.1"
   },
   "dependencies": {
+    "@types/howler": "2.0.3",
+    "howler": "2.0.4",
     "immutable": "4.0.0-rc.2",
-    "redux": "^3.7.2",
-    "redux-observable": "^0.16.0",
-    "rxjs": "^5.4.3",
+    "redux": "3.7.2",
+    "redux-observable": "0.16.0",
+    "rxjs": "5.4.3",
     "ts-keycode-enum": "^1.0.4"
   }
 }

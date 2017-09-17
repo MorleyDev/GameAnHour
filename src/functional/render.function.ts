@@ -1,6 +1,7 @@
+import { Rectangle } from "../core/models/rectangle.model";
 import { Renderer } from "../core/canvas/renderer.service";
 import { Point2 } from "../core/models/point.model";
-import { FrameCommand, Fill, Stroke, Frame, Origin } from "./frame.model";
+import { Blit, Fill, Frame, FrameCommand, Origin, Stroke } from "./frame.model";
 
 export function Render(canvas: Renderer, frame: Frame, origin?: Point2): Renderer {
 	const trueOrigin = origin || Point2(0, 0);
@@ -17,6 +18,8 @@ function RenderCommand(canvas: Renderer, origin: Point2, command: FrameCommand):
 			return RenderStroke(canvas, origin, command as Stroke);
 		case "clear":
 			return RenderClear(canvas);
+		case "blit":
+			return RenderBlit(canvas, origin, command as Blit);
 		default:
 			return canvas;
 	}
@@ -26,6 +29,14 @@ function RenderOrigin(canvas: Renderer, origin: Point2, command: Origin): Render
 	const trueOrigin = Point2(origin.x - command[1].x, origin.y - command[1].y);
 
 	return Render(canvas, command[2], trueOrigin);
+}
+
+function RenderBlit(canvas: Renderer, origin: Point2, command: Blit): Renderer {
+	const image = command[1];
+	const src = command[2];
+	const dst = command[3] as Rectangle | undefined;
+
+	return canvas.blit(image, src, dst);
 }
 
 function RenderFill(canvas: Renderer, origin: Point2, fill: Fill): Renderer {

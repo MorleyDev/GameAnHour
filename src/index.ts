@@ -1,17 +1,24 @@
-import { Circle } from "./core/models/circle.model";
-import { Vector2 } from "./core/maths/vector.maths";
+import "rxjs/add/observable/from";
+import "rxjs/add/observable/merge";
+import "rxjs/add/operator/bufferCount";
 import "rxjs/add/operator/do";
 import "rxjs/add/operator/filter";
+import "rxjs/add/operator/map";
+import "rxjs/add/operator/mergeMap";
+
+import { List } from "immutable";
+import { Observable } from "rxjs/Observable";
 
 import { main } from "./core/main";
+import { Circle } from "./core/models/circle.model";
+import { CardinalDirection } from "./core/models/direction.model";
 import { Key } from "./core/models/keys.model";
 import { Point2 } from "./core/models/point.model";
 import { Rectangle } from "./core/models/rectangle.model";
-import { SystemAction, KeyDown, KeyUp } from "./functional/app.actions";
-import { Frame } from "./functional/frame.model";
-import { createReduxApp } from "./functional/redux.app";
-import { Set, List } from "immutable";
 import { Text2 } from "./core/models/text.model";
+import { KeyDown, KeyUp, SystemAction } from "./functional/app.actions";
+import { Frame, FrameCommand } from "./functional/frame.model";
+import { createReduxApp } from "./functional/redux.app";
 
 type Entity = {
 	readonly id: string;
@@ -39,7 +46,6 @@ const PaddleBallCollisionAction = "PaddleBallCollision";
 
 type BallWallCollisionAction = { type: "BallWallCollisionAction", direction: CardinalDirection };
 const BallWallCollisionAction = "BallWallCollisionAction";
-enum CardinalDirection { Right, Left, Up, Down };
 
 const AppFactory = createReduxApp<GameState, AnyAction>({
 	initialState: {
@@ -61,36 +67,54 @@ const AppFactory = createReduxApp<GameState, AnyAction>({
 		),
 		score: 0
 	},
-	update: (state, deltaTimeS) => {
-		const paddle = state.entities.find(f => f.id == "paddle")!;
-		const ball = state.entities.find(f => f.id == "ball1")!;
-		const arePaddleAndBallColliding = !!(paddle && ball && ball.velocity.y > 0 && !((ball.position.x > paddle.position.x + paddle.size.x || ball.position.x + ball.size.x < paddle.position.x) || (ball.position.y > paddle.position.y + paddle.size.y || ball.position.y + ball.size.y < paddle.position.y + paddle.size.y / 2)));
-
-		const connection: AnyAction[] = [];
-		if (arePaddleAndBallColliding) connection.push({ type: PaddleBallCollisionAction, ball });
-		
-		if (ball.position.x <= -320) connection.push({
-			type: BallWallCollisionAction,
-			direction: CardinalDirection.Left
-		});
-		else if (ball.position.x + ball.size.x >= 320) connection.push({
-			type: BallWallCollisionAction,
-			direction: CardinalDirection.Right
-		});
-
-		if (ball.position.y <= -240) connection.push({
-			type: BallWallCollisionAction,
-			direction: CardinalDirection.Up
-		});
-		else if (ball.position.y + ball.size.y >= 240) connection.push({
-			type: BallWallCollisionAction,
-			direction: CardinalDirection.Down
-		});
-		
-		connection.push({ type: UpdatePhysicsAction, deltaTimeS })
-		return connection;
-	},
-	reducer: (prev: GameState, curr: AnyAction): GameState => {
+	update: tick =>
+		Observable.merge(
+			tick
+				.bufferCount(3)
+				.map(x => [x[2][0], x.reduce((p, y) => p + y[1], 0)] as [GameState, number])
+				.map(([state, dt]) => [state, dt, state.entities.find(f => f.id === "paddle"), state.entities.find(f => f.id === "ball1")])
+				.filter(([_1, _2, paddle, ball]: [any, any, Entity, Entity]) => !!(paddle && ball && ball.velocity.y > 0 && !((ball.position.x > paddle.position.x + paddle.size.x || ball.position.x + ball.size.x < paddle.position.x) || (ball.position.y > paddle.position.y + paddle.size.y || ball.position.y + ball.size.y < paddle.position.y + paddle.size.y / 2))))
+				.map(([_1, _2, _3, ball]: [any, any, any, Entity]) => ({ type: PaddleBallCollisionAction, ball }) as PaddleBallCollisionAction),
+			tick
+				.bufferCount(3)
+				.map(x => [x[2][0], x.reduce((p, y) => p + y[1], 0)] as [GameState, number])
+				.map(([state, dt]) => [state, dt, state.entities.find(f => f.id === "ball1")])
+				.filter(([_1, _2, ball]: [any, any, Entity]) => ball && ball.position.x <= -320)
+				.map(_ => ({
+					type: BallWallCollisionAction,
+					direction: CardinalDirection.Left
+				}) as BallWallCollisionAction),
+			tick
+				.bufferCount(3)
+				.map(x => [x[2][0], x.reduce((p, y) => p + y[1], 0)] as [GameState, number])
+				.map(([state, dt]) => [state, dt, state.entities.find(f => f.id === "ball1")])
+				.filter(([_1, _2, ball]: [any, any, Entity]) => ball && ball.position.x + ball.size.x >= 320)
+				.map(_ => ({
+					type: BallWallCollisionAction,
+					direction: CardinalDirection.Right
+				}) as BallWallCollisionAction),
+			tick
+				.bufferCount(3)
+				.map(x => [x[2][0], x.reduce((p, y) => p + y[1], 0)] as [GameState, number])
+				.map(([state, dt]) => [state, dt, state.entities.find(f => f.id === "ball1")])
+				.filter(([_1, _2, ball]: [any, any, Entity]) => ball && ball.position.y <= -240)
+				.map(_ => ({
+					type: BallWallCollisionAction,
+					direction: CardinalDirection.Up
+				}) as BallWallCollisionAction),
+			tick
+				.bufferCount(3)
+				.map(x => [x[2][0], x.reduce((p, y) => p + y[1], 0)] as [GameState, number])
+				.map(([state, dt]) => [state, dt, state.entities.find(f => f.id === "ball1")])
+				.filter(([_1, _2, ball]: [any, any, Entity]) => ball && ball.position.y + ball.size.y >= 240)
+				.map(_ => ({
+					type: BallWallCollisionAction,
+					direction: CardinalDirection.Down
+				}) as BallWallCollisionAction),
+			tick
+				.map(([state, deltaTimeS]) => ({ type: UpdatePhysicsAction, deltaTimeS } as UpdatePhysicsAction))
+		),
+	reducer(prev: GameState, curr: AnyAction): GameState {
 		switch (curr.type) {
 			case UpdatePhysicsAction:
 				return UpdatePhysics(prev, curr);
@@ -105,21 +129,25 @@ const AppFactory = createReduxApp<GameState, AnyAction>({
 			default:
 				return prev;
 		}
-	}, render: state => [
-		["clear"],
-		["stroke", Text2(state.score.toString(), 15, 15, undefined, "30px"), "white"],
-		["origin", Point2(320, 240), state.entities.map(DrawEntity).reduce((prev, curr) => prev.concat(curr), [] as Frame)]
-	],
+	},
+	render(state) {
+		return [
+			["clear"],
+			["stroke", Text2(state.score.toString(), 15, 15, undefined, "30px"), "white"],
+			["origin", Point2(320, 240), state.entities.map(DrawEntity).reduce((prev, curr) => prev.concat(curr), [] as Frame)]
+		];
+	},
 	epics: []
 });
 main(AppFactory);
 
-function DrawEntity(entity: Entity): Frame {
+function DrawEntity(entity: Entity): FrameCommand {
 	return [
-		["fill", entity.controller == "Player"
+		"fill",
+		entity.controller == "Player"
 			? Rectangle(entity.position.x, entity.position.y, entity.size.x, entity.size.y)
-			: Circle(entity.position.x + entity.size.x / 4, entity.position.y + entity.size.y / 4, entity.size.x / 2)
-			, "green"]
+			: Circle(entity.position.x + entity.size.x / 4, entity.position.y + entity.size.y / 4, entity.size.x / 2),
+		"green"
 	];
 }
 
@@ -139,9 +167,10 @@ function UpdatePhysics(state: GameState, { deltaTimeS }: UpdatePhysicsAction): G
 function WallCollision(state: GameState, { direction }: BallWallCollisionAction): GameState {
 	return {
 		...state,
+		score: direction === CardinalDirection.Down ? 0 : state.score,
 		entities: state.entities.map(entity => entity.id !== "ball1" ? entity : (({
 			[CardinalDirection.Up]: (entity: Entity) => ({ ...entity, velocity: { ...entity.velocity, y: -Math.min(-50, entity.velocity.y) } }),
-			[CardinalDirection.Down]: (entity: Entity) =>  ({ ...entity, position: { ...entity.position, y: -140 }, velocity: { ...entity.velocity, y: -Math.max(50, entity.velocity.y) } }),
+			[CardinalDirection.Down]: (entity: Entity) => ({ ...entity, position: { ...entity.position, y: -140 }, velocity: { ...entity.velocity, y: -Math.max(50, entity.velocity.y) } }),
 			[CardinalDirection.Left]: (entity: Entity) => ({ ...entity, velocity: { ...entity.velocity, x: -Math.min(-50, entity.velocity.x) } }),
 			[CardinalDirection.Right]: (entity: Entity) => ({ ...entity, velocity: { ...entity.velocity, x: -Math.max(50, entity.velocity.x) } })
 		})[direction] || ((entity: Entity) => entity))(entity))

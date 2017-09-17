@@ -1,4 +1,4 @@
-import { Renderer } from "./canvas/renderer.service";
+import { Renderer } from "./graphics/renderer.service";
 
 export abstract class App {
 	public abstract update(deltaTimeS: number): void;

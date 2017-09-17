@@ -1,5 +1,5 @@
 import { App } from "./App";
-import { CanvasRenderer } from "./canvas/canvas-renderer.service";
+import { CanvasRenderer } from "./graphics/canvas-renderer.service";
 import { EventHandler } from "./events/eventhandler.service";
 import { HtmlElementEventHandlerImpl } from "./events/htmlelement-eventhandler.service";
 
