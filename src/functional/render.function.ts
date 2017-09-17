@@ -1,5 +1,5 @@
 import { Rectangle } from "../core/models/rectangle.model";
-import { Renderer } from "../core/canvas/renderer.service";
+import { Renderer } from "../core/graphics/renderer.service";
 import { Point2 } from "../core/models/point.model";
 import { Blit, Fill, Frame, FrameCommand, Origin, Stroke } from "./frame.model";
 
