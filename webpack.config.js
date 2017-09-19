@@ -1,3 +1,5 @@
+const webpack = require('webpack');
+
 module.exports = {
     devtool: 'inline-source-map',
     entry: './src/index.ts',
@@ -11,5 +13,8 @@ module.exports = {
       rules: [
         { test: /\.tsx?$/, loader: 'ts-loader' }
       ]
-    }
+    },
+    plugins: [
+      new webpack.HotModuleReplacementPlugin()
+    ]
   }

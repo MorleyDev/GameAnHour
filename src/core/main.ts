@@ -16,9 +16,12 @@ export function main(App: new (events: EventHandler) => App): void {
 	let prevTimeMs = new Date().valueOf();
 	(function _update(): void {
 		const currTimeMs = new Date().valueOf();
+		let updateTime = Math.min(100, currTimeMs - prevTimeMs);
+		prevTimeMs = currTimeMs - updateTime;
 
-		while ((currTimeMs - prevTimeMs) >= 10) {
+		while (updateTime >= 10) {
 			prevTimeMs = prevTimeMs + 10;
+			updateTime = updateTime - 10;
 			app.update(0.01);
 		}
 		requestAnimationFrame(_update);

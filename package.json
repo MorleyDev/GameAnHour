@@ -16,7 +16,10 @@
     "webpack-dev-server": "2.7.1"
   },
   "dependencies": {
+    "@types/core-js": "^0.9.43",
     "@types/howler": "2.0.3",
+    "@types/node": "^8.0.28",
+    "core-js": "^2.5.1",
     "howler": "2.0.4",
     "redux": "3.7.2",
     "redux-observable": "0.16.0",

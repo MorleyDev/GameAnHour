@@ -1,3 +1,5 @@
+import { Blittable } from "../assets/asset.model";
+import { Radian } from "../maths/radian.maths";
 import { Circle, isCircle } from "../models/circle.model";
 import { Point2 } from "../models/point.model";
 import { isRectangle, Rectangle } from "../models/rectangle.model";
@@ -14,12 +16,31 @@ export class CanvasRenderer implements Renderer {
 	}
 
 	public clear(): this {
+		this.context.setTransform(
+			1, 0, 0,
+			1, 0, 0
+		);
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		return this;
 	}
 
-	public fill(pos: Rectangle | Circle | Text2, colour: string): this {
+	public translate(origin: Point2): Renderer {
+		this.context.translate(origin.x, origin.y);
+		return this;
+	}
 
+	public scale(origin: Point2): Renderer {
+		this.context.scale(origin.x, origin.y);
+		return this;
+	}
+
+
+	public rotate(radians: Radian): Renderer {
+		this.context.rotate(radians);
+		return this;
+	}
+
+	public fill(pos: Rectangle | Circle | Text2, colour: string): this {
 		this.context.beginPath();
 		this.context.fillStyle = colour;
 		if (isText2(pos)) {
@@ -51,7 +72,7 @@ export class CanvasRenderer implements Renderer {
 		return this;
 	}
 
-	public blit(image: ImageBitmap, dst: Point2 | Rectangle, str?: Rectangle): this {
+	public blit(image: Blittable, dst: Point2 | Rectangle, str?: Rectangle): this {
 		if (isRectangle(dst)) {
 			if (str != null) {
 				this.context.drawImage(image, str.x, str.y, str.width, str.height, dst.x, dst.y, dst.width, dst.height);
