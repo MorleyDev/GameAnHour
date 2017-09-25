@@ -7,8 +7,10 @@ export function Render(canvas: Renderer, frame: Frame): Renderer {
 	return frame.reduce((canvas, command) => RenderCommand(canvas, command), canvas);
 }
 
-function RenderCommand(canvas: Renderer, command: FrameCommand): Renderer {
+function RenderCommand(canvas: Renderer, command: Frame | FrameCommand): Renderer {
 	switch (command[0]) {
+		case "clear":
+			return RenderClear(canvas);
 		case "origin":
 			return RenderOrigin(canvas, command as Origin);
 		case "rotate":
@@ -17,12 +19,12 @@ function RenderCommand(canvas: Renderer, command: FrameCommand): Renderer {
 			return RenderFill(canvas, command as Fill);
 		case "stroke":
 			return RenderStroke(canvas, command as Stroke);
-		case "clear":
-			return RenderClear(canvas);
 		case "blit":
 			return RenderBlit(canvas, command as Blit);
 		default:
-			return canvas;
+			return command[0] != null
+				? Render(canvas, command as Frame)
+				: canvas;
 	}
 }
 

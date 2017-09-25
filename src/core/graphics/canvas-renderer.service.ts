@@ -2,8 +2,8 @@ import { Blittable } from "../assets/asset.model";
 import { Radian } from "../maths/radian.maths";
 import { Circle, isCircle } from "../models/circle.model";
 import { Point2 } from "../models/point.model";
-import { isRectangle, Rectangle } from "../models/rectangle.model";
-import { isText2, Text2 } from "../models/text.model";
+import { Rectangle } from "../models/rectangle.model";
+import { Text2 } from "../models/text.model";
 import { Renderer } from "./renderer.service";
 
 export class CanvasRenderer implements Renderer {
@@ -43,10 +43,10 @@ export class CanvasRenderer implements Renderer {
 	public fill(pos: Rectangle | Circle | Text2, colour: string): this {
 		this.context.beginPath();
 		this.context.fillStyle = colour;
-		if (isText2(pos)) {
+		if (Text2.is(pos)) {
 			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}` 
 			this.context.fillText(pos.text, pos.x, pos.y, pos.width);
-		} else if (isRectangle(pos)) {
+		} else if (Rectangle.is(pos)) {
 			this.context.fillRect(pos.x, pos.y, pos.width, pos.height);
 		} else if (isCircle(pos)) {
 			this.context.arc(pos.x, pos.y, pos.radius, 0, 360);
@@ -59,13 +59,13 @@ export class CanvasRenderer implements Renderer {
 	public stroke(pos: Rectangle | Circle | Text2, colour: string): this {
 		this.context.beginPath();
 		this.context.strokeStyle = colour;
-		if (isText2(pos)) {
+		if (Text2.is(pos)) {
 			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}` 
 			this.context.strokeText(pos.text, pos.x, pos.y, pos.width);
-		} else if (isRectangle(pos)) {
+		} else if (Rectangle.is(pos)) {
 			this.context.strokeRect(pos.x, pos.y, pos.width, pos.height);
 		} else if (isCircle(pos)) {
-			this.context.arc(pos.x, pos.y, pos.radius, 0, 360);
+			this.context.arc(pos.x, pos.y, pos.radius, 0, 2 * Math.PI);
 			this.context.stroke();
 		}
 		this.context.closePath();
@@ -73,7 +73,7 @@ export class CanvasRenderer implements Renderer {
 	}
 
 	public blit(image: Blittable, dst: Point2 | Rectangle, str?: Rectangle): this {
-		if (isRectangle(dst)) {
+		if (Rectangle.is(dst)) {
 			if (str != null) {
 				this.context.drawImage(image, str.x, str.y, str.width, str.height, dst.x, dst.y, dst.width, dst.height);
 			} else {

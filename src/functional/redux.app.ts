@@ -16,7 +16,7 @@ import { Render } from "./render.function";
 export function createReduxApp<TState, TAction extends redux.AnyAction>({ initialState, reducer, update, render, epics }: {
 	initialState: TState;
 	reducer: (prev: TState, curr: TAction) => TState;
-	update: (tick: Observable<[TState, number]>) => Observable<TAction>;
+	update: ((tick: Observable<[TState, number]>) => Observable<TAction>)[];
 	render: (state: TState) => Frame;
 	epics: ((action: ActionsObservable<TAction>) => Observable<TAction>)[];
 }): new (event: EventHandler) => App {
@@ -35,7 +35,7 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 			events.onKeyDown(key => this.store.dispatch({ type: KeyDown, key }));
 			events.onKeyUp(key => this.store.dispatch({ type: KeyUp, key }));
 
-			update(this.tick).subscribe(value => this.store.dispatch(value));
+			Observable.merge(...update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
 		}
 	
 		update(deltaTimeS: number): void {

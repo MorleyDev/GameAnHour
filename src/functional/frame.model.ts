@@ -5,8 +5,8 @@ import { Point2 } from "../core/models/point.model";
 import { Rectangle } from "../core/models/rectangle.model";
 import { Text2 } from "../core/models/text.model";
 
-export interface Frame extends Array<FrameCommand> { };
-export const Frame = (...commands: FrameCommand[]) => commands;
+export interface Frame extends Array<Frame | FrameCommand> { };
+export const Frame = (...commands: (FrameCommand | Frame)[]) => commands;
 
 export type FrameCommand = Origin | Rotate | Fill | Stroke | Blit | Clear;
 
