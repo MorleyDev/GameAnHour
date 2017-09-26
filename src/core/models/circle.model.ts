@@ -1,7 +1,8 @@
 import { Vector2 } from "../maths/vector.maths";
 import { Rectangle } from "./rectangle.model";
+import { CircleType } from "./circle.model.type";
 
-export type Circle = { readonly x: number, readonly y: number, readonly radius: number };
+export type Circle = CircleType;
 
 export function isCircle(possible: Partial<Circle>): possible is Circle {
 	return possible.x != null && possible.y != null && possible.radius != null;

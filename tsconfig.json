@@ -10,6 +10,7 @@
         "strictNullChecks": true,
         "alwaysStrict": true,
         "rootDir": "src",
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./out"
     }
 }

@@ -9,7 +9,7 @@ export function main(App: new (events: EventHandler) => App): void {
 	canvas.height = 480;
 
 	const canvasRenderer = new CanvasRenderer(canvas);
-	const eventHandler = new HtmlElementEventHandlerImpl();
+	const eventHandler = new HtmlElementEventHandlerImpl(window);
 
 	const app = new App(eventHandler);
 

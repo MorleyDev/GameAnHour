@@ -1,7 +1,8 @@
 import { Line } from "./line.model";
 import { Point2 } from "./point.model";
+import { RectangleType } from "./rectangle.model.type";
 
-export type Rectangle = { readonly x: number, readonly y: number, readonly width: number, readonly height: number };
+export type Rectangle = RectangleType;
 
 export const Rectangle = Object.assign(
 	(x: number, y: number, width: number, height: number): Rectangle => ({ x, y, width, height }),
@@ -19,22 +20,19 @@ export const Rectangle = Object.assign(
 			|| a.y + a.height < b.y
 		),
 
-		boundingTLBR: (...rects: Rectangle[]): { topLeft: Point2; bottomRight: Point2 } => {
-			const tlX = Math.min(...rects.map(rect => rect.x));
-			const tlY = Math.min(...rects.map(rect => rect.y));
-			const brX = Math.max(...rects.map(rect => rect.x + rect.width));
-			const brY = Math.max(...rects.map(rect => rect.y + rect.height));
+		boundingTLBR: (...rects: Rectangle[]): { readonly topLeft: Point2; readonly bottomRight: Point2 } =>
+			Point2.boundingTLBR(
+				...rects,
+				...rects.map(rect => Point2(rect.x + rect.width, rect.y + rect.height))
+			),
 
-			return { topLeft: Point2(tlX, tlY), bottomRight: Point2(brX, brY) };
-		},
-
-		bounding: (a: Rectangle, b: Rectangle): Rectangle => {
-			const boundingTLBR = Rectangle.boundingTLBR(a, b);
+		bounding: (...rects: Rectangle[]): Rectangle => {
+			const boundingTLBR = Rectangle.boundingTLBR(...rects);
 
 			return Rectangle.fromTopLeftBottomRight(boundingTLBR.topLeft, boundingTLBR.bottomRight);
 		},
 
-		lines: (rectangle: Rectangle): { top: Line; left: Line; bottom: Line; right: Line } => {
+		lines: (rectangle: Rectangle): { readonly top: Line; readonly left: Line; readonly bottom: Line; readonly right: Line } => {
 			const bounding = Rectangle.boundingTLBR(rectangle);
 
 			return {

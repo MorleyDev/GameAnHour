@@ -1,4 +1,5 @@
 import "rxjs/add/observable/empty";
+import "rxjs/add/observable/merge";
 import "rxjs/add/operator/mergeMap";
 
 import * as redux from "redux";

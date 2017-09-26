@@ -5,6 +5,9 @@ export type Vector2 = Point2;
 export const Vector2 = Object.assign(
 	(x: number, y: number): Vector2 => ({ x, y }),
 	{
+		zero: { x: 0, y: 0 },
+		unit: { x: Math.sqrt(0.5), y: Math.sqrt(0.5) },
+
 		abs: ({x, y}: Point2): Point2 => ({ x: Math.abs(x), y: Math.abs(y) }),
 		invert: ({x, y}: Point2): Point2 => ({ x: -x, y:  -y }),
 
