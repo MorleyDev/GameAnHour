@@ -1,9 +1,6 @@
 import { Blittable } from "../assets/asset.model";
-import { Radian } from "../maths/radian.maths";
-import { Circle, isCircle } from "../models/circle.model";
-import { Point2 } from "../models/point.model";
-import { Rectangle } from "../models/rectangle.model";
-import { Text2 } from "../models/text.model";
+import { Radian } from "../maths/angles.maths";
+import { Circle, Point2, Rectangle, Text2 } from "../models/shapes.model";
 import { Renderer } from "./renderer.service";
 
 export class CanvasRenderer implements Renderer {
@@ -44,11 +41,11 @@ export class CanvasRenderer implements Renderer {
 		this.context.beginPath();
 		this.context.fillStyle = colour;
 		if (Text2.is(pos)) {
-			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}` 
+			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}`;
 			this.context.fillText(pos.text, pos.x, pos.y, pos.width);
 		} else if (Rectangle.is(pos)) {
 			this.context.fillRect(pos.x, pos.y, pos.width, pos.height);
-		} else if (isCircle(pos)) {
+		} else if (Circle.is(pos)) {
 			this.context.arc(pos.x, pos.y, pos.radius, 0, 360);
 			this.context.fill();
 		}
@@ -60,11 +57,11 @@ export class CanvasRenderer implements Renderer {
 		this.context.beginPath();
 		this.context.strokeStyle = colour;
 		if (Text2.is(pos)) {
-			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}` 
+			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}`;
 			this.context.strokeText(pos.text, pos.x, pos.y, pos.width);
 		} else if (Rectangle.is(pos)) {
 			this.context.strokeRect(pos.x, pos.y, pos.width, pos.height);
-		} else if (isCircle(pos)) {
+		} else if (Circle.is(pos)) {
 			this.context.arc(pos.x, pos.y, pos.radius, 0, 2 * Math.PI);
 			this.context.stroke();
 		}

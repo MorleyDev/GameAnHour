@@ -1,6 +1,6 @@
-import { LineType } from "./line.model.type";
+import { Line2Type } from "./line.model.type";
 
-export const intersect = ([a1, a2]: LineType, [b1, b2]: LineType): boolean => {
+export const intersect = ([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean => {
 	const sameSign = (x: number, y: number): boolean => x >= 0 && y >= 0 || x <= 0 && y <= 0;
 
 	const x1 = a1.x;

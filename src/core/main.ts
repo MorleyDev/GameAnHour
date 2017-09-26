@@ -1,7 +1,7 @@
 import { App } from "./App";
-import { CanvasRenderer } from "./graphics/canvas-renderer.service";
 import { EventHandler } from "./events/eventhandler.service";
 import { HtmlElementEventHandlerImpl } from "./events/htmlelement-eventhandler.service";
+import { CanvasRenderer } from "./graphics/canvas-renderer.service";
 
 export function main(App: new (events: EventHandler) => App): void {
 	const canvas = document.getElementById("render-target") as HTMLCanvasElement;

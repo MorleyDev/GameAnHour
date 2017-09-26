@@ -1,6 +1,5 @@
-import { Rectangle } from "../core/models/rectangle.model";
 import { Renderer } from "../core/graphics/renderer.service";
-import { Point2 } from "../core/models/point.model";
+import { Rectangle } from "../core/models/shapes.model";
 import { Blit, Fill, Frame, FrameCommand, Origin, Rotate, Scale, Stroke } from "./frame.model";
 
 export function Render(canvas: Renderer, frame: Frame): Renderer {
@@ -11,16 +10,22 @@ function RenderCommand(canvas: Renderer, command: Frame | FrameCommand): Rendere
 	switch (command[0]) {
 		case "clear":
 			return RenderClear(canvas);
+
 		case "origin":
 			return RenderOrigin(canvas, command as Origin);
+
 		case "rotate":
 			return RenderRotate(canvas, command as Rotate);
+
 		case "fill":
 			return RenderFill(canvas, command as Fill);
+
 		case "stroke":
 			return RenderStroke(canvas, command as Stroke);
+
 		case "blit":
 			return RenderBlit(canvas, command as Blit);
+
 		default:
 			return command[0] != null
 				? Render(canvas, command as Frame)
@@ -52,16 +57,16 @@ function RenderFill(canvas: Renderer, fill: Fill): Renderer {
 	const shape = fill[1];
 	const colour = fill[2];
 
-	return canvas.fill(shape, colour)
+	return canvas.fill(shape, colour);
 }
 
 function RenderStroke(canvas: Renderer, fill: Stroke): Renderer {
 	const shape = fill[1];
 	const colour = fill[2];
 
-	return canvas.stroke(shape, colour)
+	return canvas.stroke(shape, colour);
 }
 
 function RenderClear(canvas: Renderer): Renderer {
-	return canvas.clear()
+	return canvas.clear();
 }

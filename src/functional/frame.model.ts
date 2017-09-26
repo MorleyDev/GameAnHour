@@ -1,9 +1,6 @@
 import { Blittable } from "../core/assets/asset.model";
-import { Radian } from "../core/maths/radian.maths";
-import { Circle } from "../core/models/circle.model";
-import { Point2 } from "../core/models/point.model";
-import { Rectangle } from "../core/models/rectangle.model";
-import { Text2 } from "../core/models/text.model";
+import { Radian } from "../core/maths/angles.maths";
+import { Circle, Point2, Rectangle, Text2 } from "../core/models/shapes.model";
 
 export interface Frame extends Array<Frame | FrameCommand> { };
 export const Frame = (...commands: (FrameCommand | Frame)[]) => commands;

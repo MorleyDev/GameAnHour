@@ -51,7 +51,7 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 
 			Render(canvas, frame);
 		}
-	}
+	};
 }
 
 function safeApplyMiddleware(...middleware: redux.Middleware[]): redux.GenericStoreEnhancer {
