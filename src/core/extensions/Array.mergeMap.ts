@@ -2,7 +2,7 @@ import { mergeMap } from "./Array.mergeMap.func";
 
 declare global {
 	interface Array<T> {
-		mergeMap<E>(callback: (t: T) => Array<E>): Array<E>;
+		mergeMap<E>(mapper: (value: T, index: number, initial: Array<T>) => Array<E>): Array<E>;
 	}
 }
 
