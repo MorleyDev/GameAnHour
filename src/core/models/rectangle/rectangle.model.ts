@@ -3,6 +3,7 @@ import { Point2 } from "../point/point.model";
 import * as bounding from "./rectangle.model.bounding";
 import * as  is from "./rectangle.model.is";
 import * as tlbr from "./rectangle.model.tlbr";
+import * as overlaps from "./rectangle.model.overlap";
 import { RectangleType } from "./rectangle.model.type";
 
 export type Rectangle = RectangleType;
@@ -13,13 +14,7 @@ export const Rectangle = Object.assign(
 		...bounding,
 		...tlbr,
 		...is,
-
-		overlaps: (a: Rectangle, b: Rectangle): boolean => !(
-			a.x > b.x + b.width
-			|| a.y > b.y + b.height
-			|| a.x + a.width < b.x
-			|| a.y + a.height < b.y
-		),
+		...overlaps,
 
 		lines: (rectangle: Rectangle): { readonly top: Line2; readonly left: Line2; readonly bottom: Line2; readonly right: Line2 } => {
 			const bounding = Rectangle.boundingTLBR(rectangle);
