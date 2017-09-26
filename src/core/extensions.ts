@@ -1,2 +1,2 @@
 import "./extensions/Array.mergeMap";
-import "./extensions/Array.flatten";
+import "./extensions/Array.merge";
