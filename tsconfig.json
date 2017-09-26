@@ -2,7 +2,9 @@
     "compilerOptions": {
         "module": "commonjs",
         "lib": [
-            "es6",
+            "es2015",
+            "es2016",
+            "es2017",
             "dom"
         ],
         "noImplicitAny": true,
@@ -11,6 +13,10 @@
         "alwaysStrict": true,
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
-        "outDir": "./out"
-    }
+        "outDir": "out",
+        "allowJs": true
+    },
+    "exclude": [
+        "webpack.config.js"
+    ]
 }

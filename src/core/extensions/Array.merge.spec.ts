@@ -8,3 +8,10 @@ tape("core/extensions/Array.merge", test => {
 	test.deepEqual(result, [10, 20, 40, 30, 60, [50]]);
 	test.end();
 });
+
+tape("core/extensions/Array.prototype.merge", test => {
+	const result = [[10, 20], [], [40, 30], [60, [50]]].merge();
+
+	test.deepEqual(result, [10, 20, 40, 30, 60, [50]]);
+	test.end();
+});

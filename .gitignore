@@ -1,4 +1,5 @@
 dist/
+out/
 .vscode/
 !.vscode/settings.json
 yarn.lock
