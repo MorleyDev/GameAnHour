@@ -1,6 +1,6 @@
 import { Blittable } from "../core/assets/asset.model";
 import { Radian } from "../core/maths/angles.maths";
-import { Circle, Line2, Point2, Rectangle, Text2 } from "../core/models/shapes.model";
+import { Point2, Rectangle, Shape2 } from "../core/models/shapes.model";
 
 export interface Frame extends Array<Frame | FrameCommand> { };
 export const Frame = (...commands: (FrameCommand | Frame)[]) => commands;
@@ -19,11 +19,11 @@ export const Rotate = (radian: Radian, child: Frame): Rotate => ["rotate", radia
 export type Scale = ["scale", Point2, Frame];
 export const Scale = (scale: Point2, child: Frame): Scale => ["scale", scale, child];
 
-export type Fill = ["fill", Rectangle | Text2 | Circle, string];
-export const Fill = (dst: Rectangle | Text2 | Circle, colour: string): Fill => ["fill", dst, colour];
+export type Fill = ["fill", Shape2, string];
+export const Fill = (dst: Shape2, colour: string): Fill => ["fill", dst, colour];
 
-export type Stroke = ["stroke", Rectangle | Text2 | Circle | Line2, string];
-export const Stroke = (dst: Rectangle | Text2 | Circle | Line2, colour: string): Stroke => ["stroke", dst, colour];
+export type Stroke = ["stroke", Shape2, string];
+export const Stroke = (dst: Shape2, colour: string): Stroke => ["stroke", dst, colour];
 
 export type Blit = ["blit", Blittable, Point2] | ["blit", Blittable, Rectangle, Rectangle];
 export const Blit = (image: Blittable, dst: Point2 | Rectangle, src?: Rectangle): Blit => src != null ? ["blit", image, dst, src] : ["blit", image, dst];

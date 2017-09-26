@@ -1,13 +1,39 @@
+import { Line2 } from "../core/models/line/line.model";
+import { Rectangle } from "../core/models/rectangle/rectangle.model";
 import { Circle } from "../core/models/circle/circle.model";
 import { Point2 } from "../core/models/point/point.model";
-import { Line2 } from "../core/models/shapes.model";
+import { Shape2 } from "../core/models/shapes.model";
 import { SystemAction } from "../functional/app.actions";
-import { Clear, Frame, Origin, Stroke } from "../functional/frame.model";
+import { Clear, Fill, Frame, Origin } from "../functional/frame.model";
 import { createReduxApp } from "../functional/redux.app";
 
-type GameState = { };
+type GameState = {
+	shapes: {
+		id: string;
+		shape: Shape2;
+		colour: string;
+	}[];
+};
 
-const initialState: GameState = { };
+const initialState: GameState = {
+	shapes: [
+		{
+			id: "circle",
+			shape: Circle(0, 0, 25),
+			colour: "yellow"
+		},
+		{
+			id: "block",
+			shape: Rectangle(-50, -50, 25, 15),
+			colour: "lightblue"
+		},
+		{
+			id: "block",
+			shape: Line2(Point2(-10, -50), Point2(25, -40)),
+			colour: "lightred"
+		}
+	]
+};
 
 type AnyAction = SystemAction;
 
@@ -17,11 +43,7 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 	reducer: (prev: GameState, curr: AnyAction): GameState => prev,
 	render: state => Frame(
 		Clear,
-		Origin(Point2(320, 240), [
-			Stroke(Line2(Point2(10, 20), Point2(50, 100)), "red"),
-			Stroke(Circle(0, 0, 25), "green"),
-			Stroke(Line2(Point2(-10, -20), Point2(50, -100)), "blue")
-		])
+		Origin(Point2(320, 240), state.shapes.map(shape => Fill(shape.shape, shape.colour)))
 	),
 	epics: []
 });

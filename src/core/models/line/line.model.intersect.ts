@@ -1,3 +1,5 @@
+import { boundingTLBR } from "../point/point.model.bounding";
+import { getBottomRight, getTopLeft } from "../point/point.model.tlbr";
 import { Line2Type } from "./line.model.type";
 
 export const intersect = ([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean => {
@@ -32,5 +34,13 @@ export const intersect = ([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean => 
 	if ((r1 !== 0) && (r2 !== 0) && (sameSign(r1, r2))) {
 		return false;
 	}
-	return true;
+
+	const a = boundingTLBR(a1, a2);
+	const b = boundingTLBR(b1, b2);
+	return !(
+		a.topLeft.x > b.bottomRight.x
+		|| a.topLeft.y > b.bottomRight.y
+		|| a.bottomRight.x < b.topLeft.x
+		|| a.bottomRight.y < b.topLeft.y
+	);
 }

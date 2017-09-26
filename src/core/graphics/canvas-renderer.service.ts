@@ -1,6 +1,6 @@
 import { Blittable } from "../assets/asset.model";
 import { Radian } from "../maths/angles.maths";
-import { Circle, Line2, Point2, Rectangle, Text2 } from "../models/shapes.model";
+import { Circle, Line2, Point2, Rectangle, Shape2, Text2 } from "../models/shapes.model";
 import { Renderer } from "./renderer.service";
 
 export class CanvasRenderer implements Renderer {
@@ -37,10 +37,14 @@ export class CanvasRenderer implements Renderer {
 		return this;
 	}
 
-	public fill(pos: Rectangle | Circle | Text2, colour: string): this {
+	public fill(pos: Shape2, colour: string): this {
 		this.context.beginPath();
 		this.context.fillStyle = colour;
-		if (Text2.is(pos)) {
+		if (Line2.is(pos)) {
+			this.context.moveTo(pos[0].x, pos[0].y);
+			this.context.lineTo(pos[1].x, pos[1].y);
+			this.context.fill();
+		} else if (Text2.is(pos)) {
 			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}`;
 			this.context.fillText(pos.text, pos.x, pos.y, pos.width);
 		} else if (Rectangle.is(pos)) {
@@ -53,7 +57,7 @@ export class CanvasRenderer implements Renderer {
 		return this;
 	}
 
-	public stroke(pos: Rectangle | Circle | Text2 | Line2, colour: string): this {
+	public stroke(pos: Shape2, colour: string): this {
 		this.context.beginPath();
 		this.context.strokeStyle = colour;
 		if (Line2.is(pos)) {
