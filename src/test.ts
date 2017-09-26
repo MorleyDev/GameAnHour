@@ -1,4 +1,5 @@
 import "core-js";
+import "./core/extensions";
 
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
@@ -14,7 +15,7 @@ tape(
 function importTestsIn(path: string): Promise<any[]> {
 	const testFiles = findTestsIn(path);
 	const importTests = testFiles.map(testPath => import(testPath));
-	
+
 	return Promise.all(importTests);
 }
 

@@ -38,17 +38,17 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 
 			Observable.merge(...update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
 		}
-	
+
 		update(deltaTimeS: number): void {
 			const state = this.store.getState();
 
 			this.tick.next([state, deltaTimeS]);
 		}
-	
+
 		draw(canvas: Renderer): void {
 			const state = this.store.getState();
 			const frame = render(state);
-	
+
 			Render(canvas, frame);
 		}
 	}
