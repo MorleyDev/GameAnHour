@@ -10,6 +10,6 @@ export const Circle = Object.assign(
 	{
 		...bounding,
 		...is,
-		overlap: (a: Circle, b: Circle) => Vector2.magnitudeSquared(Vector2.subtract(a, b)) < a.radius * a.radius + b.radius * b.radius
+		overlap: (a: Circle, b: Circle) => Vector2.magnitudeSquared(Vector2.subtract(a, b)) < Vector2.magnitudeSquared({ x: a.radius, y: b.radius })
 	}
 );
