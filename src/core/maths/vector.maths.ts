@@ -54,3 +54,7 @@ export function magnitude(lhs: Vector2): number {
 export function normalise(lhs: Vector2): Vector2 {
 	return divide(lhs, magnitude(lhs));
 }
+
+export function dotProduct(lhs: Vector2, rhs: Vector2): number {
+	return lhs.x * rhs.x + lhs.y * rhs.y;
+}
