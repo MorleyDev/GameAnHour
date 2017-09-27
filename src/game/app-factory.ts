@@ -6,6 +6,7 @@ import { Shape2 } from "../core/models/shapes.model";
 import { SystemAction } from "../functional/app.actions";
 import { Clear, Fill, Frame, Origin, Stroke } from "../functional/frame.model";
 import { createReduxApp } from "../functional/redux.app";
+import * as Vector2 from "../core/maths/vector.maths";
 
 type GameState = {
 	shapes: {
@@ -30,7 +31,7 @@ const initialState: GameState = {
 		},
 		{
 			id: "line",
-			shape: Line2(Point2(-10, -50), Point2(25, -40)),
+			shape: Circle.lineTo(Circle(0, 0, 25), Point2(-25, -35)),
 			colour: ["pink", "white"]
 		}
 	],
@@ -46,7 +47,7 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 	reducer: (prev: GameState, curr: AnyAction): GameState => prev,
 	render: state => Frame(
 		Clear,
-		Origin(Point2(320, 240), state.shapes.map(shape => Stroke(shape.shape, state.collisionList.find(c => c.includes(shape.id)) != null ? shape.colour[1] : shape.colour[0])))
+		Origin(Point2(320, 240), state.shapes.map(shape => Stroke(shape.shape, state.collisionList.find(c => c.includes(shape.id)) != null ? shape.colour[1] : shape.colour[0]))),
 	),
 	epics: []
 });
