@@ -50,3 +50,7 @@ export function magnitudeSquared(lhs: Vector2): number {
 export function magnitude(lhs: Vector2): number {
 	return  Math.sqrt(magnitudeSquared(lhs));
 }
+
+export function normalise(lhs: Vector2): Vector2 {
+	return divide(lhs, magnitude(lhs));
+}

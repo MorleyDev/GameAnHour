@@ -7,7 +7,17 @@ tape("core/maths/vector.maths", test => {
 
 	const within = (test: tape.Test, low: number, high: number) =>
 		(value: number) =>
-			test.true(value >= low && value <= high, `${value} should be between ${low} and ${high}`);
+			test.true(
+				value >= low && value <= high,
+				`${value} should be between ${low} and ${high}`
+			);
+
+	const between = (test: tape.Test, low: Vector2.Vector2, high: Vector2.Vector2) =>
+		(value: Vector2.Vector2) =>
+			test.true(
+				value.x >= low.x && value.y >= low.y && value.x <= high.x && value.y <= high.y,
+				`(${value.x}, ${value.y}) should be between (${low.x}, ${low.y}) and (${high.x}, ${high.y})`
+		);
 
 	test.test("basic creation", test => {
 		const expected = { x: Math.random(), y: Math.random() };
@@ -61,6 +71,12 @@ tape("core/maths/vector.maths", test => {
 	});
 	test.test("divide", test => {
 		test.deepEqual(Vector2.divide(make(3, 9), 2), make(1.5, 4.5));
+		test.end();
+	});
+
+	test.test("normalise", test => {
+		between(test, make(0.4472, 0.8944), make(0.4473, 0.8945))( Vector2.normalise(make(10, 20)) );
+		within(test, 0.999, 1.001)(  Vector2.magnitude( Vector2.normalise(make(10, 20)) ) )
 		test.end();
 	});
 
