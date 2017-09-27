@@ -22,6 +22,8 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 	epics: ((action: ActionsObservable<TAction>) => Observable<TAction>)[];
 }): new (event: EventHandler) => App {
 	return class implements App {
+		private prevState: TState | undefined;
+
 		private readonly store = redux.createStore<TState>(
 			reducer,
 			initialState,
@@ -47,8 +49,12 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 
 		draw(canvas: Renderer): void {
 			const state = this.store.getState();
-			const frame = render(state);
+			if (state === this.prevState) {
+				return;
+			}
 
+			this.prevState = state;
+			const frame = render(state);
 			Render(canvas, frame);
 		}
 	};

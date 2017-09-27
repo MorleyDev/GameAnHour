@@ -3,15 +3,15 @@ import { intersect } from "./line.model.intersect";
 import * as tape from "tape";
 
 tape("core/models/circle/circle.model.overlap.spec", test => {
-	const make = (x1: number, y1: number, x2: number, y2: number): Line2Type => [{ x: x1, y: y1}, { x: x2, y: y2 }];
+	const make = (x1: number, y1: number, x2: number, y2: number): Line2Type => [{ x: x1, y: y1 }, { x: x2, y: y2 }];
 
 	const should = (a: Line2Type, b: Line2Type) => test.true(
-		intersect(a, b), 
+		intersect(a, b),
 		`(${a[0].x}, ${a[0].y})-(${a[1].x}, ${a[1].y}) should intersect (${b[0].x}, ${b[0].y})-(${b[1].x}, ${b[1].y})`
 	);
 
 	const shouldNot = (a: Line2Type, b: Line2Type) => test.false(
-		intersect(a, b), 
+		intersect(a, b),
 		`(${a[0].x}, ${a[0].y})-(${a[1].x}, ${a[1].y}) should not intersect (${b[0].x}, ${b[0].y})-(${b[1].x}, ${b[1].y})`
 	);
 

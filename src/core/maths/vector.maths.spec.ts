@@ -5,7 +5,9 @@ import * as Vector2 from "./vector.maths";
 tape("core/maths/vector.maths", test => {
 	const make = (x: number, y: number) => ({ x, y });
 
-	const within = (test: tape.Test, low: number, high: number) => (value: number) => test.true(value >= low && value <= high, `${value} should be between ${low} and ${high}`);
+	const within = (test: tape.Test, low: number, high: number) =>
+		(value: number) =>
+			test.true(value >= low && value <= high, `${value} should be between ${low} and ${high}`);
 
 	test.test("basic creation", test => {
 		const expected = { x: Math.random(), y: Math.random() };
