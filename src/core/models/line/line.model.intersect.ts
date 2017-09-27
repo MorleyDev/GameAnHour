@@ -6,7 +6,7 @@ export function intersects(lhs: Line2Type, rhs: Line2Type): boolean {
 	return intersectsLine2(lhs, rhs);
 }
 
-function intersectsLine2([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean {
+export function intersectsLine2([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean {
 	const sameSign = (x: number, y: number): boolean => x >= 0 && y >= 0 || x <= 0 && y <= 0;
 
 	const x1 = a1.x;

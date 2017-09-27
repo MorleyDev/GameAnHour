@@ -1,3 +1,5 @@
+import "./Array.merge";
+
 import * as tape from "tape";
 
 import { merge } from "./Array.merge.func";

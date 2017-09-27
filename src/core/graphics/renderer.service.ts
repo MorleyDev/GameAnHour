@@ -1,7 +1,6 @@
 import { Blittable } from "../assets/asset.model";
 import { Radian } from "../maths/angles.maths";
-import { Line2 } from "../models/line/line.model";
-import { Circle, Point2, Rectangle, Shape2, Text2 } from "../models/shapes.model";
+import { Point2, Rectangle, Shape2 } from "../models/shapes.model";
 
 export abstract class Renderer {
 	public abstract clear(): Renderer;

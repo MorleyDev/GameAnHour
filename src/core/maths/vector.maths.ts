@@ -1,6 +1,10 @@
-export type Vector2 = { readonly x: number; readonly y: number; }
+export type Vector2 = {
+	readonly x: number;
+	readonly y: number;
+};
 
 export const Zero: Vector2 = { x: 0, y: 0 };
+
 export const Unit: Vector2 = { x: Math.sqrt(0.5), y: Math.sqrt(0.5) };
 
 export function abs({ x, y }: Vector2): Vector2 {
@@ -48,7 +52,7 @@ export function magnitudeSquared(lhs: Vector2): number {
 }
 
 export function magnitude(lhs: Vector2): number {
-	return  Math.sqrt(magnitudeSquared(lhs));
+	return Math.sqrt(magnitudeSquared(lhs));
 }
 
 export function normalise(lhs: Vector2): Vector2 {

@@ -1,5 +1,8 @@
-import { mergeMap } from "./Array.mergeMap.func";
+import "./Array.mergeMap";
+
 import * as tape from "tape";
+
+import { mergeMap } from "./Array.mergeMap.func";
 
 tape("core/extensions/Array.mergeMap", test => {
 	test.deepEqual(

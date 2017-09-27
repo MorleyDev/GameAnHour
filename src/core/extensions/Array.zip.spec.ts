@@ -1,5 +1,8 @@
-import { zip } from "./Array.zip.func";
+import "./Array.zip";
+
 import * as tape from "tape";
+
+import { zip } from "./Array.zip.func";
 
 tape("core/extensions/Array.zip", test => {
 	test.deepEqual(zip.call(([10, 20, 30]), [20, 30, 40]), [[10, 20], [20, 30], [30, 40]]);

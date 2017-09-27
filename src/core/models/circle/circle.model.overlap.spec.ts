@@ -1,7 +1,8 @@
-import { Point2Type } from "../point/point.model.type";
-import { CircleType } from "./circle.model.type";
-import { overlaps } from "./circle.model.overlap";
 import * as tape from "tape";
+
+import { Point2Type } from "../point/point.model.type";
+import { overlaps } from "./circle.model.overlap";
+import { CircleType } from "./circle.model.type";
 
 tape("core/models/circle/circle.model.overlap.spec", test => {
 	test.test("circle overlaps circle", test => {

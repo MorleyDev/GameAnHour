@@ -6,7 +6,4 @@ declare global {
 	}
 }
 
-Object.defineProperty(Array.prototype, "merge", {
-	value: merge,
-	enumerable: false
-});
+Object.defineProperty(Array.prototype, "merge", { value: merge, enumerable: false });

@@ -27,3 +27,12 @@ export function getBottomRight(...points: Point2Type[]): Point2Type {
 		y: Math.max(...points.map(point => point.y))
 	};
 }
+
+export function getCentre(...points: Point2Type[]): Point2Type {
+	const tl = getTopLeft(...points);
+	const br = getBottomRight(...points);
+	return {
+		x: tl.x + (br.x - tl.x) / 2,
+		y: tl.y + (br.y - tl.y) / 2
+	};
+}

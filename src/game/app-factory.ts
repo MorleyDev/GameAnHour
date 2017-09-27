@@ -1,12 +1,10 @@
-import { Line2 } from "../core/models/line/line.model";
-import { Rectangle } from "../core/models/rectangle/rectangle.model";
 import { Circle } from "../core/models/circle/circle.model";
 import { Point2 } from "../core/models/point/point.model";
+import { Rectangle } from "../core/models/rectangle/rectangle.model";
 import { Shape2 } from "../core/models/shapes.model";
 import { SystemAction } from "../functional/app.actions";
-import { Clear, Fill, Frame, Origin, Stroke } from "../functional/frame.model";
+import { Clear, Frame, Origin, Stroke } from "../functional/frame.model";
 import { createReduxApp } from "../functional/redux.app";
-import * as Vector2 from "../core/maths/vector.maths";
 
 type GameState = {
 	shapes: {
@@ -21,19 +19,65 @@ const initialState: GameState = {
 	shapes: [
 		{
 			id: "circle",
-			shape: Circle(0, 0, 25),
+			shape: Circle(5, 10, 25),
 			colour: ["yellow", "white"],
 		},
 		{
-			id: "block",
+			id: "block1",
 			shape: Rectangle(-50, -50, 25, 15),
 			colour: ["lightblue", "white"]
 		},
 		{
-			id: "line",
-			shape: Circle.lineTo(Circle(0, 0, 25), Point2(-25, -35)),
+			id: "block2",
+			shape: Rectangle(50, 50, 250, 150),
+			colour: ["lightblue", "white"]
+		},
+		{
+			id: "circle",
+			shape: Circle(-25, -35, 5),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "circle",
+			shape: Circle(230, -25, 10),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "circle",
+			shape: Circle(0, 125, 10),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "circle",
+			shape: Circle(0, -30, 10),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "circle2rect",
+			shape: Rectangle.lineTo(Rectangle(-50, -50, 25, 15), Circle(0, -30, 10)),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "line2circle",
+			shape: Circle.lineTo(Circle(5, 10, 25), Circle(-25, -35, 5)),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "line2rect",
+			shape: Rectangle.lineTo(Rectangle(50, 50, 250, 150), Point2(130, -25)),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "circle2rect",
+			shape: Rectangle.lineTo(Rectangle(50, 50, 250, 150), Circle(230, -25, 10)),
+			colour: ["pink", "white"]
+		},
+		{
+			id: "circle2rect",
+			shape: Rectangle.lineTo(Rectangle(50, 50, 250, 150), Circle(0, 125, 10)),
 			colour: ["pink", "white"]
 		}
+
 	],
 	collisionList: []
 };
@@ -47,7 +91,15 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 	reducer: (prev: GameState, curr: AnyAction): GameState => prev,
 	render: state => Frame(
 		Clear,
-		Origin(Point2(320, 240), state.shapes.map(shape => Stroke(shape.shape, state.collisionList.find(c => c.includes(shape.id)) != null ? shape.colour[1] : shape.colour[0]))),
+		Origin(
+			Point2(320, 240),
+			state.shapes.map(shape => Stroke(
+				shape.shape,
+				state.collisionList.find(c => c.includes(shape.id)) != null
+					? shape.colour[1]
+					: shape.colour[0])
+			)
+		),
 	),
 	epics: []
 });

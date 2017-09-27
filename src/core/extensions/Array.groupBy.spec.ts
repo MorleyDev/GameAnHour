@@ -1,5 +1,8 @@
-import { groupBy } from "./Array.groupBy.func";
+import "./Array.groupBy";
+
 import * as tape from "tape";
+
+import { groupBy } from "./Array.groupBy.func";
 
 tape("core/extensions/Array.groupBy", test => {
 	test.deepEqual(
