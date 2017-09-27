@@ -76,7 +76,14 @@ tape("core/maths/vector.maths", test => {
 
 	test.test("normalise", test => {
 		between(test, make(0.4472, 0.8944), make(0.4473, 0.8945))( Vector2.normalise(make(10, 20)) );
-		within(test, 0.999, 1.001)(  Vector2.magnitude( Vector2.normalise(make(10, 20)) ) )
+		within(test, 0.999, 1.001)(  Vector2.magnitude( Vector2.normalise(make(10, 20)) ) );
+		test.end();
+	});
+
+	test.test("dot product", test => {
+		test.equal( Vector2.dotProduct(make(9, 4), make(3, 5)), 47 );
+		test.equal( Vector2.dotProduct(make(9, -4), make(3, 5)), 7 );
+		test.equal( Vector2.dotProduct(make(9, 4), make(-3, 5)), -7 );
 		test.end();
 	});
 
