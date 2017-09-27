@@ -2,7 +2,11 @@ import { boundingTLBR } from "../point/point.model.bounding";
 import { getBottomRight, getTopLeft } from "../point/point.model.tlbr";
 import { Line2Type } from "./line.model.type";
 
-export const intersect = ([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean => {
+export function intersect(lhs: Line2Type, rhs: Line2Type): boolean {
+	return intersectLine2(lhs, rhs);
+}
+
+function intersectLine2([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean {
 	const sameSign = (x: number, y: number): boolean => x >= 0 && y >= 0 || x <= 0 && y <= 0;
 
 	const x1 = a1.x;
