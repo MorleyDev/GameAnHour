@@ -4,6 +4,7 @@ import * as bounding from "./rectangle.model.bounding";
 import * as  is from "./rectangle.model.is";
 import * as tlbr from "./rectangle.model.tlbr";
 import * as overlaps from "./rectangle.model.overlap";
+import * as contains from "./rectangle.model.contains";
 import { RectangleType } from "./rectangle.model.type";
 
 export type Rectangle = RectangleType;
@@ -15,6 +16,7 @@ export const Rectangle = Object.assign(
 		...tlbr,
 		...is,
 		...overlaps,
+		...contains,
 
 		lines: (rectangle: Rectangle): { readonly top: Line2; readonly left: Line2; readonly bottom: Line2; readonly right: Line2 } => {
 			const bounding = Rectangle.boundingTLBR(rectangle);
