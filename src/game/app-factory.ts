@@ -1,7 +1,6 @@
 import { Circle } from "../core/models/circle/circle.model";
 import { Point2 } from "../core/models/point/point.model";
-import { Rectangle } from "../core/models/rectangle/rectangle.model";
-import { Shape2 } from "../core/models/shapes.model";
+import { Rectangle, Shape2 } from "../core/models/shapes.model";
 import { SystemAction } from "../functional/app.actions";
 import { Clear, Frame, Origin, Stroke } from "../functional/frame.model";
 import { createReduxApp } from "../functional/redux.app";
@@ -21,10 +20,9 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 	reducer: (prev: GameState, curr: AnyAction): GameState => prev,
 	render: state => Frame(
 		Clear,
-		Origin(
-			Point2(320, 240),
-			[]
-		),
+		Stroke(Rectangle(300, 200, 100, 100), "red"),
+		Stroke(Rectangle(500, 300, 100, 100), "blue"),
+		Stroke(Rectangle.lineTo(Rectangle(300, 150, 50, 100), Rectangle(500, 300, 100, 100)), "pink")
 	),
 	epics: []
 });

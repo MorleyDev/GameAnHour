@@ -1,17 +1,28 @@
 import { add, multiply, normalise, subtract } from "../../maths/vector.maths";
 import { is as isCircle } from "../circle/circle.model.is";
+import { is as isRectangle } from "./rectangle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { getBottomLeft, getBottomRight, getCentre, getTopRight } from "./rectangle.model.tlbr";
 import { RectangleType } from "./rectangle.model.type";
 
-export function lineTo(lhs: RectangleType, rhs: CircleType | Point2Type): Line2Type {
+export function lineTo(lhs: RectangleType, rhs: RectangleType | CircleType | Point2Type): Line2Type {
 	if (isCircle(rhs)) {
 		return lineToCircle(lhs, rhs);
+	} else if (isRectangle(rhs)) {
+		return lineToRectangle(lhs, rhs);
 	} else {
 		return lineToPoint2(lhs, rhs);
 	}
+}
+
+export function lineToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Type {
+	const centre2centre = [getCentre(lhs), getCentre(rhs)];
+	return [
+		lineTo(lhs, centre2centre[1])[0],
+		lineTo(rhs, centre2centre[0])[0]
+	];
 }
 
 export function lineToCircle(lhs: RectangleType, rhs: CircleType): Line2Type {
