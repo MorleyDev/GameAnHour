@@ -30,7 +30,7 @@ type RotateAction = { type: "ROTATE", angle: Radian };
 const RotateAction = (angle: number): AnyAction => ({ type: "ROTATE", angle });
 const RotateTick = (tick: Observable<[GameState, number]>): Observable<AnyAction> => tick.map(([_, dt]) => RotateAction(dt));
 
-function rotate(point: Point2Type, angle: Radian): Point2Type {
+function rotatePoint2(point: Point2Type, angle: Radian): Point2Type {
 	return {
 		x: point.x * Math.cos(angle) - point.y * Math.sin(angle),
 		y: point.x * Math.sin(angle) + point.y * Math.cos(angle)
@@ -42,24 +42,24 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 	update: [RotateTick],
 	reducer: (prev: GameState, curr: AnyAction): GameState => match(curr, [
 		[
-			(curr): curr is RotateAction => curr.type === "ROTATE",
+			curr => curr.type === "ROTATE",
 			({ angle }: RotateAction) => ({
 				...prev,
 				rect1: {
 					...prev.rect1,
-					...rotate(prev.rect1, angle)
+					...rotatePoint2(prev.rect1, angle)
 				},
 				rect2: {
 					...prev.rect2,
-					...rotate(prev.rect2, -angle)
+					...rotatePoint2(prev.rect2, -angle)
 				},
 				circle1: {
 					...prev.circle1,
-					...rotate(prev.circle1, angle)
+					...rotatePoint2(prev.circle1, angle)
 				},
 				circle2: {
 					...prev.circle2,
-					...rotate(prev.circle2, angle)
+					...rotatePoint2(prev.circle2, angle)
 				}
 			})
 		],

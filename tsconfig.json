@@ -7,16 +7,17 @@
             "es2017",
             "dom"
         ],
+        "target": "es5",
         "noImplicitAny": true,
         "noImplicitThis": true,
         "strictNullChecks": true,
         "alwaysStrict": true,
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
-        "outDir": "out",
-        "allowJs": true
+        "outDir": "dist"
     },
     "exclude": [
-        "webpack.config.js"
+        "webpack.config.js",
+        "dist/**/*"
     ]
 }

@@ -30,11 +30,12 @@ export function lineToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Ty
 }
 
 export function lineToCircle(lhs: RectangleType, rhs: CircleType): Line2Type {
-	const lineToCentre = lineToPoint2(lhs, rhs);
-	return [
-		lineToCentre[0],
-		add( multiply( normalise( subtract(lineToCentre[0], lineToCentre[1]) ), rhs.radius ), lineToCentre[1] )
-	];
+	const [ pointOnRectangle, centreOfCircle ] = lineToPoint2(lhs, rhs);
+	const vectorOfLine = subtract(pointOnRectangle, centreOfCircle);
+	const normalisedLine = normalise(vectorOfLine);
+	const lineOfRadiusLength = multiply(normalisedLine, rhs.radius);
+	const pointOnCircle = add(lineOfRadiusLength, centreOfCircle );
+	return [ pointOnRectangle, pointOnCircle ];
 }
 
 export function lineToPoint2(lhs: RectangleType, rhs: Point2Type): Line2Type {
