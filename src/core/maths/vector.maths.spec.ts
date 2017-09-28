@@ -87,5 +87,14 @@ tape("core/maths/vector.maths", test => {
 		test.end();
 	});
 
+	test.test("normal", test => {
+		test.deepEqual( Vector2.normal(make(9, 4)), make(-4, 9) );
+		test.deepEqual( Vector2.normal(make(-9, 4)), make(-4, -9) );
+		test.deepEqual( Vector2.normal(make(9, -4)), make(4, 9) );
+		test.deepEqual( Vector2.normal(make(0, 0)), make(0, 0) );
+		test.deepEqual( Vector2.normal(make(9, 9)), make(-9, 9) );
+		test.end();
+	});
+
 	test.end();
 });

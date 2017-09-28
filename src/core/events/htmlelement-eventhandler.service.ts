@@ -1,4 +1,8 @@
-import { EventHandler, KeyHandler } from "./eventhandler.service";
+import { Observable } from "rxjs/Observable";
+import { Subject } from "rxjs/Subject";
+
+import { Key } from "../models/keys.model";
+import { EventHandler } from "./eventhandler.service";
 
 interface EventSource {
 	addEventListener(type: "keydown", listener: (event: KeyboardEvent) => any, useCapture?: boolean): void;
@@ -7,22 +11,19 @@ interface EventSource {
 
 export class HtmlElementEventHandlerImpl implements EventHandler {
 	private readonly events = {
-		keyDown: [] as KeyHandler[],
-		keyUp: [] as KeyHandler[]
+		keyDown: new Subject<Key>(),
+		keyUp: new Subject<Key>(),
 	};
 
 	constructor(source: EventSource) {
-		source.addEventListener("keydown", ev => this.events.keyDown.forEach(kd => kd(ev.keyCode)));
-		source.addEventListener("keyup", ev => this.events.keyUp.forEach(kd => kd(ev.keyCode)));
+		source.addEventListener("keydown", ev => this.events.keyDown.next(ev.keyCode));
+		source.addEventListener("keyup", ev => this.events.keyUp.next(ev.keyCode));
 	}
 
-	public onKeyDown(handler: KeyHandler): this {
-		this.events.keyDown.push(handler);
-		return this;
+	public keyDown(): Observable<Key> {
+		return this.events.keyDown;
 	}
-
-	public onKeyUp(handler: KeyHandler): this {
-		this.events.keyUp.push(handler);
-		return this;
+	public keyUp(): Observable<Key> {
+		return this.events.keyUp;
 	}
 }

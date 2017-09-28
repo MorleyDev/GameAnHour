@@ -2,6 +2,7 @@ import * as redux from "redux";
 import { ActionsObservable, combineEpics, createEpicMiddleware } from "redux-observable";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
+import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
 import { Subject } from "rxjs/Subject";
 
 import { App } from "../core/App";
@@ -32,8 +33,12 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 		private tick = new Subject<[TState, number]>();
 
 		constructor(private events: EventHandler) {
-			events.onKeyDown(key => this.store.dispatch({ type: KeyDown, key }));
-			events.onKeyUp(key => this.store.dispatch({ type: KeyUp, key }));
+			events.keyDown()
+				.fpipe(distinctUntilChanged)
+				.subscribe(key => this.store.dispatch({ type: KeyDown, key }));
+
+			events.keyUp()
+				.subscribe(key => this.store.dispatch({ type: KeyUp, key }));
 
 			merge(...update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
 		}
@@ -58,5 +63,7 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 }
 
 function safeApplyMiddleware(...middleware: redux.Middleware[]): redux.GenericStoreEnhancer {
-	return ((window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || redux.compose)(redux.applyMiddleware(...middleware));
+	const devToolCompose = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
+
+	return (devToolCompose || redux.compose)(redux.applyMiddleware(...middleware));
 }

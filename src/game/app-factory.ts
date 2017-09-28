@@ -3,44 +3,42 @@ import "rxjs/add/operator/map";
 import { Observable } from "rxjs/Observable";
 
 import { Radian } from "../core/maths/angles.maths";
-import { Point2 } from "../core/models/point/point.model";
-import { Rectangle } from "../core/models/shapes.model";
+import { Point2Type } from "../core/models/point/point.model.type";
+import { Circle, Point2, Rectangle } from "../core/models/shapes.model";
 import { SystemAction } from "../functional/app.actions";
-import { Clear, Frame, Origin, Stroke } from "../functional/frame.model";
+import { Clear, Fill, Frame, Origin, Stroke } from "../functional/frame.model";
+import { _, match } from "../functional/pattern-match";
 import { createReduxApp } from "../functional/redux.app";
 
 type GameState = {
 	rect1: Rectangle;
 	rect2: Rectangle;
+	circle1: Circle;
+	circle2: Circle;
 };
 
 const initialState: GameState = {
-	rect1: Rectangle(-150, 20, 50, 100),
-	rect2: Rectangle(-25, -25, 50, 50)
+	rect1: Rectangle(-150, 20, 50, 25),
+	rect2: Rectangle(-25, 105, 50, 50),
+	circle1: Circle(50, 50, 15),
+	circle2: Circle(-50, -50, 15)
 };
 
-const _ = Symbol();
+type AnyAction = SystemAction | { type: "ROTATE", angle: Radian, meta: any };
 
-function match<T, U, V>(target: T, patterns: [T | typeof _ | ((check: T) => boolean), (t: V) => U][]): U {
-	for (let pattern of patterns) {
-		const matcher = pattern[0];
-		if (matcher === target || matcher === _ || (typeof matcher === "function" && matcher(target))) {
-			return pattern[1](target as any as V);
-		}
-	}
-	throw new Error("Unmatched pattern");
-}
-
-type AnyAction = SystemAction | { type: "ROTATE", angle: Radian };
-
-const RotateAction = (angle: number): AnyAction => ({ type: "ROTATE", angle });
+const RotateAction = (angle: number): AnyAction => ({ type: "ROTATE", angle, meta: { batchdebug: true } });
 const RotateTick = (tick: Observable<[GameState, number]>): Observable<AnyAction> => tick.map(([_, dt]) => RotateAction(dt));
+
+function rotate(point: Point2Type, angle: Radian): Point2Type {
+	return {
+		x: point.x * Math.cos(angle) - point.y * Math.sin(angle),
+		y: point.x * Math.sin(angle) + point.y * Math.cos(angle)
+	};
+}
 
 export const AppFactory = createReduxApp<GameState, AnyAction>({
 	initialState,
-	update: [
-		RotateTick
-	],
+	update: [RotateTick],
 	reducer: (prev: GameState, curr: AnyAction): GameState => match(curr, [
 		[
 			curr => curr.type === "ROTATE",
@@ -48,13 +46,19 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 				...prev,
 				rect1: {
 					...prev.rect1,
-					x: prev.rect1.x * Math.cos(angle) - prev.rect1.y * Math.sin(angle),
-					y: prev.rect1.x * Math.sin(angle) + prev.rect1.y * Math.cos(angle)
+					...rotate(prev.rect1, angle)
 				},
 				rect2: {
 					...prev.rect2,
-					x: prev.rect2.x * Math.cos(angle) - prev.rect2.y * Math.sin(angle),
-					y: prev.rect2.x * Math.sin(angle) + prev.rect2.y * Math.cos(angle)
+					...rotate(prev.rect2, -angle)
+				},
+				circle1: {
+					...prev.circle1,
+					...rotate(prev.circle1, angle)
+				},
+				circle2: {
+					...prev.circle2,
+					...rotate(prev.circle2, angle)
 				}
 			})
 		],
@@ -63,9 +67,34 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 	render: state => Frame(
 		Clear,
 		Origin(Point2(320, 240), [
-			state.rect1.pipe(Stroke, "red"),
-			state.rect2.pipe(Stroke, "blue"),
-			state.rect1.pipe(Rectangle.lineTo, state.rect2).pipe(Stroke, "pink")
+			state.rect1
+				.pipe(Rectangle.lineTo, state.rect2)
+				.pipe(Stroke, "pink"),
+
+			state.circle1
+				.pipe(Circle.lineTo, state.circle2)
+				.pipe(Stroke, "pink"),
+
+			state.circle1
+				.pipe(Circle.lineTo, state.rect1)
+				.pipe(Stroke, "pink"),
+
+			state.circle1
+				.pipe(Circle.lineTo, state.rect2)
+				.pipe(Stroke, "pink"),
+
+			state.rect1
+				.pipe(Rectangle.lineTo, state.circle2)
+				.pipe(Stroke, "pink"),
+
+			state.rect2.pipe(Rectangle.lineTo, state.circle2)
+				.pipe(Stroke, "pink"),
+
+			state.rect1.pipe(Fill, "red"),
+			state.rect2.pipe(Fill, "blue"),
+
+			state.circle1.pipe(Fill, "green"),
+			state.circle2.pipe(Fill, "yellow"),
 		])
 	),
 	epics: []
