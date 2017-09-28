@@ -24,9 +24,10 @@ const initialState: GameState = {
 	circle2: Circle(-50, -50, 15)
 };
 
-type AnyAction = SystemAction | { type: "ROTATE", angle: Radian, meta: any };
+type AnyAction = SystemAction | { type: "ROTATE", angle: Radian };
 
-const RotateAction = (angle: number): AnyAction => ({ type: "ROTATE", angle, meta: { batchdebug: true } });
+type RotateAction = { type: "ROTATE", angle: Radian };
+const RotateAction = (angle: number): AnyAction => ({ type: "ROTATE", angle });
 const RotateTick = (tick: Observable<[GameState, number]>): Observable<AnyAction> => tick.map(([_, dt]) => RotateAction(dt));
 
 function rotate(point: Point2Type, angle: Radian): Point2Type {
@@ -41,8 +42,8 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 	update: [RotateTick],
 	reducer: (prev: GameState, curr: AnyAction): GameState => match(curr, [
 		[
-			curr => curr.type === "ROTATE",
-			({ angle }: { angle: Radian }) => ({
+			(curr): curr is RotateAction => curr.type === "ROTATE",
+			({ angle }: RotateAction) => ({
 				...prev,
 				rect1: {
 					...prev.rect1,
