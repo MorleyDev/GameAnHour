@@ -18,11 +18,15 @@ export function lineTo(lhs: RectangleType, rhs: RectangleType | CircleType | Poi
 }
 
 export function lineToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Type {
-	const centre2centre = [getCentre(lhs), getCentre(rhs)];
-	return [
-		lineTo(lhs, centre2centre[1])[0],
-		lineTo(rhs, centre2centre[0])[0]
-	];
+	// WARNING: Does not produce the optimal solution
+
+	const lhsCentre = getCentre(lhs);
+	const rhsCentre = getCentre(rhs);
+
+	const [lhsEdge] = lineTo(lhs, rhsCentre);
+	const [rhsEdge] = lineTo(rhs, lhsCentre);
+
+	return [lhsEdge, rhsEdge];
 }
 
 export function lineToCircle(lhs: RectangleType, rhs: CircleType): Line2Type {
@@ -34,15 +38,15 @@ export function lineToCircle(lhs: RectangleType, rhs: CircleType): Line2Type {
 }
 
 export function lineToPoint2(lhs: RectangleType, rhs: Point2Type): Line2Type {
-	if (rhs.x < lhs.x) {
-		if (rhs.y < lhs.y) {
+	if (rhs.x <= lhs.x) {
+		if (rhs.y <= lhs.y) {
 			return [lhs, rhs];
 		} else if (rhs.y > lhs.y + lhs.height) {
 			return [getBottomLeft(lhs), rhs];
 		} else {
 			return [{ x: lhs.x, y: rhs.y }, rhs];
 		}
-	} else if (rhs.x > lhs.x + lhs.width) {
+	} else if (rhs.x >= lhs.x + lhs.width) {
 		if (rhs.y < lhs.y) {
 			return [getTopRight(lhs), rhs];
 		} else if (rhs.y > lhs.y + lhs.height) {
@@ -50,9 +54,9 @@ export function lineToPoint2(lhs: RectangleType, rhs: Point2Type): Line2Type {
 		} else {
 			return [{ x: lhs.x + lhs.width, y: rhs.y }, rhs];
 		}
-	} else if (rhs.y < lhs.y) {
+	} else if (rhs.y <= lhs.y) {
 		return [{ x: rhs.x, y: lhs.y }, rhs];
-	} else if (rhs.y > lhs.y + lhs.height) {
+	} else if (rhs.y >= lhs.y + lhs.height) {
 		return [{ x: rhs.x, y: lhs.y + lhs.height }, rhs];
 	} else {
 		return [getCentre(lhs), rhs];

@@ -1,10 +1,7 @@
-import "rxjs/add/observable/empty";
-import "rxjs/add/observable/merge";
-import "rxjs/add/operator/mergeMap";
-
 import * as redux from "redux";
 import { ActionsObservable, combineEpics, createEpicMiddleware } from "redux-observable";
 import { Observable } from "rxjs/Observable";
+import { merge } from "rxjs/observable/merge";
 import { Subject } from "rxjs/Subject";
 
 import { App } from "../core/App";
@@ -38,7 +35,7 @@ export function createReduxApp<TState, TAction extends redux.AnyAction>({ initia
 			events.onKeyDown(key => this.store.dispatch({ type: KeyDown, key }));
 			events.onKeyUp(key => this.store.dispatch({ type: KeyUp, key }));
 
-			Observable.merge(...update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
+			merge(...update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
 		}
 
 		update(deltaTimeS: number): void {
