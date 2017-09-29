@@ -1,19 +1,28 @@
+import { is as isLine2 } from "../line/line.model.is";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
+import { intersectsRectangle as lineIntersectsRectangle } from "../line/line.model.intersect";
 import { lengthOf } from "../line/line.model.length";
+import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { is as isRect } from "./rectangle.model.is";
 import { lineTo } from "./rectangle.model.lineTo";
 import { RectangleType } from "./rectangle.model.type";
 
-export function overlaps(lhs: RectangleType, rhs: RectangleType | CircleType | Point2Type): boolean {
-	if (isRect(rhs)) {
+export function overlaps(lhs: RectangleType, rhs: RectangleType | CircleType | Line2Type | Point2Type): boolean {
+	if (isLine2(rhs)) {
+		return overlapsLine2(lhs, rhs);
+	} else if (isRect(rhs)) {
 		return overlapsRectangle(lhs, rhs);
 	} else if (isCircle(rhs)) {
 		return overlapsCircle(lhs, rhs);
 	} else {
 		return overlapsPoint2(lhs, rhs);
 	}
+}
+
+export function overlapsLine2(lhs: RectangleType, rhs: Line2Type): boolean {
+	return lineIntersectsRectangle(rhs, lhs);
 }
 
 export function overlapsRectangle(lhs: RectangleType, rhs: RectangleType): boolean {

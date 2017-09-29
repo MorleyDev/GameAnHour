@@ -1,6 +1,6 @@
 import { boundingTLBR } from "../point/point.model.bounding";
+import { Point2Type } from "../point/point.model.type";
 import { lines } from "../rectangle/rectangle.model.lines";
-import { overlapsPoint2 } from "../rectangle/rectangle.model.overlap";
 import { RectangleType } from "../rectangle/rectangle.model.type";
 import { is as isLine } from "./line.model.is";
 import { Line2Type } from "./line.model.type";
@@ -14,7 +14,13 @@ export function intersects(lhs: Line2Type, rhs: RectangleType | Line2Type): bool
 }
 
 export function intersectsRectangle(lhs: Line2Type, rhs: RectangleType): boolean {
-	if ( overlapsPoint2(rhs, lhs[0]) || overlapsPoint2(rhs, lhs[1]) ) {
+	const rectangleContainsPoint = (lhs: RectangleType, rhs: Point2Type) =>
+		rhs.x >= lhs.x
+		&& rhs.x <= lhs.x + lhs.width
+		&& rhs.y >= lhs.y
+		&& rhs.y <= lhs.y + lhs.height;
+
+	if ( rectangleContainsPoint(rhs, lhs[0]) || rectangleContainsPoint(rhs, lhs[1]) ) {
 		return true;
 	}
 
