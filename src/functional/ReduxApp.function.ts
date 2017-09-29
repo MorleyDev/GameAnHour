@@ -2,11 +2,14 @@ import { AnyAction, applyMiddleware, compose as productionCompose, createStore }
 import { combineEpics, createEpicMiddleware } from "redux-observable";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
+import { map } from "rxjs/operator/map";
+import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
 import { Subject } from "rxjs/Subject";
 
 import { App } from "../core/App";
 import { EventHandler } from "../core/events/eventhandler.service";
 import { Renderer } from "../core/graphics/renderer.service";
+import { Key } from "../core/models/keys.model";
 import { KeyDown, KeyUp } from "./app.actions";
 import { FrameCollection } from "./frame.model";
 import { Render } from "./render.function";
@@ -34,8 +37,10 @@ export function createReduxApp<TState, TAction extends AnyAction>(app: ReduxApp<
 		);
 
 		constructor(private events: EventHandler) {
-			events.keyDown().subscribe(key => this.store.dispatch(KeyDown(key)));
-			events.keyUp().subscribe(key => this.store.dispatch(KeyUp(key)));
+			merge(events.keyDown().fpipe(map, (key: Key) => ({ type: 0, key })), events.keyUp().fpipe(map, (key: Key) => ({ type: 1, key })))
+				.fpipe(distinctUntilChanged, (a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key)
+				.fpipe(map, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDown(e.key) : KeyUp(e.key))
+				.subscribe((e: KeyDown | KeyUp) => this.store.dispatch(e));
 
 			merge( ...app.update.map(u => u(this.tick)) ).subscribe(value => this.store.dispatch(value));
 		}
