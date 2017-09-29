@@ -1,4 +1,3 @@
-import "core-js";
 import "./core/extensions";
 
 import { main } from "./core/main";

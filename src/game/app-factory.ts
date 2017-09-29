@@ -1,9 +1,7 @@
-import "rxjs/add/operator/map";
-
 import { Observable } from "rxjs/Observable";
+import { map } from "rxjs/operator/map";
 
-import { Radian } from "../core/maths/angles.maths";
-import { Point2Type } from "../core/models/point/point.model.type";
+import { Radian, rotate2d } from "../core/maths/angles.maths";
 import { Circle, Point2, Rectangle } from "../core/models/shapes.model";
 import { SystemAction } from "../functional/app.actions";
 import { Clear, Fill, Frame, Origin, Stroke } from "../functional/frame.model";
@@ -24,18 +22,13 @@ const initialState: GameState = {
 	circle2: Circle(-50, -50, 15)
 };
 
+type GameTick = [GameState, number];
 type AnyAction = SystemAction | { type: "ROTATE", angle: Radian };
 
 type RotateAction = { type: "ROTATE", angle: Radian };
 const RotateAction = (angle: number): AnyAction => ({ type: "ROTATE", angle });
-const RotateTick = (tick: Observable<[GameState, number]>): Observable<AnyAction> => tick.map(([_, dt]) => RotateAction(dt));
-
-function rotatePoint2(point: Point2Type, angle: Radian): Point2Type {
-	return {
-		x: point.x * Math.cos(angle) - point.y * Math.sin(angle),
-		y: point.x * Math.sin(angle) + point.y * Math.cos(angle)
-	};
-}
+const RotateTick = (tick: Observable<[GameState, number]>): Observable<AnyAction> =>
+	tick.fpipe(map, ([_, dt]: GameTick) => RotateAction(dt)) as Observable<AnyAction>;
 
 export const AppFactory = createReduxApp<GameState, AnyAction>({
 	initialState,
@@ -47,19 +40,19 @@ export const AppFactory = createReduxApp<GameState, AnyAction>({
 				...prev,
 				rect1: {
 					...prev.rect1,
-					...rotatePoint2(prev.rect1, angle)
+					...rotate2d(prev.rect1, angle)
 				},
 				rect2: {
 					...prev.rect2,
-					...rotatePoint2(prev.rect2, -angle)
+					...rotate2d(prev.rect2, -angle)
 				},
 				circle1: {
 					...prev.circle1,
-					...rotatePoint2(prev.circle1, angle)
+					...rotate2d(prev.circle1, angle)
 				},
 				circle2: {
 					...prev.circle2,
-					...rotatePoint2(prev.circle2, angle)
+					...rotate2d(prev.circle2, angle)
 				}
 			})
 		],

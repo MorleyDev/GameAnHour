@@ -1,9 +1,28 @@
 import { boundingTLBR } from "../point/point.model.bounding";
-import { getBottomRight, getTopLeft } from "../point/point.model.tlbr";
+import { lines } from "../rectangle/rectangle.model.lines";
+import { overlapsPoint2 } from "../rectangle/rectangle.model.overlap";
+import { RectangleType } from "../rectangle/rectangle.model.type";
+import { is as isLine } from "./line.model.is";
 import { Line2Type } from "./line.model.type";
 
-export function intersects(lhs: Line2Type, rhs: Line2Type): boolean {
-	return intersectsLine2(lhs, rhs);
+export function intersects(lhs: Line2Type, rhs: RectangleType | Line2Type): boolean {
+	if (isLine(rhs)) {
+		return intersectsLine2(lhs, rhs);
+	} else {
+		return intersectsRectangle(lhs, rhs);
+	}
+}
+
+export function intersectsRectangle(lhs: Line2Type, rhs: RectangleType): boolean {
+	if ( overlapsPoint2(rhs, lhs[0]) || overlapsPoint2(rhs, lhs[1]) ) {
+		return true;
+	}
+
+	const { bottom, top, left, right } = lines(rhs);
+	return intersectsLine2(lhs, top)
+		|| intersectsLine2(lhs, bottom)
+		|| intersectsLine2(lhs, left)
+		|| intersectsLine2(lhs, right);
 }
 
 export function intersectsLine2([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean {
