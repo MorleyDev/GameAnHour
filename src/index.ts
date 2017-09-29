@@ -162,6 +162,15 @@ run<GameState, AnyAction>({
 				}
 			})
 		],
+		[
+			curr => curr.type === "UPDATE_BULLETS_POSITION",
+			(curr: UpdateBulletsPosition) => ({
+				...prev,
+				bullets: prev.bullets
+					.map(bullet => ({ ...bullet, position: addVector2(bullet.position, multiply(bullet.velocity, curr.deltaTime)) }))
+					.filter(bullet => bullet.position.y < 300 && bullet.position.y > -300)
+			})
+		],
 		[_, () => prev]
 	]),
 	render: state => Frame(
