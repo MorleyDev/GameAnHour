@@ -4,31 +4,29 @@ import { HtmlElementEventHandlerImpl } from "./events/htmlelement-eventhandler.s
 import { CanvasRenderer } from "./graphics/canvas-renderer.service";
 
 export function main(App: new (events: EventHandler) => App): void {
-	const canvas = document.getElementById("render-target") as HTMLCanvasElement;
-	canvas.width = 640;
-	canvas.height = 480;
+	function requestAnimationFrameLoop(logic: () => void, framerate: number, maxTime?: number): void {
+		maxTime = maxTime || framerate;
 
+		let prevTimeMs = new Date().valueOf();
+		(function _tick(): void {
+			const startTimeMs = new Date().valueOf();
+			let updateTime = Math.min(maxTime, startTimeMs - prevTimeMs);
+			prevTimeMs = startTimeMs - updateTime;
+
+			while (updateTime >= framerate) {
+				prevTimeMs = prevTimeMs + framerate;
+				updateTime = updateTime - framerate;
+				logic();
+			}
+			requestAnimationFrame(_tick);
+		})();
+	}
+
+	const canvas = document.getElementById("render-target") as HTMLCanvasElement;
 	const canvasRenderer = new CanvasRenderer(canvas);
 	const eventHandler = new HtmlElementEventHandlerImpl(window);
 
 	const app = new App(eventHandler);
-
-	let prevTimeMs = new Date().valueOf();
-	(function _update(): void {
-		const currTimeMs = new Date().valueOf();
-		let updateTime = Math.min(100, currTimeMs - prevTimeMs);
-		prevTimeMs = currTimeMs - updateTime;
-
-		while (updateTime >= 10) {
-			prevTimeMs = prevTimeMs + 10;
-			updateTime = updateTime - 10;
-			app.update(0.01);
-		}
-		requestAnimationFrame(_update);
-	})();
-
-	(function _draw(): void {
-		app.draw(canvasRenderer);
-		requestAnimationFrame(_draw);
-	})();
+	requestAnimationFrameLoop(() => app.update(0.01), 10, 100);
+	requestAnimationFrameLoop(() => app.draw(canvasRenderer), 1);
 }
