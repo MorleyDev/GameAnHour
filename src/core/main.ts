@@ -2,19 +2,20 @@ import { App } from "./App";
 import { EventHandler } from "./events/eventhandler.service";
 import { HtmlElementEventHandlerImpl } from "./events/htmlelement-eventhandler.service";
 import { CanvasRenderer } from "./graphics/canvas-renderer.service";
+import { Milliseconds } from "./models/time.model";
 
 export function main(App: new (events: EventHandler) => App): void {
-	function requestAnimationFrameLoop(logic: () => void, framerate: number, maxTime?: number): void {
+	function requestAnimationFrameLoop(logic: () => void, framerate: Milliseconds, maxTime?: Milliseconds): void {
 		maxTime = maxTime || framerate;
 
-		let prevTimeMs = new Date().valueOf();
+		let prevTime: Milliseconds = new Date().valueOf();
 		(function _tick(): void {
-			const startTimeMs = new Date().valueOf();
-			let updateTime = Math.min(maxTime, startTimeMs - prevTimeMs);
-			prevTimeMs = startTimeMs - updateTime;
+			const startTime: Milliseconds = new Date().valueOf();
+			let updateTime: Milliseconds = Math.min(maxTime, startTime - prevTime);
+			prevTime = startTime - updateTime;
 
 			while (updateTime >= framerate) {
-				prevTimeMs = prevTimeMs + framerate;
+				prevTime = prevTime + framerate;
 				updateTime = updateTime - framerate;
 				logic();
 			}

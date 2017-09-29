@@ -1,6 +1,7 @@
 import { Renderer } from "./graphics/renderer.service";
+import { Seconds } from "./models/time.model";
 
 export abstract class App {
-	public abstract update(deltaTimeS: number): void;
+	public abstract update(deltaTime: Seconds): void;
 	public abstract draw(canvas: Renderer): void;
 }

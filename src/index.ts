@@ -1,9 +1,10 @@
-import { Circle } from "./core/models/circle/circle.model";
 import "./core/extensions";
 import "rxjs/add/operator/filter";
 import "rxjs/add/operator/map";
+import "rxjs/add/operator/mergeMap";
 
 import { add as addVector2, multiply, Vector2 } from "./core/maths/vector.maths";
+import { Circle } from "./core/models/circle/circle.model";
 import { Key } from "./core/models/keys.model";
 import { Line2 } from "./core/models/line/line.model";
 import { Point2 } from "./core/models/point/point.model";
@@ -39,8 +40,15 @@ type StopPlayerMovingLeftAction = { type: "STOP_MOVE_PLAYER_LEFT" };
 type StartPlayerMovingRightAction = { type: "START_MOVE_PLAYER_RIGHT" };
 type StopPlayerMovingRightAction = { type: "STOP_MOVE_PLAYER_RIGHT" };
 
-type ModifyPlayerPosition = { type: "MOD_PLAYER_POSITION", delta: Vector2 };
-type GameAction = StartPlayerMovingLeftAction | StopPlayerMovingLeftAction | StartPlayerMovingRightAction | StopPlayerMovingRightAction | ModifyPlayerPosition;
+type UpdatePlayerPosition = { type: "UPDATE_PLAYER_POSITION", deltaTime: number };
+type UpdateBulletsPosition = { type: "UPDATE_BULLETS_POSITION", deltaTime: number };
+type GameAction =
+	StartPlayerMovingLeftAction
+	| StopPlayerMovingLeftAction
+	| StartPlayerMovingRightAction
+	| StopPlayerMovingRightAction
+	| UpdatePlayerPosition
+	| UpdateBulletsPosition;
 type AnyAction = SystemAction | GameAction;
 
 function makeBullet(damages: "player" | "enemy", position: Point2, velocity: Vector2) {
@@ -81,12 +89,19 @@ run<GameState, AnyAction>({
 	initialState,
 	update: [
 		tick => tick
-			.filter(([state, dt]) => state.player.velocity.x !== 0)
-			.map(([state, dt]) => ({ type: "MOD_PLAYER_POSITION", delta: multiply(state.player.velocity, dt) } as ModifyPlayerPosition))
+			.map(({ state, deltaTime }) => ({ player: state.player, deltaTime }))
+			.filter(({player, deltaTime}) => player.velocity.x !== 0)
+			.map(({player, deltaTime}) => ({ type: "UPDATE_PLAYER_POSITION", deltaTime } as UpdatePlayerPosition)),
+
+		tick => tick
+			.map(({ state, deltaTime }) => ({ bullets: state.bullets, deltaTime }))
+			.filter(({ bullets, deltaTime }) => bullets.some(bullet => bullet.velocity.y !== 0 || bullet.velocity.x !== 0 ))
+			.map(({ bullets, deltaTime }) => ({ type: "UPDATE_BULLETS_POSITION", deltaTime } as UpdateBulletsPosition))
 	],
 	reducer: (prev: GameState, curr: AnyAction): GameState => match(curr, [
 		[
-			curr => curr.type === "START_MOVE_PLAYER_RIGHT", () => ({
+			curr => curr.type === "START_MOVE_PLAYER_RIGHT",
+			() => ({
 				...prev,
 				player: {
 					...prev.player,
@@ -98,7 +113,8 @@ run<GameState, AnyAction>({
 			})
 		],
 		[
-			curr => curr.type === "STOP_MOVE_PLAYER_RIGHT", () => ({
+			curr => curr.type === "STOP_MOVE_PLAYER_RIGHT",
+			() => ({
 				...prev,
 				player: {
 					...prev.player,
@@ -110,7 +126,8 @@ run<GameState, AnyAction>({
 			})
 		],
 		[
-			curr => curr.type === "START_MOVE_PLAYER_LEFT", () => ({
+			curr => curr.type === "START_MOVE_PLAYER_LEFT",
+			() => ({
 				...prev,
 				player: {
 					...prev.player,
@@ -122,7 +139,8 @@ run<GameState, AnyAction>({
 			})
 		],
 		[
-			curr => curr.type === "STOP_MOVE_PLAYER_LEFT", () => ({
+			curr => curr.type === "STOP_MOVE_PLAYER_LEFT",
+			() => ({
 				...prev,
 				player: {
 					...prev.player,
@@ -134,11 +152,12 @@ run<GameState, AnyAction>({
 			})
 		],
 		[
-			curr => curr.type === "MOD_PLAYER_POSITION", (curr: ModifyPlayerPosition) => ({
+			curr => curr.type === "UPDATE_PLAYER_POSITION",
+			(curr: UpdatePlayerPosition) => ({
 				...prev,
 				player: {
 					...prev.player,
-					position: addVector2(prev.player.position, curr.delta)
+					position: addVector2(prev.player.position, multiply(prev.player.velocity, curr.deltaTime))
 						.pipe(vec => ({ ...vec, x: Math.max(-320, Math.min(320, vec.x)) }))
 				}
 			})
