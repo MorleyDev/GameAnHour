@@ -10,9 +10,9 @@ export class HtmlElementEventHandlerImpl implements EventHandler {
 	}
 
 	public keyDown(): Observable<Key> {
-		return fromEvent(this.source, "keydown");
+		return fromEvent(this.source, "keydown").map((e: KeyboardEvent) => e.keyCode);
 	}
 	public keyUp(): Observable<Key> {
-		return fromEvent(this.source, "keyup");
+		return fromEvent(this.source, "keyup").map((e: KeyboardEvent) => e.keyCode);
 	}
 }

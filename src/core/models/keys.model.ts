@@ -1,4 +1,4 @@
-export declare enum Key {
+export enum Key {
 	Backspace = 8,
 	Tab = 9,
 	Enter = 13,

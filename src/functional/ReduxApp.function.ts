@@ -8,14 +8,14 @@ import { App } from "../core/App";
 import { EventHandler } from "../core/events/eventhandler.service";
 import { Renderer } from "../core/graphics/renderer.service";
 import { KeyDown, KeyUp } from "./app.actions";
-import { Frame } from "./frame.model";
+import { FrameCollection } from "./frame.model";
 import { Render } from "./render.function";
 
 export type ReduxApp<TState, TAction> = {
 	initialState: TState;
 	reducer: (prev: TState, curr: TAction) => TState;
 	update: ((tick: Observable<[TState, number]>) => Observable<TAction>)[];
-	render: (state: TState) => Frame;
+	render: (state: TState) => FrameCollection;
 	epics: ((action: Observable<TAction>) => Observable<TAction>)[];
 };
 
@@ -34,10 +34,10 @@ export function createReduxApp<TState, TAction extends AnyAction>(app: ReduxApp<
 		);
 
 		constructor(private events: EventHandler) {
-			events.keyDown().subscribe(key => this.store.dispatch({ type: KeyDown, key }));
-			events.keyUp().subscribe(key => this.store.dispatch({ type: KeyUp, key }));
+			events.keyDown().subscribe(key => this.store.dispatch(KeyDown(key)));
+			events.keyUp().subscribe(key => this.store.dispatch(KeyUp(key)));
 
-			merge(...app.update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
+			merge( ...app.update.map(u => u(this.tick)) ).subscribe(value => this.store.dispatch(value));
 		}
 
 		update(deltaTimeS: number): void {

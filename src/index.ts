@@ -1,22 +1,196 @@
+import { Circle } from "./core/models/circle/circle.model";
 import "./core/extensions";
+import "rxjs/add/operator/filter";
+import "rxjs/add/operator/map";
 
+import { add as addVector2, multiply, Vector2 } from "./core/maths/vector.maths";
+import { Key } from "./core/models/keys.model";
+import { Line2 } from "./core/models/line/line.model";
+import { Point2 } from "./core/models/point/point.model";
+import { Rectangle } from "./core/models/rectangle/rectangle.model";
+import { Shape2 } from "./core/models/shapes.model";
 import { SystemAction } from "./functional/app.actions";
-import { Clear, Frame } from "./functional/frame.model";
+import { Clear, Fill, Frame, Origin } from "./functional/frame.model";
 import { _, match } from "./functional/pattern-match.function";
 import { run } from "./functional/run.function";
 
-type GameState = { };
+type GameState = {
+	player: {
+		position: Point2;
+		shape: Shape2[];
+		velocity: Vector2;
+	};
+	bullets: {
+		position: Point2;
+		shape: Shape2[];
+		velocity: Vector2;
+		damages: "player" | "enemy"
+	}[];
+	enemies: {
+		position: Point2;
+		shape: Shape2[];
+	}[];
+};
 type GameTick = [GameState, number];
-type AnyAction = SystemAction;
 
-const initialState: GameState = { };
+type StartPlayerMovingLeftAction = { type: "START_MOVE_PLAYER_LEFT" };
+type StopPlayerMovingLeftAction = { type: "STOP_MOVE_PLAYER_LEFT" };
+
+type StartPlayerMovingRightAction = { type: "START_MOVE_PLAYER_RIGHT" };
+type StopPlayerMovingRightAction = { type: "STOP_MOVE_PLAYER_RIGHT" };
+
+type ModifyPlayerPosition = { type: "MOD_PLAYER_POSITION", delta: Vector2 };
+type GameAction = StartPlayerMovingLeftAction | StopPlayerMovingLeftAction | StartPlayerMovingRightAction | StopPlayerMovingRightAction | ModifyPlayerPosition;
+type AnyAction = SystemAction | GameAction;
+
+function makeBullet(damages: "player" | "enemy", position: Point2, velocity: Vector2) {
+	return {
+		damages,
+		position,
+		velocity,
+		shape: [Circle(0, 0, 2)]
+	};
+}
+
+function makeEnemy(position: Point2) {
+	return {
+		position,
+		shape: [
+			Rectangle(-10, -10, 5, 20),
+			Rectangle(-5, -3, 10, 7),
+			Rectangle(5, -10, 5, 20)
+		]
+	};
+}
+
+const initialState: GameState = {
+	player: {
+		position: Point2(0, 235),
+		shape: [
+			Rectangle(-10, -5, 20, 5),
+			Rectangle(-5, -10, 10, 5),
+			Rectangle(-2, -14, 4, 4)
+		],
+		velocity: Vector2(0, 0)
+	},
+	bullets: [],
+	enemies: []
+};
 
 run<GameState, AnyAction>({
 	initialState,
-	update: [],
+	update: [
+		tick => tick
+			.filter(([state, dt]) => state.player.velocity.x !== 0)
+			.map(([state, dt]) => ({ type: "MOD_PLAYER_POSITION", delta: multiply(state.player.velocity, dt) } as ModifyPlayerPosition))
+	],
 	reducer: (prev: GameState, curr: AnyAction): GameState => match(curr, [
+		[
+			curr => curr.type === "START_MOVE_PLAYER_RIGHT", () => ({
+				...prev,
+				player: {
+					...prev.player,
+					velocity: {
+						...prev.player.velocity,
+						x: 100
+					}
+				}
+			})
+		],
+		[
+			curr => curr.type === "STOP_MOVE_PLAYER_RIGHT", () => ({
+				...prev,
+				player: {
+					...prev.player,
+					velocity: {
+						...prev.player.velocity,
+						x: Math.min(prev.player.velocity.x, 0)
+					}
+				}
+			})
+		],
+		[
+			curr => curr.type === "START_MOVE_PLAYER_LEFT", () => ({
+				...prev,
+				player: {
+					...prev.player,
+					velocity: {
+						...prev.player.velocity,
+						x: -100
+					}
+				}
+			})
+		],
+		[
+			curr => curr.type === "STOP_MOVE_PLAYER_LEFT", () => ({
+				...prev,
+				player: {
+					...prev.player,
+					velocity: {
+						...prev.player.velocity,
+						x: Math.max(prev.player.velocity.x, 0)
+					}
+				}
+			})
+		],
+		[
+			curr => curr.type === "MOD_PLAYER_POSITION", (curr: ModifyPlayerPosition) => ({
+				...prev,
+				player: {
+					...prev.player,
+					position: addVector2(prev.player.position, curr.delta)
+						.pipe(vec => ({ ...vec, x: Math.max(-320, Math.min(320, vec.x)) }))
+				}
+			})
+		],
 		[_, () => prev]
 	]),
-	render: state => Frame(Clear),
-	epics: []
+	render: state => Frame(
+		Clear,
+		render(state)
+	),
+	epics: [
+		actions => actions
+			.filter(action => action.type === "EVENTS_KEY_DOWN" && action.key === Key.RightArrow)
+			.map(() => ({ type: "START_MOVE_PLAYER_RIGHT" }) as StartPlayerMovingRightAction),
+		actions => actions
+			.filter(action => action.type === "EVENTS_KEY_UP" && action.key === Key.RightArrow)
+			.map(() => ({ type: "STOP_MOVE_PLAYER_RIGHT" }) as StopPlayerMovingRightAction),
+
+		actions => actions
+			.filter(action => action.type === "EVENTS_KEY_DOWN" && action.key === Key.LeftArrow)
+			.map(() => ({ type: "START_MOVE_PLAYER_LEFT" }) as StartPlayerMovingLeftAction),
+		actions => actions
+			.filter(action => action.type === "EVENTS_KEY_UP" && action.key === Key.LeftArrow)
+			.map(() => ({ type: "STOP_MOVE_PLAYER_LEFT" }) as StopPlayerMovingLeftAction)
+	]
 });
+
+function offsetShape(lhs: Shape2, rhs: Vector2): Shape2 {
+	if (Line2.is(lhs)) {
+		const line: Line2 = lhs;
+		return [offsetShape(line, rhs), offsetShape(line, rhs)] as Line2;
+	} else {
+		return {
+			...lhs,
+			...addVector2(lhs, rhs)
+		};
+	}
+}
+
+function offsetEntity({ position, shape }: { position: Point2, shape: Shape2[] }): Shape2[] {
+	return shape.map(s => offsetShape(s, position));
+}
+
+function render(state: GameState): Frame {
+	return Origin(Point2(320, 240), [
+		offsetEntity(state.player).map(entity => Fill(entity, "lightgreen")),
+		state.enemies.mergeMap(offsetEntity).map(entity => Fill(entity, "white")),
+		state.bullets
+			.groupBy(bullet => bullet.damages)
+			.pipe(group => [
+				(group.player || []).mergeMap(offsetEntity).map(entity => Fill(entity, "lightgreen")),
+				(group.enemy || []).mergeMap(offsetEntity).map(entity => Fill(entity, "white"))
+			])
+	]);
+}

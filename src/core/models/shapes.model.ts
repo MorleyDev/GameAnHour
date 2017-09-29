@@ -9,4 +9,4 @@ export { Line2 } from "./line/line.model";
 export { Rectangle } from "./rectangle/rectangle.model";
 export { Text2 } from "./text/text.model";
 
-export type Shape2 = Rectangle | Text2 | Circle | Line2;
+export type Shape2 = Rectangle | Circle | Line2 | Text2;

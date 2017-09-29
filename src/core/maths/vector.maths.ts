@@ -2,6 +2,7 @@ export type Vector2 = {
 	readonly x: number;
 	readonly y: number;
 };
+export const Vector2 = (x: number, y: number) => ({ x, y });
 
 export const Zero: Vector2 = { x: 0, y: 0 };
 

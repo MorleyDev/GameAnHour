@@ -1,12 +1,12 @@
 import { Renderer } from "../core/graphics/renderer.service";
 import { Rectangle } from "../core/models/shapes.model";
-import { Blit, Fill, Frame, FrameCommand, Origin, Rotate, Scale, Stroke } from "./frame.model";
+import { Blit, Fill, Frame, FrameCollection, FrameCommand, Origin, Rotate, Scale, Stroke } from "./frame.model";
 
-export function Render(canvas: Renderer, frame: Frame): Renderer {
+export function Render(canvas: Renderer, frame: FrameCollection): Renderer {
 	return frame.reduce((canvas, command) => RenderCommand(canvas, command), canvas);
 }
 
-function RenderCommand(canvas: Renderer, command: Frame | FrameCommand): Renderer {
+function RenderCommand(canvas: Renderer, command: Frame): Renderer {
 	switch (command[0]) {
 		case "clear":
 			return RenderClear(canvas);
@@ -28,7 +28,7 @@ function RenderCommand(canvas: Renderer, command: Frame | FrameCommand): Rendere
 
 		default:
 			return command[0] != null
-				? Render(canvas, command as Frame)
+				? Render(canvas, command as FrameCollection)
 				: canvas;
 	}
 }
