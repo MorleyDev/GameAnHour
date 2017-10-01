@@ -1,17 +1,22 @@
-import { is as isLine2 } from "../line/line.model.is";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { intersectsRectangle as lineIntersectsRectangle } from "../line/line.model.intersect";
+import { is as isLine2 } from "../line/line.model.is";
 import { lengthOf } from "../line/line.model.length";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
+import { Shape2Type } from "../shapes.model.type";
+import { is as isTri2 } from "../triangle/triangle.model.is";
+import { overlapsRectangle as triangleOverlapsRectangle } from "../triangle/triangle.model.overlap";
 import { is as isRect } from "./rectangle.model.is";
 import { lineTo } from "./rectangle.model.lineTo";
 import { RectangleType } from "./rectangle.model.type";
 
-export function overlaps(lhs: RectangleType, rhs: RectangleType | CircleType | Line2Type | Point2Type): boolean {
+export function overlaps(lhs: RectangleType, rhs: Shape2Type): boolean {
 	if (isLine2(rhs)) {
 		return overlapsLine2(lhs, rhs);
+	} else if (isTri2(rhs)) {
+		return triangleOverlapsRectangle(rhs, lhs);
 	} else if (isRect(rhs)) {
 		return overlapsRectangle(lhs, rhs);
 	} else if (isCircle(rhs)) {
@@ -22,6 +27,10 @@ export function overlaps(lhs: RectangleType, rhs: RectangleType | CircleType | L
 }
 
 export function overlapsLine2(lhs: RectangleType, rhs: Line2Type): boolean {
+	if (overlapsPoint2(lhs, rhs[0]) || overlapsPoint2(lhs, rhs[1])) {
+		return true;
+	}
+
 	return lineIntersectsRectangle(rhs, lhs);
 }
 
@@ -35,7 +44,7 @@ export function overlapsRectangle(lhs: RectangleType, rhs: RectangleType): boole
 }
 
 export function overlapsCircle(lhs: RectangleType, rhs: CircleType): boolean {
-	return overlapsPoint2(lhs, rhs) || lengthOf( lineTo(lhs, rhs) ) <= rhs.radius;
+	return overlapsPoint2(lhs, rhs) || lengthOf(lineTo(lhs, rhs)) <= rhs.radius;
 }
 
 export function overlapsPoint2(lhs: RectangleType, rhs: Point2Type) {

@@ -38,12 +38,14 @@ export function createReduxApp<TState, TAction extends AnyAction>(app: ReduxApp<
 		);
 
 		constructor(private events: EventHandler) {
-			merge(events.keyDown().fpipe(map, (key: Key) => ({ type: 0, key })), events.keyUp().fpipe(map, (key: Key) => ({ type: 1, key })))
-				.fpipe(distinctUntilChanged, (a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key)
-				.fpipe(map, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDown(e.key) : KeyUp(e.key))
-				.subscribe((e: KeyDown | KeyUp) => this.store.dispatch(e));
+			const keydown = map.call(events.keyDown(), (key: Key) => ({ type: 0, key }));
+			const keyup = map.call(events.keyUp(), (key: Key) => ({ type: 1, key }));
+			const keypresses = merge(keydown, keyup);
+			const distinctKeyPresses = distinctUntilChanged.call(keypresses, (a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key);
+			const fullKeyPresses = map.call(distinctKeyPresses, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDown(e.key) : KeyUp(e.key));
+			fullKeyPresses.subscribe((e: KeyDown | KeyUp) => this.store.dispatch(e));
 
-			merge( ...app.update.map(u => u(this.tick)) ).subscribe(value => this.store.dispatch(value));
+			merge(...app.update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
 		}
 
 		update(deltaTime: Seconds): void {

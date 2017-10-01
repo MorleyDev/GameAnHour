@@ -1,9 +1,9 @@
-import { add, multiply, normalise, subtract } from "../../maths/vector.maths";
+import { add, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
-import { is as isRectangle } from "./rectangle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
+import { is as isRectangle } from "./rectangle.model.is";
 import { getBottomLeft, getBottomRight, getCentre, getTopRight } from "./rectangle.model.tlbr";
 import { RectangleType } from "./rectangle.model.type";
 

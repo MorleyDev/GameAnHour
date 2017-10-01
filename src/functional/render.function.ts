@@ -1,6 +1,6 @@
 import { Renderer } from "../core/graphics/renderer.service";
 import { Rectangle } from "../core/models/shapes.model";
-import { Blit, Fill, Frame, FrameCollection, FrameCommand, Origin, Rotate, Scale, Stroke } from "./frame.model";
+import { Blit, Fill, Frame, FrameCollection, Origin, Rotate, Scale, Stroke } from "./frame.model";
 
 export function Render(canvas: Renderer, frame: FrameCollection): Renderer {
 	return frame.reduce((canvas, command) => RenderCommand(canvas, command), canvas);

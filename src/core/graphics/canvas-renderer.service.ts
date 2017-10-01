@@ -40,9 +40,11 @@ export class CanvasRenderer implements Renderer {
 	public fill(pos: Shape2, colour: string): this {
 		this.context.beginPath();
 		this.context.fillStyle = colour;
-		if (Line2.is(pos)) {
+		if (Array.isArray(pos)) {
 			this.context.moveTo(pos[0].x, pos[0].y);
-			this.context.lineTo(pos[1].x, pos[1].y);
+			for(let i = 1; i < pos.length; ++i) {
+				this.context.lineTo(pos[i].x, pos[i].y);
+			}
 			this.context.fill();
 		} else if (Text2.is(pos)) {
 			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}`;
@@ -60,9 +62,11 @@ export class CanvasRenderer implements Renderer {
 	public stroke(pos: Shape2, colour: string): this {
 		this.context.beginPath();
 		this.context.strokeStyle = colour;
-		if (Line2.is(pos)) {
+		if (Array.isArray(pos)) {
 			this.context.moveTo(pos[0].x, pos[0].y);
-			this.context.lineTo(pos[1].x, pos[1].y);
+			for(let i = 1; i < pos.length; ++i) {
+				this.context.lineTo(pos[i].x, pos[i].y);
+			}
 			this.context.stroke();
 		} else if (Text2.is(pos)) {
 			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}`;

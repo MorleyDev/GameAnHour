@@ -1,5 +1,5 @@
 import { RectangleType } from "../rectangle/rectangle.model.type";
-import { add, multiply, normalise, subtract } from "../../maths/vector.maths";
+import { add, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { is as isCircle } from "./circle.model.is";

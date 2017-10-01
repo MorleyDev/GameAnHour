@@ -1,29 +1,50 @@
+import { Triangle2Type } from "../triangle/triangle.model.type";
+import { magnitude, subtract } from "../../maths/vector.maths.func";
+import { is as isCircle } from "../circle/circle.model.is";
+import { CircleType } from "../circle/circle.model.type";
 import { boundingTLBR } from "../point/point.model.bounding";
 import { Point2Type } from "../point/point.model.type";
+import { is as isRect } from "../rectangle/rectangle.model.is";
 import { lines } from "../rectangle/rectangle.model.lines";
 import { RectangleType } from "../rectangle/rectangle.model.type";
+import { Shape2Type } from "../shapes.model.type";
 import { is as isLine } from "./line.model.is";
+import { is as isTri2 } from "../triangle/triangle.model.is";
 import { Line2Type } from "./line.model.type";
 
-export function intersects(lhs: Line2Type, rhs: RectangleType | Line2Type): boolean {
+export function intersects(lhs: Line2Type, rhs: Shape2Type, tolerance: number = 0.001): boolean {
 	if (isLine(rhs)) {
 		return intersectsLine2(lhs, rhs);
-	} else {
+	} else if (isTri2(rhs)) {
+		return intersectsTriangle2(lhs, rhs);
+	} else if (isCircle(rhs)) {
+		return intersectsCircle(lhs, rhs);
+	} else if (isRect(rhs)) {
 		return intersectsRectangle(lhs, rhs);
+	} else {
+		return intersectsPoint2(lhs, rhs, tolerance);
 	}
 }
 
+export function intersectsTriangle2([a1, a2]: Line2Type, [v1, v2, v3]: Triangle2Type): boolean {
+	return intersectsLine2([v1, v2], [a1, a2])
+		|| intersectsLine2([v2, v3], [a1, a2])
+		|| intersectsLine2([v3, v1], [a1, a2]);
+}
+
+export function intersectsCircle(lhs: Line2Type, rhs: CircleType): boolean {
+	return intersectsPoint2(lhs, rhs, rhs.radius);
+}
+
+export function intersectsPoint2([a1, a2]: Line2Type, a0: Point2Type, tolerance: number): boolean {
+	const top = Math.abs((a2.y - a1.y) * a0.x - (a2.x - a1.y) * a0.y + a2.x * a1.y - a2.y * a1.x)
+	const bottom = magnitude(subtract(a2, a1));
+	const distance = (top / bottom);
+
+	return distance <= tolerance;
+}
+
 export function intersectsRectangle(lhs: Line2Type, rhs: RectangleType): boolean {
-	const rectangleContainsPoint = (lhs: RectangleType, rhs: Point2Type) =>
-		rhs.x >= lhs.x
-		&& rhs.x <= lhs.x + lhs.width
-		&& rhs.y >= lhs.y
-		&& rhs.y <= lhs.y + lhs.height;
-
-	if ( rectangleContainsPoint(rhs, lhs[0]) || rectangleContainsPoint(rhs, lhs[1]) ) {
-		return true;
-	}
-
 	const { bottom, top, left, right } = lines(rhs);
 	return intersectsLine2(lhs, top)
 		|| intersectsLine2(lhs, bottom)

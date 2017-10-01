@@ -1,5 +1,6 @@
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { Observable } from "rxjs/Observable";
+import { map } from "rxjs/operator/map";
 import { Subject } from "rxjs/Subject";
 
 import { Key } from "../models/keys.model";
@@ -10,9 +11,9 @@ export class HtmlElementEventHandlerImpl implements EventHandler {
 	}
 
 	public keyDown(): Observable<Key> {
-		return fromEvent(this.source, "keydown").map((e: KeyboardEvent) => e.keyCode);
+		return map.call(fromEvent(this.source, "keydown"), (e: KeyboardEvent) => e.keyCode);
 	}
 	public keyUp(): Observable<Key> {
-		return fromEvent(this.source, "keyup").map((e: KeyboardEvent) => e.keyCode);
+		return map.call(fromEvent(this.source, "keyup"), (e: KeyboardEvent) => e.keyCode);
 	}
 }
