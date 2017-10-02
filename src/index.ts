@@ -1,17 +1,18 @@
 import "./core/extensions";
 
 import { run } from "./functional/run.function";
-import { GameAction } from "./game/GameAction";
-import { GameState, initialState } from "./game/GameState";
-import { mainReducer } from "./game/main.reducer";
-import { mainRender } from "./game/main.render";
-import { mainUpdateTicks } from "./game/main.updatetick";
+import { GameAction } from "./main/game/game-action.type";
+import { gameEpic } from "./main/game/game-epic.func";
+import { gameReducer } from "./main/game/game-reducer.func";
+import { gameRender } from "./main/game/game-render.func";
+import { initialState } from "./main/game/game-state.initial";
+import { GameState } from "./main/game/game-state.type";
+import { gameTick } from "./main/game/game-tick.func";
 
 const app = run<GameState, GameAction>({
 	initialState,
-	update: mainUpdateTicks,
-	reducer: mainReducer,
-	render: mainRender,
-	epics: [
-	]
+	update: [gameTick],
+	reducer: gameReducer,
+	render: gameRender,
+	epics: [gameEpic]
 });
