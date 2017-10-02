@@ -36,9 +36,12 @@ export function createReduxApp<
 			app.reducer as any,
 			app.initialState,
 			compose(applyMiddleware(createEpicMiddleware(combineEpics(...app.epics.map(epic => (action$: Observable<TAction>) => epic(action$, () => this.store.getState()))) as any), store => next => action => {
+				const prevState: TState = store.getState() as any;
 				const result = next(action);
 				const nextState: TState = store.getState() as any;
-				this.state$.next(nextState);
+				if (prevState !== nextState) {
+					this.state$.next(nextState);
+				}
 				return result;
 			}))
 		);
