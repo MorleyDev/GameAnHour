@@ -13,6 +13,14 @@ tape("core/extensions/Array.groupBy", test => {
 			"c": ["cde"]
 		}
 	);
+	test.deepEqual(
+		groupBy.call((["abc", "cde", "acb", "bcd"]), (v: string, i: number, h: string[]) => v.charAt(0), (v: string) => v.charAt(1)),
+		{
+			"a": ["b", "c"],
+			"b": ["c"],
+			"c": ["d"]
+		}
+	);
 	test.end();
 });
 
