@@ -1,4 +1,6 @@
 import "./core/extensions";
+import "rxjs/add/operator/mergeMap";
+import "rxjs/add/operator/map";
 
 import { run } from "./functional/run.function";
 import { GameAction } from "./main/game/game-action.type";

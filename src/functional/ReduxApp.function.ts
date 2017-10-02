@@ -1,4 +1,4 @@
-import { applyMiddleware, compose as productionCompose, createStore } from "redux";
+import { applyMiddleware, compose as productionCompose, createStore, Store } from "redux";
 import { combineEpics, createEpicMiddleware } from "redux-observable";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
@@ -32,10 +32,10 @@ export function createReduxApp<
 		public readonly state$: Subject<TState> = new Subject<TState>();
 		public readonly render$: Subject<Renderer> = new Subject<Renderer>();
 
-		public readonly store = createStore<TState>(
+		public readonly store: Store<TState> = createStore<TState>(
 			app.reducer as any,
 			app.initialState,
-			compose(applyMiddleware(createEpicMiddleware(combineEpics(...app.epics) as any), store => next => action => {
+			compose(applyMiddleware(createEpicMiddleware(combineEpics(...app.epics.map(epic => (action$: Observable<TAction>) => epic(action$, () => this.store.getState()))) as any), store => next => action => {
 				const result = next(action);
 				const nextState: TState = store.getState() as any;
 				this.state$.next(nextState);

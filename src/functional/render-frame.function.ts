@@ -7,29 +7,32 @@ export function Render(canvas: Renderer, frame: FrameCollection): Renderer {
 }
 
 function RenderCommand(canvas: Renderer, command: Frame): Renderer {
-	switch (command[0]) {
-		case "clear":
-			return RenderClear(canvas);
+	const commandType = command[0];
+	if (Array.isArray(commandType)) {
+		return Render(canvas, command as FrameCollection);
+	} else {
+		switch (commandType) {
+			case "clear":
+				return RenderClear(canvas);
 
-		case "origin":
-			return RenderOrigin(canvas, command as Origin);
+			case "origin":
+				return RenderOrigin(canvas, command as Origin);
 
-		case "rotate":
-			return RenderRotate(canvas, command as Rotate);
+			case "rotate":
+				return RenderRotate(canvas, command as Rotate);
 
-		case "fill":
-			return RenderFill(canvas, command as Fill);
+			case "fill":
+				return RenderFill(canvas, command as Fill);
 
-		case "stroke":
-			return RenderStroke(canvas, command as Stroke);
+			case "stroke":
+				return RenderStroke(canvas, command as Stroke);
 
-		case "blit":
-			return RenderBlit(canvas, command as Blit);
+			case "blit":
+				return RenderBlit(canvas, command as Blit);
 
-		default:
-			return command[0] != null
-				? Render(canvas, command as FrameCollection)
-				: canvas;
+			default:
+				return canvas;
+		}
 	}
 }
 

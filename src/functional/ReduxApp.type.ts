@@ -8,5 +8,5 @@ export type ReduxApp<TState, TAction> = {
 	reducer: (prev: TState, curr: TAction) => TState;
 	update: ((tick: Observable<{ state: TState, deltaTime: Seconds }>) => Observable<TAction>)[];
 	render: (state: TState) => FrameCollection;
-	epics: ((action: Observable<TAction>) => Observable<TAction>)[];
+	epics: ((action: Observable<TAction>, state: () => TState) => Observable<TAction>)[];
 };

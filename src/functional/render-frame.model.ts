@@ -5,7 +5,7 @@ import { Point2, Rectangle, Shape2 } from "../core/models/shapes.model";
 export type Frame = FrameCommand | FrameCollection;
 export const Frame = (...commands: (FrameCommand | Frame)[]) => commands;
 
-export interface FrameCollection extends Array<Frame | FrameCommand> { };
+export interface FrameCollection extends ReadonlyArray<Frame | FrameCommand> { };
 export type FrameCommand = Origin | Rotate | Fill | Stroke | Blit | Clear;
 
 export type Clear = ["clear"];
