@@ -1,7 +1,6 @@
-import { fromEvent } from "rxjs/observable/fromEvent";
 import { Observable } from "rxjs/Observable";
+import { fromEvent } from "rxjs/observable/fromEvent";
 import { map } from "rxjs/operator/map";
-import { Subject } from "rxjs/Subject";
 
 import { Key } from "../models/keys.model";
 import { EventHandler } from "./eventhandler.service";

@@ -1,28 +1,17 @@
 import "./core/extensions";
 
-import { SystemAction } from "./functional/app.actions";
-import { Clear, Frame } from "./functional/frame.model";
-import { _, match } from "./functional/pattern-match.function";
 import { run } from "./functional/run.function";
+import { GameAction } from "./game/GameAction";
+import { GameState, initialState } from "./game/GameState";
+import { mainReducer } from "./game/main.reducer";
+import { mainRender } from "./game/main.render";
+import { mainUpdateTicks } from "./game/main.updatetick";
 
-type GameState = { };
-type GameTick = [GameState, number];
-
-type GameAction = { type: string };
-type AnyAction = SystemAction | GameAction;
-
-const initialState: GameState = { };
-
-run<GameState, AnyAction>({
+const app = run<GameState, GameAction>({
 	initialState,
-	update: [
-	],
-	reducer: (state: GameState, curr: AnyAction): GameState => match(curr, [
-		[_, () => state]
-	]),
-	render: state => Frame(
-		Clear
-	),
+	update: mainUpdateTicks,
+	reducer: mainReducer,
+	render: mainRender,
 	epics: [
 	]
 });

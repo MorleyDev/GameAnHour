@@ -1,33 +1,21 @@
+import { mainSdl } from "./main.sdl";
 import { App } from "./App";
 import { EventHandler } from "./events/eventhandler.service";
-import { HtmlElementEventHandlerImpl } from "./events/htmlelement-eventhandler.service";
-import { CanvasRenderer } from "./graphics/canvas-renderer.service";
-import { Milliseconds } from "./models/time.model";
+import { mainHtml } from "./main.html";
 
-export function main(App: new (events: EventHandler) => App): void {
-	function requestAnimationFrameLoop(logic: () => void, framerate: Milliseconds, maxTime?: Milliseconds): void {
-		maxTime = maxTime || framerate;
+export function main(App: new (events: EventHandler) => App): App {
+	if (typeof document !== "undefined") {
+		const existingCanvas = document.getElementById("render-target") as HTMLCanvasElement | undefined;
+		if (existingCanvas != null) {
+			return mainHtml(existingCanvas, App);
+		}
 
-		let prevTime: Milliseconds = new Date().valueOf();
-		(function _tick(): void {
-			const startTime: Milliseconds = new Date().valueOf();
-			let updateTime: Milliseconds = Math.min(maxTime, startTime - prevTime);
-			prevTime = startTime - updateTime;
-
-			while (updateTime >= framerate) {
-				prevTime = prevTime + framerate;
-				updateTime = updateTime - framerate;
-				logic();
-			}
-			requestAnimationFrame(_tick);
-		})();
+		const newCanvas = document.createElement("canvas");
+		newCanvas.width = 640;
+		newCanvas.height = 480;
+		document.body.appendChild(newCanvas);
+		return mainHtml(newCanvas, App);
+	} else {
+		return mainSdl(App);
 	}
-
-	const canvas = document.getElementById("render-target") as HTMLCanvasElement;
-	const canvasRenderer = new CanvasRenderer(canvas);
-	const eventHandler = new HtmlElementEventHandlerImpl(window);
-
-	const app = new App(eventHandler);
-	requestAnimationFrameLoop(() => app.update(0.01), 10, 100);
-	requestAnimationFrameLoop(() => app.draw(canvasRenderer), 1);
 }

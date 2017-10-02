@@ -23,46 +23,54 @@ export type ReduxApp<TState, TAction> = {
 	epics: ((action: Observable<TAction>) => Observable<TAction>)[];
 };
 
+function keyPresses(keydown: Observable<Key>, keyup: Observable<Key>): Observable<KeyUp | KeyDown> {
+	const keydown$ = map.call(keyup, (key: Key) => ({ type: 0, key }));
+	const keyup$ = map.call(keyup, (key: Key) => ({ type: 1, key }));
+	const keypresses = merge(keydown, keyup);
+	const distinctKeyPresses = distinctUntilChanged.call(keypresses, (a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key);
+	const fullKeyPresses = map.call(distinctKeyPresses, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDown(e.key) : KeyUp(e.key));
+
+	return fullKeyPresses;
+}
+
 export function createReduxApp<TState, TAction extends AnyAction>(app: ReduxApp<TState, TAction>): new (event: EventHandler) => App {
-	const devCompose: typeof productionCompose | undefined = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
+	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
 	return class implements App {
-		private prevState: TState | undefined = undefined;
-		private tick: Subject<{ state: TState, deltaTime: Seconds }> = new Subject<{ state: TState, deltaTime: Seconds }>();
+		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
+		public readonly state$: Subject<TState> = new Subject<TState>();
+		public readonly render$: Subject<Renderer> = new Subject<Renderer>();
 
-		private readonly store = createStore<TState>(
+		public readonly store = createStore<TState>(
 			app.reducer,
 			app.initialState,
-			compose(applyMiddleware(createEpicMiddleware(combineEpics(...app.epics))))
+			compose(applyMiddleware(createEpicMiddleware(combineEpics(...app.epics)), store => next => action => {
+				const result = next(action);
+				const nextState: TState = store.getState() as any;
+				this.state$.next(nextState);
+				return result;
+			}))
 		);
 
 		constructor(private events: EventHandler) {
-			const keydown = map.call(events.keyDown(), (key: Key) => ({ type: 0, key }));
-			const keyup = map.call(events.keyUp(), (key: Key) => ({ type: 1, key }));
-			const keypresses = merge(keydown, keyup);
-			const distinctKeyPresses = distinctUntilChanged.call(keypresses, (a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key);
-			const fullKeyPresses = map.call(distinctKeyPresses, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDown(e.key) : KeyUp(e.key));
-			fullKeyPresses.subscribe((e: KeyDown | KeyUp) => this.store.dispatch(e));
+			const keypresses$ = keyPresses(events.keyDown(), events.keyUp());
+			const latest$tickState$: Observable<{ state: TState; deltaTime: Seconds }> = map.call(this.tick$, (deltaTime: Seconds) => ({ state: this.store.getState(), deltaTime }));
+			const merged$actions$ = merge(...app.update.map(u => u(latest$tickState$)), keypresses$);
 
-			merge(...app.update.map(u => u(this.tick))).subscribe(value => this.store.dispatch(value));
+			const latest$render$state$: Observable<[Renderer, TState]> = map.call(this.render$, (renderer: Renderer) => [renderer, this.store.getState()]);
+			const latest$render$frame$: Observable<[Renderer, FrameCollection]> = map.call(latest$render$state$, ([renderer, state]: [Renderer, TState]) => [renderer, app.render(state)]);
+
+			merged$actions$.subscribe(action => this.store.dispatch(action));
+			latest$render$frame$.subscribe(([render, frame]) => Render(render, frame));
 		}
 
 		update(deltaTime: Seconds): void {
-			const state = this.store.getState();
-
-			this.tick.next({ state, deltaTime });
+			this.tick$.next(deltaTime);
 		}
 
 		draw(canvas: Renderer): void {
-			const state = this.store.getState();
-			if (state === this.prevState) {
-				return;
-			}
-
-			this.prevState = state;
-			const frame = app.render(state);
-			Render(canvas, frame);
+			this.render$.next(canvas);
 		}
 	};
 }

@@ -17,7 +17,7 @@ module.exports = {
     ]
   },
   plugins: (isProd
-    ? [new ClosureCompilerPlugin({ jsCompiler: true })]
+    ? [new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })]
     : [new webpack.HotModuleReplacementPlugin()]
   )
 }
