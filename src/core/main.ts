@@ -1,9 +1,9 @@
-import { mainSdl } from "./main.sdl";
 import { App } from "./App";
-import { EventHandler } from "./events/eventhandler.service";
+import { AppConstructor } from "./App.constructor";
 import { mainHtml } from "./main.html";
+import { mainSdl } from "./main.sdl";
 
-export function main(App: new (events: EventHandler) => App): App {
+export function main(App: AppConstructor): App {
 	if (typeof document !== "undefined") {
 		const existingCanvas = document.getElementById("render-target") as HTMLCanvasElement | undefined;
 		if (existingCanvas != null) {

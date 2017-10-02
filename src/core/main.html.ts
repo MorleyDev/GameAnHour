@@ -1,10 +1,11 @@
 import { App } from "./App";
-import { EventHandler } from "./events/eventhandler.service";
+import { AppConstructor } from "./App.constructor";
 import { HtmlElementEventHandlerImpl } from "./events/htmlelement-eventhandler.service";
 import { CanvasRenderer } from "./graphics/canvas-renderer.service";
 import { Milliseconds } from "./models/time.model";
 
-export function mainHtml(canvas: HTMLCanvasElement, App: new (events: EventHandler) => App): App {
+export function mainHtml(canvas: HTMLCanvasElement, App: AppConstructor): App {
+	let shutdown = false;
 	function requestAnimationFrameLoop(logic: () => void, framerate: Milliseconds, maxTime?: Milliseconds): void {
 		maxTime = maxTime || framerate;
 
@@ -19,14 +20,17 @@ export function mainHtml(canvas: HTMLCanvasElement, App: new (events: EventHandl
 				updateTime = updateTime - framerate;
 				logic();
 			}
-			requestAnimationFrame(_tick);
+
+			if (!shutdown) {
+				requestAnimationFrame(_tick);
+			}
 		})();
 	}
 
 	const canvasRenderer = new CanvasRenderer(canvas);
 	const eventHandler = new HtmlElementEventHandlerImpl(window);
 
-	const app = new App(eventHandler);
+	const app = new App(eventHandler, () => { shutdown = true; canvas.remove(); });
 	requestAnimationFrameLoop(() => app.update(0.01), 10, 100);
 	requestAnimationFrameLoop(() => app.draw(canvasRenderer), 1);
 	return app;

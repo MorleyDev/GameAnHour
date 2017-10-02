@@ -16,3 +16,6 @@ const app = run<GameState, GameAction>({
 	render: gameRender,
 	epics: [gameEpic]
 });
+if (typeof window !== "undefined") {
+	(window as any).app = app;
+}

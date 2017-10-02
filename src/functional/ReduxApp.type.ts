@@ -1,8 +1,7 @@
 import { Observable } from "rxjs/Observable";
 
 import { Seconds } from "../core/models/time.model";
-import { FrameCollection } from "./frame.model";
-
+import { FrameCollection } from "./render-frame.model";
 
 export type ReduxApp<TState, TAction> = {
 	initialState: TState;

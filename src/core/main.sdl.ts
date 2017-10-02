@@ -1,10 +1,11 @@
 import { App } from "./App";
-import { EventHandler } from "./events/eventhandler.service";
+import { AppConstructor } from "./App.constructor";
 import { SdlEventHandlerImpl } from "./events/sdl-eventhandler.service";
 import { SdlRenderer } from "./graphics/sdl-renderer.service";
 import { Milliseconds } from "./models/time.model";
 
-export function mainSdl(App: new (events: EventHandler) => App): App {
+export function mainSdl(App: AppConstructor): App {
+	let shutdown: boolean = false;
 	function requestAnimationFrameLoop(logic: () => void, framerate: Milliseconds, maxTime?: Milliseconds): void {
 		maxTime = maxTime || framerate;
 
@@ -19,13 +20,16 @@ export function mainSdl(App: new (events: EventHandler) => App): App {
 				updateTime = updateTime - framerate;
 				logic();
 			}
-			setTimeout(_tick, framerate);
+
+			if (!shutdown) {
+				setTimeout(_tick, framerate);
+			}
 		})();
 	}
 
 	const eventHandler = new SdlEventHandlerImpl();
 	const renderer = new SdlRenderer();
-	const app = new App(eventHandler);
+	const app = new App(eventHandler, () => { shutdown = true; });
 	requestAnimationFrameLoop(() => app.update(0.01), 10, 100);
 	requestAnimationFrameLoop(() => app.draw(renderer), 1);
 	return app;
