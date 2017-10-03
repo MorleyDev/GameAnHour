@@ -1,8 +1,11 @@
 import { mergeMap } from "./Array.mergeMap.func";
 
 declare global {
+	interface ReadonlyArray<T> {
+		mergeMap<E>(mapper: (value: T, index: number, initial: ReadonlyArray<T>) => ReadonlyArray<E>): E[];
+	}
 	interface Array<T> {
-		mergeMap<E>(mapper: (value: T, index: number, initial: Array<T>) => Array<E>): Array<E>;
+		mergeMap<E>(mapper: (value: T, index: number, initial: ReadonlyArray<T>) => ReadonlyArray<E>): E[];
 	}
 }
 

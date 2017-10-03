@@ -1,8 +1,11 @@
 import { merge } from "./Array.merge.func";
 
 declare global {
+	interface ReadonlyArray<T> {
+		merge<U>(this: ReadonlyArray<ReadonlyArray<U>>): U[];
+	}
 	interface Array<T> {
-		merge<U>(this: Array<U[]>): Array<U>;
+		merge<U>(this: ReadonlyArray<ReadonlyArray<U>>): U[];
 	}
 }
 

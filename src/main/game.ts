@@ -39,7 +39,7 @@ export const initialState: GameState = {}
 	.pipe(EntitiesState, [
 		Entity(
 			PhysicsObjectComponent(Point2(0, 0), Vector2(20, 10)),
-			PhysicsCollidableComponent([Rectangle(-10, -5, 20, 10)]),
+			PhysicsCollidableComponent([Rectangle(-10, -5, 200, 100)]),
 			{
 				name: "BOUNCING_AROUND_WORLD",
 				reduce(entity, action) {
@@ -61,7 +61,7 @@ export const initialState: GameState = {}
 			{
 				name: "RENDER_COLLISION_MESH",
 				render(self) {
-					return extractCollisionMap(self.components).map(shape => Fill(shape, "blue"));
+					return extractCollisionMap(self.components).map(shape => Fill(shape, "lightblue"));
 				}
 			}
 		)

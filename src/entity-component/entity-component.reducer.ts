@@ -4,47 +4,47 @@ import { addEntityComponentLink, breakEntityComponentLinks, dropEntityComponentL
 import { EntityComponentAction } from "./entity-component.actions";
 
 export function entityComponentReducer<TState extends EntitiesState>(state: TState, action: GenericAction): TState {
-	switch (action.type) {
-		case EntityComponentAction.CreateEntity:
-			return {
-				...(state as any),
-				entities: state.entities.append(action.entity.id, action.entity),
-				componentEntityLinks: mergeEntityComponentLinks(state.componentEntityLinks, action.entity)
-			};
-		case EntityComponentAction.DestroyEntity:
-			return {
-				...(state as any),
-				entities: state.entities.remove(action.id),
-				componentEntityLinks: breakEntityComponentLinks(state.componentEntityLinks, action.id)
-			};
-		case EntityComponentAction.AttachComponent:
-			return {
-				...(state as any),
-				entities: state.entities.update(action.id, entity => ({
-					...entity,
-					components: entity.components.concat(action.component)
-				})),
-				componentEntityLinks: addEntityComponentLink(state.componentEntityLinks, [action.id, action.component.name])
-			};
-		case EntityComponentAction.DetachComponent:
-			return {
-				...(state as any),
-				entities: state.entities.update(action.id, entity => ({
-					...entity,
-					components: entity.components.filter(component => component.name !== action.component)
-				})),
-				componentEntityLinks: dropEntityComponentLink(state.componentEntityLinks, [action.id, action.component])
-			};
-		default:
-			return {
-				...(state as any),
-				entities: state.entities.updateWhere(
-					([entityId, entity]) => entity.components.find(v => v.reduce != null) != null,
-					([_, entity]) =>
-						entity.components.reduce((prev, curr) => curr.reduce != null
-							? curr.reduce(prev, action)
-							: prev, entity)
-				)
-			};
+	if (EntityComponentAction.CreateEntity(action)) {
+		return {
+			...(state as any),
+			entities: state.entities.append(action.entity.id, action.entity),
+			componentEntityLinks: mergeEntityComponentLinks(state.componentEntityLinks, action.entity)
+		};
+	} else if (EntityComponentAction.DestroyEntity(action)) {
+		return {
+			...(state as any),
+			entities: state.entities.remove(action.id),
+			componentEntityLinks: breakEntityComponentLinks(state.componentEntityLinks, action.id)
+		};
+	} else if (EntityComponentAction.AttachComponent(action)) {
+		return {
+			...(state as any),
+			entities: state.entities.update(action.id, entity => ({
+				...entity,
+				components: entity.components.concat(action.component)
+			})),
+			componentEntityLinks: addEntityComponentLink(state.componentEntityLinks, [action.id, action.component.name])
+		};
+	} else if (EntityComponentAction.DetachComponent(action)) {
+		return {
+			...(state as any),
+			entities: state.entities.update(action.id, entity => ({
+				...entity,
+				components: entity.components.filter(component => component.name !== action.component)
+			})),
+			componentEntityLinks: dropEntityComponentLink(state.componentEntityLinks, [action.id, action.component])
+
+		};
+	} else {
+		return {
+			...(state as any),
+			entities: state.entities.updateWhere(
+				([entityId, entity]) => entity.components.find(v => v.reduce != null) != null,
+				([_, entity]) =>
+					entity.components.reduce((prev, curr) => curr.reduce != null
+						? curr.reduce(prev, action)
+						: prev, entity)
+			)
+		};
 	}
 }

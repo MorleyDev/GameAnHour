@@ -1,6 +1,6 @@
 interface IHashMap<TKey extends string, TValue> {
 	map<U>(mapper: (kv: [TKey, TValue]) => U): U[];
-	mergeMap<U>(mapper: (kv: [TKey, TValue]) => U[]): U[];
+	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): U[];
 	filter(mapper: (kv: [TKey, TValue]) => boolean): IHashMap<TKey, TValue>;
 	forEach(mapper: (kv: [TKey, TValue]) => void): void;
 
@@ -25,7 +25,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 			.map(mapper);
 	}
 
-	mergeMap<U>(mapper: (kv: [TKey, TValue]) => U[]): U[] {
+	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): U[] {
 		return Array.prototype.concat(
 			...Object.keys(this._inner)
 				.map(k => [k, this._inner[k]])

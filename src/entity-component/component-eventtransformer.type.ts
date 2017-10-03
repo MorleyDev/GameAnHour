@@ -4,5 +4,5 @@ import { Entity } from "./entity.type";
 
 export type EventTransformerComponent<K extends string> = BaseComponent & {
 	readonly name: K;
-	readonly transform: (world: { self: Entity; state: any }, action: GenericAction) => GenericAction[];
+	readonly transform: (self: Entity, action: GenericAction) => GenericAction[];
 };

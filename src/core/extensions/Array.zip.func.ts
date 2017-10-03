@@ -1,8 +1,12 @@
-export function zip<T, K>(this: T[], rhs: K[]): [T, K][] {
+export function zip<T, K>(this: ReadonlyArray<T>, rhs: ReadonlyArray<K>): [T, K][] {
+	return fzip(this, rhs);
+}
+
+export function fzip<T, K>(self: ReadonlyArray<T>, rhs: ReadonlyArray<K>): [T, K][] {
 	const output: [T, K][] = [];
-	const length = Math.min(this.length, rhs.length);
+	const length = Math.min(self.length, rhs.length);
 	for (let i = 0; i < length; ++i) {
-		output.push([this[i], rhs[i]]);
+		output.push([self[i], rhs[i]]);
 	}
 	return output;
 }

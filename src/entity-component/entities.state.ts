@@ -12,5 +12,5 @@ export type EntitiesState = {
 export const EntitiesState = <TState>(state: TState, entities: Entity[]): TState & EntitiesState => ({
 	...(state as any),
 	entities: HashMap.fromArray(entities, entity => entity.id),
-	componentEntityLinks: entities.reduce((merged, entity) => mergeEntityComponentLinks(merged, entity), {})
+	componentEntityLinks: entities.reduce(mergeEntityComponentLinks, {})
 });
