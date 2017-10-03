@@ -1,15 +1,15 @@
-import { PhysicsObjectComponent } from "./physics-object.component";
-import { physicsIntegrateComponent } from "./physics-integrate-object.func";
 import { Seconds } from "../../core/models/time.model";
-import { GameState } from "../game/game-state.type";
+import { EntitiesState } from "../../entity-component/entities.state";
+import { physicsIntegrateComponent } from "./physics-integrate-object.func";
+import { PhysicsObjectComponent } from "./physics-object.component";
 
-export function physicsIntegrateState(state: GameState, deltaTime: Seconds): GameState {
+export function physicsIntegrateState<TState extends EntitiesState>(state: TState, deltaTime: Seconds): TState {
 	const physicsEntities = state.componentEntityLinks["PHYSICS_OBJECT"] || [];
 	if (physicsEntities.length === 0) {
 		return state;
 	}
 	return {
-		...state,
+		...(state as any),
 		entities: state.entities.updateWhere(
 			([id]) => physicsEntities.includes(id),
 			([_, entity]) => ({

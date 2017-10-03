@@ -1,11 +1,10 @@
-import { HashMap } from "../../core/utility/hashmap";
+import { HashMap } from "../core/utility/hashmap";
 import { EntityId } from "./entity-base.type";
 import { mergeEntityComponentLinks } from "./entity-component-flipper.func";
 import { Entity } from "./entity.type";
 
 export type EntitiesState = {
 	readonly entities: HashMap<EntityId, Entity>;
-
 	readonly componentEntityLinks: { [name: string]: EntityId[] | undefined };
 };
 

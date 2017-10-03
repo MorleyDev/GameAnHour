@@ -1,31 +1,25 @@
-import { GameState } from "../game/game-state.type";
-import { EntityId } from "./entity-base.type";
-import {
-	addEntityComponentLink,
-	breakEntityComponentLinks,
-	dropEntityComponentLink,
-	mergeEntityComponentLinks,
-} from "./entity-component-flipper.func";
+import { GenericAction } from "../functional/generic.action";
+import { EntitiesState } from "./entities.state";
+import { addEntityComponentLink, breakEntityComponentLinks, dropEntityComponentLink, mergeEntityComponentLinks } from "./entity-component-flipper.func";
 import { EntityComponentAction } from "./entity-component.actions";
-import { Entity } from "./entity.type";
 
-export function entityComponentReducer(state: GameState, action: EntityComponentAction): GameState {
+export function entityComponentReducer<TState extends EntitiesState>(state: TState, action: GenericAction): TState {
 	switch (action.type) {
 		case EntityComponentAction.CreateEntity:
 			return {
-				...state,
+				...(state as any),
 				entities: state.entities.append(action.entity.id, action.entity),
 				componentEntityLinks: mergeEntityComponentLinks(state.componentEntityLinks, action.entity)
 			};
 		case EntityComponentAction.DestroyEntity:
 			return {
-				...state,
+				...(state as any),
 				entities: state.entities.remove(action.id),
 				componentEntityLinks: breakEntityComponentLinks(state.componentEntityLinks, action.id)
 			};
 		case EntityComponentAction.AttachComponent:
 			return {
-				...state,
+				...(state as any),
 				entities: state.entities.update(action.id, entity => ({
 					...entity,
 					components: entity.components.concat(action.component)
@@ -34,7 +28,7 @@ export function entityComponentReducer(state: GameState, action: EntityComponent
 			};
 		case EntityComponentAction.DetachComponent:
 			return {
-				...state,
+				...(state as any),
 				entities: state.entities.update(action.id, entity => ({
 					...entity,
 					components: entity.components.filter(component => component.name !== action.component)
@@ -43,7 +37,7 @@ export function entityComponentReducer(state: GameState, action: EntityComponent
 			};
 		default:
 			return {
-				...state,
+				...(state as any),
 				entities: state.entities.updateWhere(
 					([entityId, entity]) => entity.components.find(v => v.reduce != null) != null,
 					([_, entity]) =>

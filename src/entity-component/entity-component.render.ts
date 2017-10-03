@@ -1,8 +1,8 @@
+import { FrameCollection } from "../functional/render-frame.model";
+import { EntitiesState } from "./entities.state";
 import { Entity } from "./entity.type";
-import { FrameCollection } from "../../functional/render-frame.model";
-import { GameState } from "../game/game-state.type";
 
-export function entityComponentRender(state: GameState): FrameCollection {
+export function entityComponentRender(state: EntitiesState): FrameCollection {
 	const renderEntity = (entity: Entity): FrameCollection =>
 		entity.components
 			.filter(c => c.render != null)
@@ -10,4 +10,3 @@ export function entityComponentRender(state: GameState): FrameCollection {
 
 	return state.entities.map(([_, entity]) => renderEntity(entity));
 }
-

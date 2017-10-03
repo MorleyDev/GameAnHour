@@ -1,4 +1,4 @@
-import { entityComponentReducer } from "../ec/entity-component.reducer";
+import { entityComponentReducer } from "../../entity-component/entity-component.reducer";
 import { physicsReducer } from "../physics/physics.reducer";
 import { GameReducer } from "./game-reducer.type";
 

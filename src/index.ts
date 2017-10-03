@@ -12,7 +12,7 @@ import { initialState } from "./main/game/game-state.initial";
 import { GameState } from "./main/game/game-state.type";
 import { gameTick } from "./main/game/game-tick.func";
 
-const app = run<GameState, GameAction>({
+const app = run({
 	initialState,
 	update: [gameTick],
 	reducer: gameReducer,

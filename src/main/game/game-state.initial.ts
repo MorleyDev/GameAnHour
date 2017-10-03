@@ -1,14 +1,14 @@
-import { Key } from "../../core/models/keys.model";
-import { Fill } from "../../functional/render-frame.model";
-import { extractCollisionMap } from "../physics/physics-extract.func";
-import { Rectangle } from "../../core/models/rectangle/rectangle.model";
-import { PhysicsCollidableComponent } from "../physics/physics-collidable.component";
 import { Vector2 } from "../../core/maths/vector.maths";
+import { Key } from "../../core/models/keys.model";
 import { Point2 } from "../../core/models/point/point.model";
-import { PhysicsObjectComponent } from "../physics/physics-object.component";
-import { Entity } from "../ec/entity.type";
-import { EntitiesState } from "../ec/entities.state";
+import { Rectangle } from "../../core/models/rectangle/rectangle.model";
+import { EntitiesState } from "../../entity-component/entities.state";
+import { Entity } from "../../entity-component/entity.type";
+import { Fill } from "../../functional/render-frame.model";
 import { SystemState } from "../../functional/system.state";
+import { PhysicsCollidableComponent } from "../physics/physics-collidable.component";
+import { extractCollisionMap } from "../physics/physics-extract.func";
+import { PhysicsObjectComponent } from "../physics/physics-object.component";
 import { GameState } from "./game-state.type";
 
 export const initialState: GameState = { }

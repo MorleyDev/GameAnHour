@@ -1,13 +1,12 @@
-import { GameAction } from "../game/game-action.type";
-import { GameState } from "../game/game-state.type";
+import { GenericAction } from "../../functional/generic.action";
+import { EntitiesState } from "../../entity-component/entities.state";
 import { physicsIntegrateState } from "./physics-integrate-state.func";
 import { PhysicsAction } from "./physics.actions";
 
-export function physicsReducer(state: GameState, action: GameAction): GameState {
-	switch (action.type) {
-		case PhysicsAction.AdvancePhysicsAction:
-			return physicsIntegrateState(state, action.deltaTime);
-		default:
-			return state;
+export function physicsReducer<TState extends EntitiesState>(state: TState, action: GenericAction): TState {
+	if (PhysicsAction.AdvancePhysicsAction(action)) {
+		return physicsIntegrateState(state, action.deltaTime);
+	} else {
+		return state;
 	}
 }

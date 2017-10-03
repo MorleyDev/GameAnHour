@@ -1,6 +1,6 @@
 import { Point2 } from "../../core/models/point/point.model";
 import { Shape2 } from "../../core/models/shapes.model";
-import { Component } from "../ec/component.type";
+import { Component } from "../../entity-component/component.type";
 import { PhysicsCollidableComponent } from "./physics-collidable.component";
 import { PhysicsObjectComponent } from "./physics-object.component";
 

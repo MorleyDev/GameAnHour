@@ -1,7 +1,7 @@
-interface hashmap<TKey extends string, TValue> {
+interface IHashMap<TKey extends string, TValue> {
 	map<U>(mapper: (kv: [TKey, TValue]) => U): U[];
 	mergeMap<U>(mapper: (kv: [TKey, TValue]) => U[]): U[];
-	filter(mapper: (kv: [TKey, TValue]) => boolean): hashmap<TKey, TValue>;
+	filter(mapper: (kv: [TKey, TValue]) => boolean): IHashMap<TKey, TValue>;
 	forEach(mapper: (kv: [TKey, TValue]) => void): void;
 
 	hmap<UKey extends string, UValue>(mapper: (kv: [TKey, TValue]) => [UKey, UValue]): HashMap<UKey, UValue>;
@@ -15,7 +15,7 @@ interface hashmap<TKey extends string, TValue> {
 	at(key: TKey): TValue;
 }
 
-class hashMap<TKey extends string, TValue> implements hashmap<TKey, TValue> {
+class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue> {
 	constructor(public _inner: { [key: string]: TValue }) {
 	}
 
@@ -91,10 +91,10 @@ class hashMap<TKey extends string, TValue> implements hashmap<TKey, TValue> {
 	}
 }
 
-export interface HashMap<TKey extends string, TValue> extends hashMap<TKey, TValue> { };
+export interface HashMap<TKey extends string, TValue> extends HashMapInner<TKey, TValue> { };
 
 export const HashMap = Object.assign(
-	<TKey extends string, TValue>(json: { [key: string]: TValue }): HashMap<TKey, TValue> => new hashMap<TKey, TValue>(json),
+	<TKey extends string, TValue>(json: { [key: string]: TValue }): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(json),
 	{
 		fromArray: <T, K extends string>(array: T[], keySelector: (value: T) => K) => HashMap(array.reduce((prev, curr) => ({ ...prev, [keySelector(curr) as string]: curr }), {}))
 	}

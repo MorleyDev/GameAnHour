@@ -1,5 +1,5 @@
 import { Vector2 } from "../../core/maths/vector.maths";
-import { ValueComponent } from "../ec/component-value.type";
+import { ValueComponent } from "../../entity-component/component-value.type";
 
 export type PhysicsObjectComponent = ValueComponent<"PHYSICS_OBJECT", {
 	position: Vector2;

@@ -1,9 +1,9 @@
 import { Observable } from "rxjs/Observable";
 
-import { GameAction } from "../game/game-action.type";
-import { GameState } from "../game/game-state.type";
+import { GenericAction } from "../functional/generic.action";
+import { EntitiesState } from "./entities.state";
 
-export const entityComponentEpic = (action$: Observable<GameAction>, getState: () => GameState) => action$
+export const entityComponentEpic = (action$: Observable<GenericAction>, getState: () => EntitiesState) => action$
 	.mergeMap(action => {
 		const state = getState();
 
