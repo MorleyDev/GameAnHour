@@ -1,3 +1,4 @@
+import { Vector2 } from "../maths/vector.maths";
 import { Circle } from "./circle/circle.model";
 import { Line2 } from "./line/line.model";
 import { Point2 } from "./point/point.model";
@@ -27,6 +28,17 @@ export const Shape2 = {
 		 } else {
 			console.warn("Collision detection between", lhs, "and", rhs, "is not currently supported");
 			return false;
+		}
+	},
+	
+	add(lhs: Shape2, rhs: Vector2): Shape2 {
+		if (Array.isArray(lhs)) {
+			return lhs.map(vert => Vector2.add(vert, rhs)) as Line2 | Triangle2;
+		} else {
+			return {
+				...lhs,
+				...Vector2.add(lhs, rhs)
+			};
 		}
 	}
 }

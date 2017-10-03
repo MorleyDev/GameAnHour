@@ -8,6 +8,6 @@ export function entityComponentRender(state: GameState): FrameCollection {
 			.filter(c => c.render != null)
 			.map(c => c.render!(entity));
 
-	return state.entities.map(renderEntity);
+	return state.entities.map(([_, entity]) => renderEntity(entity));
 }
 

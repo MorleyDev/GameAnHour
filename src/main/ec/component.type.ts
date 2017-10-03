@@ -10,4 +10,5 @@ export type Component = {
 	readonly tick?: (world: { self: Entity; state: GameState }, deltaTime: Seconds) => GameAction[];
 	readonly data?: any;
 	readonly render?: (self: Entity) => Frame;
+	readonly reduce?: (previous: Entity, action: GameAction) => Entity;
 };

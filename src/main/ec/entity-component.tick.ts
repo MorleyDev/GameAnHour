@@ -13,5 +13,5 @@ function tickEntity(self: Entity, { state, deltaTime }: { state: GameState; delt
 }
 
 function tickState({ state, deltaTime }: { state: GameState; deltaTime: Seconds }): GameAction[] {
-	return state.entities.mergeMap(self => tickEntity(self, { state, deltaTime }));
+	return state.entities.map(([_, self]) => tickEntity(self, { state, deltaTime })).merge();
 }
