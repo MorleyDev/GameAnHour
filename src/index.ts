@@ -8,10 +8,10 @@ import { gameEpic, gameReducer, gameRender, gameTick, initialState } from "./mai
 
 const app = run({
 	initialState,
-	update: [gameTick],
+	update: gameTick,
 	reducer: gameReducer,
 	render: gameRender,
-	epics: [gameEpic]
+	epic: gameEpic
 });
 if (typeof window !== "undefined") {
 	(window as any).app = app;

@@ -1,8 +1,8 @@
 import { Observable } from "rxjs/Observable";
 
 import { Seconds } from "../../core/models/time.model";
-import { EntitiesState } from "../../entity-component/entities.state";
 import { AdvancePhysicsAction } from "./physics.actions";
+import { PhysicsState } from "./physics.state";
 
-export const physicsIntegrationTick = (tick$: Observable<{ state: EntitiesState, deltaTime: Seconds }>) =>
-	tick$.map(({ state, deltaTime }) => AdvancePhysicsAction(deltaTime));
+export const physicsIntegrationTick = (tick$: Observable<{ state: PhysicsState, deltaTime: Seconds }>) =>
+	tick$.filter(({ state }) => state.physics.integrationEnabled).map(({ state, deltaTime }) => AdvancePhysicsAction(deltaTime));

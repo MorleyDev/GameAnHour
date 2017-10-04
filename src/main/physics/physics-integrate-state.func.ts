@@ -1,9 +1,9 @@
 import { Seconds } from "../../core/models/time.model";
-import { EntitiesState } from "../../entity-component/entities.state";
 import { physicsIntegrateComponent } from "./physics-integrate-object.func";
 import { PhysicsObjectComponent } from "./physics-object.component";
+import { PhysicsState } from "./physics.state";
 
-export function physicsIntegrateState<TState extends EntitiesState>(state: TState, deltaTime: Seconds): TState {
+export function physicsIntegrateState<TState extends PhysicsState>(state: TState, deltaTime: Seconds): TState {
 	const physicsEntities = state.componentEntityLinks["PHYSICS_OBJECT"] || [];
 	if (physicsEntities.length === 0) {
 		return state;

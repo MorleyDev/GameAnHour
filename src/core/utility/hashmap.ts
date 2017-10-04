@@ -1,3 +1,5 @@
+import { fmerge } from "../extensions/Array.merge.func";
+
 interface IHashMap<TKey extends string, TValue> {
 	map<U>(mapper: (kv: [TKey, TValue]) => U): U[];
 	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): U[];
@@ -26,8 +28,8 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): U[] {
-		return Array.prototype.concat(
-			...Object.keys(this._inner)
+		return fmerge(
+			Object.keys(this._inner)
 				.map(k => [k, this._inner[k]])
 				.map(mapper)
 		);
@@ -67,7 +69,8 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	remove(key: TKey): HashMap<TKey, TValue> {
-		return  HashMap({ ...this._inner, [key]: undefined }) as HashMap<TKey, TValue>;
+		const { [key]: omit, ...rest } = this._inner;
+		return  HashMap(rest) as HashMap<TKey, TValue>;
 	}
 
 	update(key: TKey, map: (value: TValue) => TValue): HashMap<TKey, TValue> {

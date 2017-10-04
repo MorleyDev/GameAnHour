@@ -36,7 +36,7 @@ export function createReduxApp<
 		public readonly store: Store<TState> = createStore<TState>(
 			app.reducer as any,
 			app.initialState,
-			compose(applyMiddleware(createEpicMiddleware(combineEpics(...app.epics.map(epic => (action$: Observable<TAction>) => epic(action$, () => this.store.getState()))) as any), store => next => action => {
+			compose(applyMiddleware(createEpicMiddleware(combineEpics(action$ => app.epic(action$ as any, () => this.store.getState())) as any), store => next => action => {
 				const prevState: TState = store.getState() as any;
 				const result = next(action);
 				const nextState: TState = store.getState() as any;
@@ -51,7 +51,7 @@ export function createReduxApp<
 			// Good lord this would be cleaned up by :: sooooooo much
 			const keypresses$ = keyPresses(events.keyDown(), events.keyUp());
 			const latest$tickState$ = fcall(this.tick$, map, (deltaTime: Seconds) => ({ state: this.store.getState(), deltaTime })) as Observable<{ state: TState; deltaTime: Seconds }>;
-			const merged$actions$ = merge(...app.update.map(u => u(latest$tickState$)), keypresses$);
+			const merged$actions$ = merge(app.update(latest$tickState$), keypresses$);
 
 			const latest$render$state$ = fcall(this.render$, map, (renderer: Renderer) => [renderer, this.store.getState()]) as Observable<[Renderer, TState]>;
 			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, app.render(state)]) as Observable<[Renderer, FrameCollection]>;
