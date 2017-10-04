@@ -6,13 +6,17 @@ interface IHashMultiMap<TKey extends string, TValue> {
 	filter<U>(predicate: (kv: [TKey, TValue]) => boolean): HashMultiMap<TKey, TValue>;
 
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue>;
+	appendSet(set: [TKey, TValue][]): HashMultiMap<TKey, TValue>;
 	remove(key: TKey): HashMultiMap<TKey, TValue>;
 
 	at(key: TKey): ReadonlyArray<TValue>;
 }
 
 class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TKey, TValue> {
-	constructor(public _inner: { [key: string]: ReadonlyArray<TValue> }) {
+	private readonly _inner: Readonly<{ [key: string]: ReadonlyArray<TValue> }>;
+
+	constructor(inner?: { [key: string]: ReadonlyArray<TValue> }) {
+		this._inner = inner || { };
 	}
 
 	map<U>(mapper: (kv: [TKey, TValue]) => U): U[] {
@@ -41,6 +45,14 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 		});
 	}
 
+	appendSet(set: [TKey, TValue][]): HashMultiMap<TKey, TValue> {
+		const json = { ...this._inner };
+		set.forEach(([key, value]) => {
+			json[key] = (json[key] || []).concat(value);
+		});
+		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
+	}
+
 	remove(key: TKey): HashMultiMap<TKey, TValue> {
 		const { [key]: omit, ...rest } = this._inner;
 		return HashMultiMap(rest);
@@ -64,9 +76,10 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 export interface HashMultiMap<TKey extends string, TValue> extends HashMultiMapInner<TKey, TValue> { };
 
 export const HashMultiMap = Object.assign(
-	<TKey extends string, TValue>(json: { [key: string]: ReadonlyArray<TValue> }): HashMultiMap<TKey, TValue> => new HashMultiMapInner<TKey, TValue>(json),
+	<TKey extends string, TValue>(json?: { [key: string]: ReadonlyArray<TValue> }): HashMultiMap<TKey, TValue> => new HashMultiMapInner<TKey, TValue>(json),
 	{
-		fromArray: <T, K extends string, U = T>(array: T[], keySelector: (value: T) => K, valueSelector?: (value: T) => U) => HashMultiMap(fgroupBy(array, keySelector, valueSelector) as { [key: string]: U[] }),
-		fromBidirectPairs: <T, K extends string>(array: [T, T][], keySelector: (value: T) => K) => HashMultiMap(fgroupBy(array.concat(array.map(x => [x[1], x[0]] as [T, T])), k => keySelector(k[0]), k => k[1]) as { [key: string]: T[] })
+		fromKeyValues: <K extends string, T>(array: [K, T[]][]): HashMultiMap<K, T> => HashMultiMap(array.reduce((prev, curr) => ({ ...prev, [curr[0] as string]: curr }), {})),
+		fromArray: <T, K extends string, U = T>(array: T[], keySelector: (value: T) => K, valueSelector?: (value: T) => U): HashMultiMap<K, U> => HashMultiMap(fgroupBy(array, keySelector, valueSelector) as { [key: string]: U[] }),
+		fromBidirectPairs: <T, K extends string>(array: [T, T][], keySelector: (value: T) => K): HashMultiMap<K, T> => HashMultiMap(fgroupBy(array.concat(array.map(x => [x[1], x[0]] as [T, T])), k => keySelector(k[0]), k => k[1]) as { [key: string]: T[] })
 	}
 );

@@ -4,5 +4,5 @@ import { Entity } from "./entity.type";
 
 export type ReducableComponent<K extends string> = BaseComponent & {
 	readonly name: K;
-	readonly reduce: (previous: Entity, action: GenericAction) => Entity;
+	readonly reduce: (previous: BaseComponent, action: GenericAction) => BaseComponent;
 };

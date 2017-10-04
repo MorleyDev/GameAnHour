@@ -8,7 +8,7 @@ export function lines(rectangle: RectangleType): { readonly top: Line2Type; read
 	return {
 		top: [bounding.topLeft, { x: bounding.bottomRight.x, y: bounding.topLeft.y }],
 		left: [bounding.topLeft, { x: bounding.topLeft.x, y: bounding.bottomRight.y }],
-		bottom: [ { x:bounding.topLeft.x, y: bounding.bottomRight.y }, bounding.bottomRight],
+		bottom: [ { x: bounding.topLeft.x, y: bounding.bottomRight.y }, bounding.bottomRight],
 		right: [ { x: bounding.bottomRight.x, y: bounding.topLeft.y }, bounding.bottomRight]
 	};
 }

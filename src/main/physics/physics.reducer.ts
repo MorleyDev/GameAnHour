@@ -10,20 +10,20 @@ export function physicsReducer<TState extends PhysicsState>(state: TState, actio
 		return physicsIntegrateState(state, action.deltaTime);
 	} else if (PhysicsAction.ActiveCollisionsChangedAction(action)) {
 		return {
-			...(state as any),
+			...(state as PhysicsState),
 			physics: {
 				...state.physics,
 				activeCollisions: HashMultiMap.fromBidirectPairs(action.detected, t => t.id)
 			}
-		}
+		} as TState;
 	} else if (action.type === "PHYS_DEBUG_ToggleIntegrator") {
 		return {
-			...(state as any),
+			...(state as PhysicsState),
 			physics: {
 				...state.physics,
 				integrationEnabled: !state.physics.integrationEnabled
 			}
-		}
+		} as TState;
 	} else {
 		return state;
 	}

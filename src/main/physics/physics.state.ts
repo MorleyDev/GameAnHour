@@ -12,10 +12,10 @@ export type PhysicsState = EntitiesState & {
 
 export function PhysicsState<TState extends EntitiesState>(prev: TState): TState & PhysicsState {
 	return {
-		...(prev as any),
+		...(prev as EntitiesState),
 		physics: {
 			integrationEnabled: true,
-			activeCollisions: []
+			activeCollisions: HashMultiMap<EntityId, Entity>({})
 		}
-	};
+	} as TState & PhysicsState;
 }

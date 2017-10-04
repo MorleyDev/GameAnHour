@@ -11,7 +11,7 @@ import { Shape2Type } from "../shapes.model.type";
 import { is as isTri2 } from "../triangle/triangle.model.is";
 import { overlapsCircle as triangleOverlapsCircle } from "../triangle/triangle.model.overlap";
 import { is as isCircle } from "./circle.model.is";
-import { lineTo } from "./circle.model.lineTo";
+import { lineTo } from "../rectangle/rectangle.model.lineTo";
 import { CircleType } from "./circle.model.type";
 
 export function overlaps(lhs: CircleType, rhs: Shape2Type): boolean {
@@ -45,5 +45,5 @@ export function overlapsPoint2(a: CircleType, b: Point2Type): boolean {
 }
 
 export function overlapsRectangle(lhs: CircleType, rhs: RectangleType): boolean {
-	return overlapsPoint2(lhs, rhs) || ( lengthOf( lineTo(lhs, rhs) ) <= lhs.radius );
+	return overlapsPoint2(lhs, rhs) || ( lengthOf( lineTo(rhs, { x: lhs.x, y: lhs.y }) ) <= lhs.radius );
 }

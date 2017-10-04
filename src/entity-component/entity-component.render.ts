@@ -5,8 +5,8 @@ import { Entity } from "./entity.type";
 export function entityComponentRender(state: EntitiesState): FrameCollection {
 	const renderEntity = (entity: Entity): FrameCollection =>
 		entity.components
-			.filter(c => c.render != null)
-			.map(c => c.render!(entity));
+			.filter(([_, component]) => component.render != null)
+			.map(([_, component]) => component.render!(entity));
 
 	return state.entities.map(([_, entity]) => renderEntity(entity));
 }

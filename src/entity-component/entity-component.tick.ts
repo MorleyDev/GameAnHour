@@ -16,15 +16,15 @@ export const entityComponentTick = (tick$: Observable<{ state: EntitiesState; de
 	}
 
 	function tickEntity(self: Entity, deltaTime: Seconds): ReadonlyArray<GenericAction> {
-		const tickables = self.components.filter(c => c.tick != null);
+		const tickables = self.components.filter(([_, c]) => c.tick != null).map(t => t[1]);
 		const result = fmergeMap(tickables, tickComponent(self, deltaTime));
 		return result;
 	}
-	
+
 	function tickState({ state, deltaTime }: { state: EntitiesState; deltaTime: Seconds }): ReadonlyArray<GenericAction> {
 		const tickedActions = state.entities.map(([_, self]) => tickEntity(self, deltaTime));
 		return fcall(tickedActions, merge) as any as ReadonlyArray<GenericAction>;
 	}
-	
+
 	return fcall(tick$, mergeMap, tickState) as Observable<GenericAction>;
-}
+};

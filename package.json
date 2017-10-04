@@ -7,7 +7,8 @@
     "compile-dev": "webpack",
     "compile-prod": "webpack --env.prod --define process.env.NODE_ENV=\"'production'\"",
     "serve": "webpack-dev-server",
-    "test": "ts-node ./src/test.ts"
+    "test": "ts-node ./src/test.ts",
+    "test-dot": "ts-node ./src/test.ts | tap-dot"
   },
   "author": "",
   "license": "ISC",
@@ -29,6 +30,7 @@
     "howler": "2.0.4",
     "redux": "3.7.2",
     "redux-observable": "0.16.0",
-    "rxjs": "5.4.3"
+    "rxjs": "5.4.3",
+    "tap-dot": "^1.0.5"
   }
 }

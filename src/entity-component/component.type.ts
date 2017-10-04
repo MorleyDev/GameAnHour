@@ -7,8 +7,8 @@ export type Component = {
 	readonly name: string;
 
 	readonly transform?: (self: Entity, action: GenericAction) => ReadonlyArray<GenericAction>;
+	readonly reduce?: (previous: Component, action: GenericAction) => Component;
 	readonly tick?: (self: Entity, deltaTime: Seconds) => ReadonlyArray<GenericAction>;
 	readonly render?: (self: Entity) => Frame;
-	readonly reduce?: (previous: Entity, action: GenericAction) => Entity;
 	readonly data?: any;
 };

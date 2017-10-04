@@ -1,3 +1,4 @@
+import { RectangleType } from "../rectangle/rectangle.model.type";
 import * as tape from "tape";
 
 import { Point2Type } from "../point/point.model.type";
@@ -31,6 +32,28 @@ tape("core/models/circle/circle.model.overlap.spec", test => {
 		shouldNot({ x: 10, y: 10, radius: 5 }, { x: 16, y: 10, });
 		shouldNot({ x: 10, y: 10, radius: 5 }, { x: 4, y: 10, });
 		shouldNot({ x: 10, y: 10, radius: 5 }, { x: 10, y: 4, });
+
+		test.end();
+	});
+	test.test("circle overlaps rectangle", test => {
+		const should = (a: CircleType, b: RectangleType) => test.true(overlaps(a, b), `(${a.x},${a.y})r${a.radius} should overlap (${b.x},${b.y})${b.width}w${b.height}h`);
+		const shouldNot = (a: CircleType, b: RectangleType) => test.false(overlaps(a, b), `(${a.x},${a.y})r${a.radius} should not overlap (${b.x},${b.y})${b.width}w${b.height}h`);
+
+		// Above
+		should({ x: 15, y: 10, radius: 5 }, { x: 12, y: 15, width: 10, height: 5 });
+		shouldNot({ x: 15, y: 9, radius: 5 }, { x: 12, y: 15, width: 10, height: 5 });
+
+		// Left of
+		should({ x: 10, y: 10, radius: 5 }, { x: 15, y: 8, width: 10, height: 15 });
+		shouldNot({ x: 9, y: 10, radius: 5 }, { x: 15, y: 8, width: 10, height: 15 });
+
+		// Right of
+		should({ x: 30, y: 10, radius: 5 }, { x: 15, y: 8, width: 10, height: 15 });
+		shouldNot({ x: 31, y: 10, radius: 5 }, { x: 15, y: 8, width: 10, height: 15 });
+
+		// Below
+		should({ x: 15, y: 25, radius: 5 }, { x: 12, y: 15, width: 10, height: 5 });
+		shouldNot({ x: 15, y: 26, radius: 5 }, { x: 12, y: 15, width: 10, height: 5 });
 
 		test.end();
 	});

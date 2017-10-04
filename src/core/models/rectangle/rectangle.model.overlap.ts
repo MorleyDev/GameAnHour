@@ -48,7 +48,7 @@ export function overlapsRectangle(lhs: RectangleType, rhs: RectangleType): boole
 }
 
 export function overlapsCircle(lhs: RectangleType, rhs: CircleType): boolean {
-	return overlapsPoint2(lhs, rhs) || lengthOf(lineTo(lhs, rhs)) <= rhs.radius;
+	return overlapsPoint2(lhs, rhs) || lengthOf(lineTo(lhs, { x: rhs.x, y: rhs.y })) <= rhs.radius;
 }
 
 export function overlapsPoint2(lhs: RectangleType, rhs: Point2Type) {

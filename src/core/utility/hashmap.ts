@@ -14,11 +14,14 @@ interface IHashMap<TKey extends string, TValue> {
 	updateWhere(predicate: (kv: [TKey, TValue]) => boolean, map: (keyValue: [TKey, TValue]) => TValue): HashMap<TKey, TValue>
 	remove(key: TKey): HashMap<TKey, TValue>;
 
-	at(key: TKey): TValue;
+	at(key: TKey): TValue | undefined;
 }
 
 class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue> {
-	constructor(public _inner: { [key: string]: TValue }) {
+	private readonly _inner: Readonly<{ [key: string]: TValue }>;
+
+	constructor(inner: { [key: string]: TValue }) {
+		this._inner = inner;
 	}
 
 	map<U>(mapper: (kv: [TKey, TValue]) => U): U[] {
@@ -64,7 +67,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 		return HashMap({ ...this._inner, [key]: value }) as HashMap<TKey, TValue>;
 	}
 
-	at(key: TKey): TValue {
+	at(key: TKey): TValue | undefined {
 		return this._inner[key];
 	}
 
@@ -99,6 +102,6 @@ export interface HashMap<TKey extends string, TValue> extends HashMapInner<TKey,
 export const HashMap = Object.assign(
 	<TKey extends string, TValue>(json: { [key: string]: TValue }): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(json),
 	{
-		fromArray: <T, K extends string>(array: T[], keySelector: (value: T) => K) => HashMap(array.reduce((prev, curr) => ({ ...prev, [keySelector(curr) as string]: curr }), {}))
+		fromArray: <K extends string, T>(array: T[], keySelector: (value: T) => K): HashMap<K, T> => HashMap(array.reduce((prev, curr) => ({ ...prev, [keySelector(curr) as string]: curr }), {}))
 	}
 );

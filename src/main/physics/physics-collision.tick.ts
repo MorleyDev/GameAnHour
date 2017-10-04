@@ -16,9 +16,9 @@ export const physicsCollisionTick = (tick$: Observable<{ state: PhysicsState, de
 	.map(({ detected, ended }) => ActiveCollisionsChangedAction(detected, ended));
 
 function collisionDetectionPass(state: PhysicsState): { detected: [Entity, Entity][], ended: [Entity, Entity][] } {
-	const entities = state.componentEntityLinks["PHYSICS_COLLIDABLE"] || [];
+	const entities = state.componentEntityLinks.at("PHYSICS_COLLIDABLE");
 	const collidables = entities
-		.map(id => state.entities.at(id))
+		.map(id => state.entities.at(id)!)
 		.map(entity => ({
 			entity,
 			collision: extractCollisionMap(entity.components)
@@ -28,7 +28,7 @@ function collisionDetectionPass(state: PhysicsState): { detected: [Entity, Entit
 		possible.at(lhs.id).some(e => e.id === rhs.id);
 
 	const detected: [Entity, Entity][] = []; // Ugh
-	const ended: [Entity, Entity][] = []; // Ugh
+	const ended: [Entity, Entity][] = []; // Uuuugh
 	for (let i = 0; i < collidables.length; ++i) {
 		for (let j = i + 1; j < collidables.length; ++j) {
 			const lhs = collidables[i];

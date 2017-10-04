@@ -15,6 +15,8 @@ export const AttachComponentAction = (id: EntityId, component: Component): Attac
 export type DetachComponentAction = { type: "EC_DetachComponentAction", id: EntityId, component: string };
 export const DetachComponentAction = (id: EntityId, component: string): DetachComponentAction => ({ type: "EC_DetachComponentAction", id, component });
 
+export type EntityFilteredAction = { targetEntities: EntityId[]; };
+
 export const EntityComponentAction = {
 	CreateEntity: (action: GenericAction): action is CreateEntityAction =>  action.type === "EC_CreateEntityAction",
 	DestroyEntity: (action: GenericAction): action is DestroyEntityAction =>  action.type === "EC_DestroyEntityAction",
