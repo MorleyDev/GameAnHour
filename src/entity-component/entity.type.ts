@@ -7,7 +7,7 @@ export type Entity = {
 	readonly components: HashMap<string, Component>;
 };
 
-export const Entity = (...components: Component[]): Entity => ({
-	id: EntityId(),
+export const Entity = (name: string, ...components: Component[]): Entity => ({
+	id: name + EntityId(),
 	components: HashMap.fromArray<string, Component>(components, k => k.name)
 });

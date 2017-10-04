@@ -1,14 +1,23 @@
 import { add, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
+import { is as isLine2 } from "../line/line.model.is";
+import { is as isTri2 } from "../triangle/triangle.model.is";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
+import { Shape2Type } from "../shapes.model.type";
 import { is as isRectangle } from "./rectangle.model.is";
 import { getBottomLeft, getBottomRight, getCentre, getTopRight } from "./rectangle.model.tlbr";
 import { RectangleType } from "./rectangle.model.type";
 
-export function lineTo(lhs: RectangleType, rhs: RectangleType | CircleType | Point2Type): Line2Type {
-	if (isCircle(rhs)) {
+export function lineTo(lhs: RectangleType, rhs: Shape2Type): Line2Type {
+	if (isLine2(rhs)) {
+		console.warn("lineTo between rectangle and line is not currently supported");
+		return [lhs, rhs[0]];
+	} else if (isTri2(rhs)) {
+		console.warn("lineTo between rectangle and triangle is not currently supported");
+		return [lhs, rhs[0]];
+	} else if (isCircle(rhs)) {
 		return lineToCircle(lhs, rhs);
 	} else if (isRectangle(rhs)) {
 		return lineToRectangle(lhs, rhs);
@@ -30,12 +39,12 @@ export function lineToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Ty
 }
 
 export function lineToCircle(lhs: RectangleType, rhs: CircleType): Line2Type {
-	const [ pointOnRectangle, centreOfCircle ] = lineToPoint2(lhs, rhs);
+	const [pointOnRectangle, centreOfCircle] = lineToPoint2(lhs, rhs);
 	const vectorOfLine = subtract(pointOnRectangle, centreOfCircle);
 	const normalisedLine = normalise(vectorOfLine);
 	const lineOfRadiusLength = multiply(normalisedLine, rhs.radius);
-	const pointOnCircle = add(lineOfRadiusLength, centreOfCircle );
-	return [ pointOnRectangle, pointOnCircle ];
+	const pointOnCircle = add(lineOfRadiusLength, centreOfCircle);
+	return [pointOnRectangle, pointOnCircle];
 }
 
 export function lineToPoint2(lhs: RectangleType, rhs: Point2Type): Line2Type {

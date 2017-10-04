@@ -26,6 +26,7 @@ export function subtract(lhs: Vector2Type, rhs: Vector2Type): Vector2Type {
 		y: lhs.y - rhs.y
 	};
 }
+
 export function multiply(lhs: Vector2Type, rhs: number): Vector2Type {
 	return {
 		x: lhs.x * rhs,

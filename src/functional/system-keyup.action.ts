@@ -1,4 +1,4 @@
 import { Key } from "../core/models/keys.model";
 
-export type KeyUp = { type: "EVENTS_KEY_UP", key: Key };
-export const KeyUp = (key: Key) => ({ type: "EVENTS_KEY_UP", key });
+export type KeyUpAction = { type: "SYS_KeyUpAction", key: Key };
+export const KeyUpAction = (key: Key): KeyUpAction => ({ type: "SYS_KeyUpAction", key });

@@ -5,7 +5,6 @@ import { merge } from "rxjs/observable/merge";
 import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
 import { filter } from "rxjs/operator/filter";
 import { map } from "rxjs/operator/map";
-import { _do } from "rxjs/operator/do";
 import { Subject } from "rxjs/Subject";
 
 import { App } from "../core/App";
@@ -18,8 +17,8 @@ import { Seconds } from "../core/models/time.model";
 import { ReduxApp } from "./ReduxApp.type";
 import { Render } from "./render-frame.function";
 import { FrameCollection } from "./render-frame.model";
-import { KeyDown } from "./system-keydown.action";
-import { KeyUp } from "./system-keyup.action";
+import { KeyDownAction } from "./system-keydown.action";
+import { KeyUpAction } from "./system-keyup.action";
 
 export function createReduxApp<
 	TState,
@@ -81,12 +80,12 @@ export function createReduxApp<
 	};
 }
 
-function keyPresses(keydown: Observable<Key>, keyup: Observable<Key>): Observable<KeyUp | KeyDown> {
-	const keydown$ = fcall(keyup, map, (key: Key) => ({ type: 0, key }));
-	const keyup$ = fcall(keydown, map, (key: Key) => ({ type: 1, key }));
+function keyPresses(keydown: Observable<Key>, keyup: Observable<Key>): Observable<KeyUpAction | KeyDownAction> {
+	const keydown$ = fcall(keydown, map, (key: Key) => ({ type: 0, key }));
+	const keyup$ = fcall(keyup, map, (key: Key) => ({ type: 1, key }));
 	const merged$keyup$keydown$ = merge(keydown$, keyup$);
 	const keypress$ = fcall(merged$keyup$keydown$, distinctUntilChanged, (a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key);
-	const keypress$actions$ = fcall(keypress$, map, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDown(e.key) : KeyUp(e.key));
+	const keypress$actions$ = fcall(keypress$, map, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDownAction(e.key) : KeyUpAction(e.key));
 
-	return keypress$actions$ as Observable<KeyUp | KeyDown>;
+	return keypress$actions$ as Observable<KeyUpAction | KeyDownAction>;
 }

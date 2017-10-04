@@ -8,7 +8,7 @@ type PatternSet<T, U,  V extends T = T> =
 	| [(t: T) => t is V, (v: V) => U]
 	| [(t: T) => boolean, (t: T) => U];
 
-export function match<T, U, V extends T = T>(target: T, patterns: PatternSet<T, U, V>[]): U {
+export function match<T, U, V extends T = T>(target: T, ...patterns: PatternSet<T, U, V>[]): U {
 	for (let pattern of patterns) {
 		const matcher = pattern[0];
 		if (matcher === target || matcher === _ || (typeof matcher === "function" && matcher(target))) {
