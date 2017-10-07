@@ -4,6 +4,7 @@ import * as tape from "tape";
 import {
     abs,
     add,
+    constraint,
     divide,
     dotProduct,
     invert,
@@ -108,6 +109,17 @@ tape("core/maths/vector.maths", test => {
 		test.deepEqual( normal(make(9, -4)), make(4, 9) );
 		test.deepEqual( normal(make(0, 0)), make(0, 0) );
 		test.deepEqual( normal(make(9, 9)), make(-9, 9) );
+		test.end();
+	});
+
+	test.test("constraint", test => {
+		test.deepEqual( constraint(make(0, 0), make(-10, -10), make(10, 10)), make(0, 0) );
+		test.deepEqual( constraint(make(-20, 0), make(-10, -10), make(10, 10)), make(-10, 0) );
+		test.deepEqual( constraint(make(20, 0), make(-10, -10), make(10, 10)), make(10, 0) );
+		test.deepEqual( constraint(make(0, -20), make(-10, -10), make(10, 10)), make(0, -10) );
+		test.deepEqual( constraint(make(0, 20), make(-10, -10), make(10, 10)), make(0, 10) );
+		test.deepEqual( constraint(make(20, 20), make(-10, -10), make(10, 10)), make(10, 10) );
+		test.deepEqual( constraint(make(-20, -20), make(-10, -10), make(10, 10)), make(-10, -10) );
 		test.end();
 	});
 

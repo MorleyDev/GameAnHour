@@ -63,3 +63,10 @@ export function normal(lhs: Vector2Type): Vector2Type {
 		y: lhs.x
 	};
 }
+
+export function constraint(lhs: Vector2Type, topLeft: Vector2Type, bottomRight: Vector2Type): Vector2Type {
+	return {
+		x: Math.min(Math.max(topLeft.x, lhs.x), bottomRight.x),
+		y: Math.min(Math.max(topLeft.y, lhs.y), bottomRight.y)
+	};
+}

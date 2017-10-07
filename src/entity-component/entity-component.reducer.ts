@@ -1,6 +1,10 @@
-import { EntityId } from "./entity-base.type";
+import { HashMap } from "../core/utility/hashmap";
+import { fzip } from "../core/extensions/Array.zip.func";
+import { intersect } from "../core/extensions/Array.intersect.func";
+import { BaseComponent } from "./component-base.type";
 import { GenericAction } from "../functional/generic.action";
 import { EntitiesState } from "./entities.state";
+import { BaseEntity, EntityId } from "./entity-base.type";
 import { EntityComponentAction } from "./entity-component.actions";
 
 export function entityComponentReducer<TState extends EntitiesState>(state: TState, action: GenericAction): TState {
@@ -36,25 +40,6 @@ export function entityComponentReducer<TState extends EntitiesState>(state: TSta
 
 		} as TState;
 	} else {
-		const entityTargets: EntityId[] | undefined = action["targetEntities"];
-
-		if (entityTargets != null) {
-			return {
-				...(state as EntitiesState),
-				entities: entityTargets.reduce((entities, target) =>
-					entities.update(target, entity => ({
-						...entity,
-						components: entity.components.updateWhere(([_, c]) => c.reduce != null, ([_, c]) => c.reduce!(c, action))
-					})), state.entities)
-			} as TState;
-		}
-
-		return {
-			...(state as EntitiesState),
-			entities: state.entities.hmap(([_, entity]) => [_, ({
-				...entity,
-				components: entity.components.updateWhere(([_, c]) => c.reduce != null, ([_, c]) => c.reduce!(c, action))
-			})])
-		} as TState;
+		return state;
 	}
 }

@@ -16,7 +16,7 @@ import { CircleType } from "./circle.model.type";
 
 export function overlaps(lhs: CircleType, rhs: Shape2Type): boolean {
 	if (isLine(rhs)) {
-		return overlapsLine(lhs, rhs);
+		return overlapsLine2(lhs, rhs);
 	} else if (isTri2(rhs)) {
 		return overlapsTriangle2(lhs, rhs);
 	} else if (isCircle(rhs)) {
@@ -28,7 +28,7 @@ export function overlaps(lhs: CircleType, rhs: Shape2Type): boolean {
 	}
 }
 
-export function overlapsLine(lhs: CircleType, rhs: Line2Type): boolean {
+export function overlapsLine2(lhs: CircleType, rhs: Line2Type): boolean {
 	return lineIntersectsCircle(rhs, lhs);
 }
 

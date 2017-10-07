@@ -1,13 +1,13 @@
 import { HashMap } from "../core/utility/hashmap";
-import { Component } from "./component.type";
-import { EntityId } from "./entity-base.type";
+import { BaseComponent } from "./component-base.type";
+import { BaseEntity, EntityId } from "./entity-base.type";
 
-export type Entity = {
+export type Entity<TComponent extends BaseComponent> = BaseEntity & {
 	readonly id: EntityId;
-	readonly components: HashMap<string, Component>;
+	readonly components: HashMap<string, TComponent>;
 };
 
-export const Entity = (name: string, ...components: Component[]): Entity => ({
+export const Entity = <TComponent extends BaseComponent>(name: string, ...components: TComponent[]): Entity<TComponent> => ({
 	id: name + EntityId(),
-	components: HashMap.fromArray<string, Component>(components, k => k.name)
+	components: HashMap.fromArray<string, TComponent>(components, k => k.name, k => k)
 });

@@ -102,6 +102,6 @@ export interface HashMap<TKey extends string, TValue> extends HashMapInner<TKey,
 export const HashMap = Object.assign(
 	<TKey extends string, TValue>(json: { [key: string]: TValue }): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(json),
 	{
-		fromArray: <K extends string, T>(array: T[], keySelector: (value: T) => K): HashMap<K, T> => HashMap(array.reduce((prev, curr) => ({ ...prev, [keySelector(curr) as string]: curr }), {}))
+		fromArray: <K extends string, T, U = T>(array: T[], keySelector: (value: T) => K, valueSelector: (value: T) => U): HashMap<K, U> => HashMap(array.reduce((prev, curr) => ({ ...prev, [keySelector(curr) as string]: valueSelector(curr) }), {}))
 	}
 );

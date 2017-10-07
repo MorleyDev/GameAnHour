@@ -1,7 +1,8 @@
-import { RectangleType } from "../rectangle/rectangle.model.type";
 import * as tape from "tape";
 
+import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
+import { RectangleType } from "../rectangle/rectangle.model.type";
 import { overlaps } from "./circle.model.overlap";
 import { CircleType } from "./circle.model.type";
 
@@ -54,6 +55,25 @@ tape("core/models/circle/circle.model.overlap.spec", test => {
 		// Below
 		should({ x: 15, y: 25, radius: 5 }, { x: 12, y: 15, width: 10, height: 5 });
 		shouldNot({ x: 15, y: 26, radius: 5 }, { x: 12, y: 15, width: 10, height: 5 });
+
+		test.end();
+	});
+	test.test("circle overlaps line", test => {
+		const should = (a: CircleType, b: Line2Type) => test.true(overlaps(a, b), `(${a.x},${a.y})r${a.radius} should overlap (${b[0].x},${b[0].y})-(${b[1].x},${b[1].y})`);
+		const shouldNot = (a: CircleType, b: Line2Type) => test.false(overlaps(a, b), `(${a.x},${a.y})r${a.radius} should not overlap (${b[0].x},${b[0].y})-(${b[1].x},${b[1].y})`);
+
+		should({ x: 0, y: 0, radius: 100 }, [{ x: 0, y: 0 }, { x: 0, y: 0 }]);
+		should({ x: 0, y: 0, radius: 100 }, [{ x: -100, y: -100 }, { x: 100, y: 100 }]);
+		should({ x: 0, y: 0, radius: 100 }, [{ x: -100, y: 100 }, { x: 100, y: -100 }]);
+		should({ x: 0, y: 0, radius: 100 }, [{ x: -100, y: 100 }, { x: -100, y: -100 }]);
+		should({ x: 0, y: 0, radius: 100 }, [{ x: 100, y: 100 }, { x: 100, y: -100 }]);
+		should({ x: 0, y: 0, radius: 100 }, [{ x: -100, y: -100 }, { x: 100, y: -100 }]);
+		should({ x: 0, y: 0, radius: 100 }, [{ x: -100, y: 100 }, { x: 100, y: 100 }]);
+		should({ x: 247, y: 213, radius: 10 }, [{ x: 213, y: 195 }, { x: 253, y: 205 }]);
+
+		shouldNot({ x: 0, y: 0, radius: 100 }, [{ x: 100, y: 100 }, { x: 200, y: 300 }]);
+		shouldNot({ x: 0, y: 0, radius: 100 }, [{ x: -100, y: -100 }, { x: -200, y: -300 }]);
+		shouldNot({ x: 200, y: 300, radius: 100 }, [{ x: -421, y: -642 }, { x: -6090, y: -453 }]);
 
 		test.end();
 	});

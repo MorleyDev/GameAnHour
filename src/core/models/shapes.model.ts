@@ -42,17 +42,35 @@ export const Shape2 = {
 		}
 	},
 
+	bounding(lhs: Shape2): Rectangle {
+		if (Line2.is(lhs)) {
+			const topLeft = { x: Math.min(lhs[0].x, lhs[1].x), y: Math.min(lhs[0].y, lhs[1].y) };
+			const bottomRight = { x: Math.max(lhs[0].x, lhs[1].x), y: Math.max(lhs[0].y, lhs[1].y) };
+			return Rectangle.fromTopLeftBottomRight(topLeft, bottomRight);
+		} else if (Triangle2.is(lhs)) {
+			const topLeft = { x: Math.min(lhs[0].x, lhs[1].x, lhs[2].x), y: Math.min(lhs[0].y, lhs[1].y, lhs[1].y) };
+			const bottomRight = { x: Math.max(lhs[0].x, lhs[1].x, lhs[2].x), y: Math.max(lhs[0].y, lhs[1].y, lhs[2].y) };
+			return Rectangle.fromTopLeftBottomRight(topLeft, bottomRight);
+		} else if (Circle.is(lhs)) {
+			return Rectangle(lhs.x - lhs.radius, lhs.y - lhs.radius, lhs.radius*2, lhs.radius*2);
+		} else if (Rectangle.is(lhs)) {
+			return lhs;
+		} else if (Point2.is(lhs)) {
+			return Rectangle(lhs.x, lhs.y, 0, 0);
+		} else {
+			return Rectangle(0, 0, 0, 0);
+		}
+	},
+
 	lineTo(lhs: Shape2, rhs: Shape2): Line2 {
 		if (Line2.is(lhs)) {
-			console.warn("Line To with line segments is not supported");
-			return Shape2.lineTo(Vector2.add(lhs[0], Vector2.divide(Vector2.subtract(lhs[1], lhs[0]), 2)), rhs);
+			return Line2.lineTo(lhs, rhs);
+		} else if (Triangle2.is(lhs)) {
+			return Line2.lineTo(lhs, rhs);
 		} else if (Circle.is(lhs)) {
 			return Circle.lineTo(lhs, rhs);
 		} else if (Rectangle.is(lhs)) {
 			return Rectangle.lineTo(lhs, rhs);
-		} else if (Triangle2.is(lhs)) {
-			console.warn("Line To with triangles segments is not supported");
-			return Shape2.lineTo(lhs[0], rhs);
 		} else if (Point2.is(lhs)) {
 			const flip = ([a, b]: Line2): Line2 => [b, a];
 			if (Line2.is(rhs)) {
@@ -62,17 +80,12 @@ export const Shape2 = {
 			} else if (Rectangle.is(rhs)) {
 				return flip(Rectangle.lineTo(rhs, lhs));
 			} else if (Triangle2.is(rhs)) {
-				console.warn("Line To with triangles segments is not supported");
-				return flip(Shape2.lineTo(rhs, lhs));
+				return flip(Line2.lineTo(rhs, lhs));
 			} else if (Point2.is(rhs)) {
 				return [lhs, rhs];
-			} else {
-				console.warn("Line To between", lhs, "and", rhs, "is not currently supported");
-				return rhs;
 			}
-		} else {
-			console.warn("Line To between", lhs, "and", rhs, "is not currently supported");
-			return lhs;
 		}
+		console.warn("Line To between", lhs, "and", rhs, "is not currently supported");
+		return [Point2(0, 0), Point2(0, 0)];
 	}
 }

@@ -1,23 +1,25 @@
 import { fmerge } from "../core/extensions/Array.merge.func";
-import { HashMultiMap } from "../core/utility/hashmultimap";
 import { HashMap } from "../core/utility/hashmap";
-import { EntityId } from "./entity-base.type";
+import { HashMultiMap } from "../core/utility/hashmultimap";
+import { BaseComponent } from "./component-base.type";
+import { BaseEntity, EntityId } from "./entity-base.type";
 import { Entity } from "./entity.type";
 
 export type EntitiesState = {
-	readonly entities: HashMap<EntityId, Entity>;
+	readonly entities: HashMap<EntityId, BaseEntity>;
 	readonly componentEntityLinks: HashMultiMap<string, EntityId>;
 };
 
-
-export const EntitiesState = <TState>(state: TState, entities: Entity[]): TState & EntitiesState => ({
+export const EntitiesState = <TState, TComponent extends BaseComponent>(entities: Entity<TComponent>[]): (state: TState) => TState & EntitiesState => state => ({
 	...(state as any),
-	entities: HashMap.fromArray(entities, entity => entity.id),
+	entities: HashMap.fromArray(entities, entity => entity.id, entity => entity),
 	componentEntityLinks: extractEntityComponentLinks(entities)
 });
 
-function extractEntityComponentLinks(entities: Entity[]): HashMultiMap<string, EntityId> {
-	const kv: [string, EntityId][] = fmerge( entities.map(entity => entity.components.map(([k, v]) => [k, entity.id] as [string, EntityId])) );
+function extractEntityComponentLinks<TComponent extends BaseComponent>(entities: ReadonlyArray<Entity<TComponent>>): HashMultiMap<string, EntityId> {
+	const kv: [string, EntityId][] = fmerge(
+		entities.map(entity => entity.components.map(([k, v]) => [k, entity.id] as [string, EntityId]))
+	);
 
 	return HashMultiMap.fromArray(kv, ([key, _]) => key, ([_, value]) => value);
 }

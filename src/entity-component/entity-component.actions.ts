@@ -1,21 +1,18 @@
 import { GenericAction } from "../functional/generic.action";
-import { Component } from "./component.type";
-import { EntityId } from "./entity-base.type";
-import { Entity } from "./entity.type";
+import { BaseComponent } from "./component-base.type";
+import { BaseEntity, EntityId } from "./entity-base.type";
 
-export type CreateEntityAction = { type: "EC_CreateEntityAction", entity: Entity };
-export const CreateEntityAction = (entity: Entity): CreateEntityAction => ({ type: "EC_CreateEntityAction", entity });
+export type CreateEntityAction = { type: "EC_CreateEntityAction", entity: BaseEntity };
+export const CreateEntityAction = (entity: BaseEntity): CreateEntityAction => ({ type: "EC_CreateEntityAction", entity });
 
 export type DestroyEntityAction = { type: "EC_DestroyEntityAction", id: EntityId };
 export const DestroyEntityAction = (id: EntityId): DestroyEntityAction => ({ type: "EC_DestroyEntityAction", id });
 
-export type AttachComponentAction = { type: "EC_AttachComponentAction", id: EntityId, component: Component };
-export const AttachComponentAction = (id: EntityId, component: Component): AttachComponentAction => ({ type: "EC_AttachComponentAction", id, component });
+export type AttachComponentAction = { type: "EC_AttachComponentAction", id: EntityId, component: BaseComponent };
+export const AttachComponentAction = (id: EntityId, component: BaseComponent): AttachComponentAction => ({ type: "EC_AttachComponentAction", id, component });
 
 export type DetachComponentAction = { type: "EC_DetachComponentAction", id: EntityId, component: string };
 export const DetachComponentAction = (id: EntityId, component: string): DetachComponentAction => ({ type: "EC_DetachComponentAction", id, component });
-
-export type EntityFilteredAction = { targetEntities: EntityId[]; };
 
 export const EntityComponentAction = {
 	CreateEntity: (action: GenericAction): action is CreateEntityAction =>  action.type === "EC_CreateEntityAction",
