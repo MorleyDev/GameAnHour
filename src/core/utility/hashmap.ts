@@ -21,7 +21,7 @@ interface IHashMap<TKey extends string, TValue> {
 }
 
 class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue> {
-	constructor(private _inner: Map<TKey, TValue>) {
+	constructor(public _inner: Map<TKey, TValue>) {
 	}
 
 	map<U>(mapper: (kv: [TKey, TValue]) => U): List<U> {
@@ -40,14 +40,9 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 		return new HashMapInner(this._inner.filter((value, key) => predicate([key as TKey, value])));
 	}
 
-	subset(keys: ReadonlyArray<TKey>): HashMap<TKey, TValue> {
-		function keyIn(...keys: string[]) {
-			var keySet = Set(keys); 
-			return function (v: TValue, k: string) {
-			  return keySet.has(k);
-			}
-		  }
-		return new HashMapInner(this._inner.filter(keyIn(...keys)));
+	subset(keys: Iterable<TKey>): HashMap<TKey, TValue> {
+		const keySet = Set(keys);
+		return new HashMapInner(this._inner.filter((v: TValue, k: TKey) => keySet.has(k)));
 	}
 
 	forEach(invoke: (kv: [TKey, TValue], index: number) => void): void {
@@ -56,7 +51,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	append(key: TKey, value: TValue): HashMap<TKey, TValue> {
-		return new HashMapInner(this._inner.concat([[key, value]]));
+		return new HashMapInner(this._inner.set(key, value));
 	}
 
 	at(key: TKey): TValue | undefined {
@@ -64,7 +59,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	remove(key: TKey): HashMap<TKey, TValue> {
-		return new HashMapInner( this._inner.remove(key) );
+		return new HashMapInner(this._inner.delete(key));
 	}
 
 	update(key: TKey, map: (value: TValue) => TValue): HashMap<TKey, TValue> {
@@ -72,7 +67,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	union(rhs: HashMap<TKey, TValue>): HashMap<TKey, TValue> {
-		return new HashMapInner(this._inner.concat(rhs._inner));
+		return new HashMapInner(this._inner.merge(rhs._inner));
 	}
 
 	values(): IterableIterator<TValue> {

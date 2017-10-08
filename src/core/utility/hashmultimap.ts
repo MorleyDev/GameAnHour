@@ -1,132 +1,94 @@
 import { HashMap } from "./hashmap";
 import { fgroupBy } from "../extensions/Array.groupBy.func";
 import { fmerge } from "../extensions/Array.merge.func";
+import { List, Map, Set } from "immutable";
 
 interface IHashMultiMap<TKey extends string, TValue> {
-	map<U>(mapper: (kv: [TKey, TValue]) => U): U[];
-	groupMap<TResult>(mapper: (kv: [TKey, ReadonlyArray<TValue>]) => TResult): TResult[];
+	map<U>(mapper: (kv: [TKey, TValue]) => U): List<U>;
+	groupMap<TResult>(mapper: (kv: [TKey, Iterable<TValue>]) => TResult): List<TResult>;
 
 	filter<U>(predicate: (kv: [TKey, TValue]) => boolean): HashMultiMap<TKey, TValue>;
-	subset(keys: ReadonlyArray<TKey>): HashMultiMap<TKey, TValue>;
-	
+	subset(keys: Iterable<TKey>): HashMultiMap<TKey, TValue>;
+
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue>;
 	appendMap(map: HashMap<TKey, TValue>): HashMultiMap<TKey, TValue>
 	remove(key: TKey): HashMultiMap<TKey, TValue>;
 
-	at(key: TKey): ReadonlyArray<TValue>;
-	values(): TValue[][];	
+	at(key: TKey): List<TValue>;
 }
 
 class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TKey, TValue> {
-	private readonly _inner: Readonly<{ [key: string]: ReadonlyArray<TValue> }>;
+	private readonly _inner: Map<TKey, List<TValue>>;
 
-	constructor(inner?: { [key: string]: ReadonlyArray<TValue> }) {
-		this._inner = inner || { };
+	constructor(inner: Map<TKey, List<TValue>>) {
+		this._inner = inner || Map<TKey, List<TValue>>();
 	}
 
-	map<U>(mapper: (kv: [TKey, TValue]) => U): U[] {
-		const mapped = Object.keys(this._inner)
-			.map(k => [k, this._inner[k]])
-			.map(([key, value]) => (value as ReadonlyArray<TValue>).map(value => mapper([key as TKey, value])));
-
-		return fmerge(mapped);
+	map<U>(mapper: (kv: [TKey, TValue]) => U): List<U> {
+		return this._inner
+			.map((value, key) => value.map((value) => mapper([key, value])))
+			.toList()
+			.flatMap(values => values);
 	}
 
-	groupMap<TResult>(mapper: (kv: [TKey, ReadonlyArray<TValue>]) => TResult): TResult[] {
-		const result: TResult[] = [];
-		for (let key in this._inner) {
-			result.push( mapper([key as TKey, this._inner[key]]) );
-		}
-		return result;
+	groupMap<TResult>(mapper: (kv: [TKey, Iterable<TValue>]) => TResult): List<TResult> {
+		return this._inner.map((value, key) => mapper([key, value])).toList()
 	}
 
 	filter<U>(predicate: (kv: [TKey, TValue]) => boolean): HashMultiMap<TKey, TValue> {
-		const json: { [key: string]: TValue[] } = {};
-		for (let key in this._inner) {
-			const innerItems = [key as TKey, this._inner[key].filter(v => predicate([key as TKey, v]))];
-			if (innerItems[1].length > 0) {
-				json[key] = innerItems[1] as TValue[];
-			}
-		}
-		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
+		return new HashMultiMapInner(
+			this._inner.map((value, key) => value.filter(value => predicate([key, value])))
+		);
 	}
 
-	subset(keys: ReadonlyArray<TKey>): HashMultiMap<TKey, TValue> {
-		const json: { [key: string]: ReadonlyArray<TValue> } = {};
-		for (let key of keys) {
-			const current = this._inner[key];
-			if (current != null) {
-				json[key] = this._inner[key];
-			}
-		}
-		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
+	subset(keys: Iterable<TKey>): HashMultiMap<TKey, TValue> {
+		const keySet = Set(keys);
+		return new HashMultiMapInner(this._inner.filter((v: List<TValue>, k: TKey) => keySet.has(k)));
 	}
 
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue> {
-		return HashMultiMap({
-			...this._inner,
-			[key]: (this._inner[key] || []).concat(value)
-		});
+		return new HashMultiMapInner(
+			this._inner.update(key, List<TValue>([value]), list => list.push(value))
+		)
 	}
 
 	appendMap(map: HashMap<TKey, TValue>): HashMultiMap<TKey, TValue> {
-		const json = { ...this._inner };
-		map.forEach(([key, value]) => {
-			json[key] = (json[key] || []).concat(value);
-		});
-		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
+		return new HashMultiMapInner(
+			map._inner.reduce((prev, value, key) => prev.update(key, List<TValue>([value]), list => list.push(value)), this._inner)
+		);
 	}
 
 
 	concat(set: HashMultiMap<TKey, TValue>): HashMultiMap<TKey, TValue> {
-		const json = { ...this._inner };
-		set.forEachArray(([key, value]) => {
-			json[key] = (json[key] || []).concat(...value);
-		});
-		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
+		return new HashMultiMapInner(
+			set._inner.reduce((prev, value, key) => prev.update(key, value, list => list.concat(value)), this._inner)
+		);
 	}
 
 	remove(key: TKey): HashMultiMap<TKey, TValue> {
-		const { [key]: omit, ...rest } = this._inner;
-		return HashMultiMap(rest);
+		return new HashMultiMapInner(this._inner.delete(key));
 	}
 
 	removeWhere(key: TKey, predicate: (value: TValue) => boolean): HashMultiMap<TKey, TValue> {
-		const { [key]: omit, ...rest } = this._inner;
-		const filtered = (omit as TValue[]).filter(value => !predicate(value));
-		if (filtered.length === 0) {
-			return HashMultiMap(rest);
-		} else {
-			return HashMultiMap({ ...rest, [key]: filtered });
-		}
+		return new HashMultiMapInner(this._inner.update(key, value => value.filter(predicate)));
 	}
 
-	at(key: TKey): ReadonlyArray<TValue> {
-		return this._inner[key] || [];
-	}
-
-	values(): TValue[][] {
-		const array: TValue[][] = [];
-		for (let key in this._inner) {
-			array.push( [...this._inner[key]] );
-		}
-		return array;
-	}
-
-	forEachArray(invoke: (kv: [TKey, ReadonlyArray<TValue>]) => void) {
-		for(let key in this._inner) {
-			invoke([key as TKey, this._inner[key]])
-		}
+	at(key: TKey): List<TValue> {
+		return this._inner.get(key) || List<TValue>();
 	}
 }
 
 export interface HashMultiMap<TKey extends string, TValue> extends HashMultiMapInner<TKey, TValue> { };
 
 export const HashMultiMap = Object.assign(
-	<TKey extends string, TValue>(json?: { [key: string]: ReadonlyArray<TValue> }): HashMultiMap<TKey, TValue> => new HashMultiMapInner<TKey, TValue>(json),
+	<TKey extends string, TValue>(map: Map<TKey, List<TValue>> = Map<TKey, List<TValue>>()): HashMultiMap<TKey, TValue> => new HashMultiMapInner(Map<TKey, List<TValue>>()),
 	{
-		fromKeyValues: <K extends string, T>(array: [K, T[]][]): HashMultiMap<K, T> => HashMultiMap(array.reduce((prev, curr) => ({ ...prev, [curr[0] as string]: curr }), {})),
-		fromArray: <T, K extends string, U = T>(array: T[], keySelector: (value: T) => K, valueSelector?: (value: T) => U): HashMultiMap<K, U> => HashMultiMap(fgroupBy(array, keySelector, valueSelector) as { [key: string]: U[] }),
-		fromBidirectPairs: <T, K extends string>(array: [T, T][], keySelector: (value: T) => K): HashMultiMap<K, T> => HashMultiMap(fgroupBy(array.concat(array.map(x => [x[1], x[0]] as [T, T])), k => keySelector(k[0]), k => k[1]) as { [key: string]: T[] })
+		fromJson: <TKey extends string, TValue>(json?: { [key: string]: ReadonlyArray<TValue> }): HashMultiMap<TKey, TValue> => new HashMultiMapInner<TKey, TValue>(
+			json != null
+				? Map(Object.keys(json).map(key => [key, List(json[key])] as [TKey, List<TValue>]))
+				: Map<TKey, List<TValue>>()
+		),	
+		fromArray: <T, K extends string, U = T>(array: T[], keySelector: (value: T) => K, valueSelector?: (value: T) => U): HashMultiMap<K, U> => HashMultiMap.fromJson(fgroupBy(array, keySelector, valueSelector) as { [key: string]: U[] }),
+		fromBidirectPairs: <T, K extends string>(array: [T, T][], keySelector: (value: T) => K): HashMultiMap<K, T> => HashMultiMap.fromJson(fgroupBy(array.concat(array.map(x => [x[1], x[0]] as [T, T])), k => keySelector(k[0]), k => k[1]) as { [key: string]: T[] })
 	}
 );

@@ -11,8 +11,8 @@ const initialEntities: GameEntity[] = Array(3).fill(0).mergeMap((_, j) => Array(
 	.map(([i,j]) => GameEntity(
 		"Ball",
 		({ name: "RENDER_Colour", colour: `rgb(${255 - (i * (255 / 3))}, ${255 - (j * (255 / 3))}, 255)` } as any),
-		PhysicsPhysicalComponent(Point2(i * 90 + 15 - 160, j * 90 + 15 - 120), Vector2(0, 0), 1),
-		PhysicsCollidableComponent(Circle(0, 0, 30))
+		PhysicsPhysicalComponent(Point2(i * 30 + 15 - 160, j * 30 + 15 - 120), Vector2(0, 0), 1),
+		PhysicsCollidableComponent(Circle(0, 0, 5))
 	));
 
 export const initialState: GameState = {}

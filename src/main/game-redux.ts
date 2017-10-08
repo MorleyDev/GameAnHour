@@ -1,3 +1,4 @@
+import { createReducer } from "../functional/create-reducer.func";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 
@@ -61,14 +62,14 @@ const reducer = (state: GameState, action: GameAction): GameState => {
 		};
 	}
 
-	const constrainedPhysics = (state: GameState, action: GameAction) =>
-		physicsIntegratorReducer(state, action)
-			.pipe(createEntityReducer(
-				["PHYS_PhysicsPhysicalComponent"],
-				(action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)]
-			), action);
+	const constrainedPhysics = createReducer<GameState>(
+		["PHYS_PhysicsAdvanceIntegrationAction", createEntityReducer(
+			["PHYS_PhysicsPhysicalComponent"],
+			(action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)]
+		)]
+	);
 
-	return entityComponentReducer(constrainedPhysics(state, action), action);
+	return entityComponentReducer(constrainedPhysics(physicsIntegratorReducer(state, action), action), action);
 };
 
 const update = (tick$: Observable<{ state: GameState, deltaTime: Seconds }>): Observable<GameAction> => {
@@ -124,14 +125,14 @@ const epic = (action$: Observable<GameAction>, state: () => GameState): Observab
 function applyExplosionForce(position: Point2, magnitude: number) {
 	return createEntitiesStateMap(["PHYS_PhysicsPhysicalComponent"], (entityId: EntityId, physical: PhysicsPhysicalComponent) => {
 		const distance = Vector2.subtract(physical.properties.position, position);
-		if (Vector2.magnitudeSquared(distance) > magnitude*magnitude) {
+		if (Vector2.magnitudeSquared(distance) > magnitude * magnitude) {
 			return [];
 		}
 		return [
 			PhysicsApplyForceAction(entityId, Vector2.multiply(Vector2.normalise(distance), magnitude - Vector2.magnitude(distance)))
 		];
 	})
-} 
+}
 
 export const app = () => ({
 	epic,
