@@ -1,3 +1,4 @@
+import { HashMap } from "./hashmap";
 import { fgroupBy } from "../extensions/Array.groupBy.func";
 import { fmerge } from "../extensions/Array.merge.func";
 
@@ -9,7 +10,7 @@ interface IHashMultiMap<TKey extends string, TValue> {
 	subset(keys: ReadonlyArray<TKey>): HashMultiMap<TKey, TValue>;
 	
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue>;
-	appendSet(set: [TKey, TValue][]): HashMultiMap<TKey, TValue>;
+	appendMap(map: HashMap<TKey, TValue>): HashMultiMap<TKey, TValue>
 	remove(key: TKey): HashMultiMap<TKey, TValue>;
 
 	at(key: TKey): ReadonlyArray<TValue>;
@@ -68,10 +69,19 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 		});
 	}
 
-	appendSet(set: [TKey, TValue][]): HashMultiMap<TKey, TValue> {
+	appendMap(map: HashMap<TKey, TValue>): HashMultiMap<TKey, TValue> {
 		const json = { ...this._inner };
-		set.forEach(([key, value]) => {
+		map.forEach(([key, value]) => {
 			json[key] = (json[key] || []).concat(value);
+		});
+		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
+	}
+
+
+	concat(set: HashMultiMap<TKey, TValue>): HashMultiMap<TKey, TValue> {
+		const json = { ...this._inner };
+		set.forEachArray(([key, value]) => {
+			json[key] = (json[key] || []).concat(...value);
 		});
 		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
 	}
@@ -101,6 +111,12 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 			array.push( [...this._inner[key]] );
 		}
 		return array;
+	}
+
+	forEachArray(invoke: (kv: [TKey, ReadonlyArray<TValue>]) => void) {
+		for(let key in this._inner) {
+			invoke([key as TKey, this._inner[key]])
+		}
 	}
 }
 

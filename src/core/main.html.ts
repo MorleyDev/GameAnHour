@@ -31,7 +31,7 @@ export function mainHtml(canvas: HTMLCanvasElement, App: AppConstructor): App {
 	const eventHandler = new HtmlElementEventHandlerImpl(window);
 
 	const app = new App(eventHandler, () => { shutdown = true; canvas.remove(); });
-	requestAnimationFrameLoop(() => app.update(0.01), 10, 100);
+	requestAnimationFrameLoop(() => app.update(0.032), 32, 100);
 	requestAnimationFrameLoop(() => app.draw(canvasRenderer), 1);
 	return app;
 }

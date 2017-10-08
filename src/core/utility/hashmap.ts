@@ -1,9 +1,10 @@
 import { fmerge } from "../extensions/Array.merge.func";
+import { Map, Collection, List, Set } from "immutable";
 
 interface IHashMap<TKey extends string, TValue> {
-	map<U>(mapper: (kv: [TKey, TValue]) => U): U[];
-	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): U[];
-	filter(mapper: (kv: [TKey, TValue]) => boolean): IHashMap<TKey, TValue>;
+	map<U>(mapper: (kv: [TKey, TValue]) => U): List<U>;
+	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): List<U>;
+	filter(mapper: (kv: [TKey, TValue]) => boolean): HashMap<TKey, TValue>;
 	forEach(mapper: (kv: [TKey, TValue]) => void): void;
 
 	hmap<UKey extends string, UValue>(mapper: (kv: [TKey, TValue]) => [UKey, UValue]): HashMap<UKey, UValue>;
@@ -11,122 +12,84 @@ interface IHashMap<TKey extends string, TValue> {
 
 	append(key: TKey, value: TValue): HashMap<TKey, TValue>;
 	update(key: TKey, map: (value: TValue) => TValue): HashMap<TKey, TValue>;
-	updateWhere(predicate: (kv: [TKey, TValue]) => boolean, map: (keyValue: [TKey, TValue]) => TValue): HashMap<TKey, TValue>
 	remove(key: TKey): HashMap<TKey, TValue>;
 
 	at(key: TKey): TValue | undefined;
 	subset(keys: ReadonlyArray<TKey>): HashMap<TKey, TValue>;
 
-	values(): TValue[];
+	values(): IterableIterator<TValue>;
 }
 
 class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue> {
-	private readonly _inner: Readonly<{ [key: string]: TValue }>;
-
-	constructor(inner: { [key: string]: TValue }) {
-		this._inner = inner;
+	constructor(private _inner: Map<TKey, TValue>) {
 	}
 
-	map<U>(mapper: (kv: [TKey, TValue]) => U): U[] {
-		return Object.keys(this._inner)
-			.map(k => [k, this._inner[k]])
-			.map(mapper);
+	map<U>(mapper: (kv: [TKey, TValue]) => U): List<U> {
+		return this._inner.map((value, key) => mapper([key as TKey, value])).toList();
 	}
 
-	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): U[] {
-		return fmerge(
-			Object.keys(this._inner)
-				.map(k => [k, this._inner[k]])
-				.map(mapper)
-		);
+	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): List<U> {
+		return this._inner.map((value, key) => mapper([key as TKey, value])).flatten(true).toList();
 	}
 
 	hmap<UKey extends string, UValue>(mapper: (kv: [TKey, TValue]) => [UKey, UValue]): HashMap<UKey, UValue> {
-		const json: { [key: string]: UValue } = {};
-		for (let key in this._inner) {
-			const kv = mapper([key as TKey, this._inner[key]]);
-			json[kv[0]] = kv[1];
-		}
-		return HashMap(json) as HashMap<UKey, UValue>;
+		return new HashMapInner(this._inner.mapEntries(mapper));
 	}
 
 	filter(predicate: (kv: [TKey, TValue]) => boolean): HashMap<TKey, TValue> {
-		const json: { [key: string]: TValue } = {};
-		for (let key in this._inner) {
-			if (predicate([key as TKey, this._inner[key]])) {
-				json[key] = this._inner[key];
-			}
-		}
-		return HashMap(json) as HashMap<TKey, TValue>;
+		return new HashMapInner(this._inner.filter((value, key) => predicate([key as TKey, value])));
 	}
 
 	subset(keys: ReadonlyArray<TKey>): HashMap<TKey, TValue> {
-		const json: { [key: string]: TValue } = {};
-		for (let key of keys) {
-			const current = this._inner[key];
-			if (current != null) {
-				json[key] = this._inner[key];
+		function keyIn(...keys: string[]) {
+			var keySet = Set(keys); 
+			return function (v: TValue, k: string) {
+			  return keySet.has(k);
 			}
-		}
-		return HashMap(json) as HashMap<TKey, TValue>;
+		  }
+		return new HashMapInner(this._inner.filter(keyIn(...keys)));
 	}
 
-	forEach(invoke: (kv: [TKey, TValue]) => void): void {
-		for (let key in this._inner) {
-			invoke([key as TKey, this._inner[key]]);
-		}
+	forEach(invoke: (kv: [TKey, TValue], index: number) => void): void {
+		let i = 0;
+		this._inner.forEach((value, key) => invoke([key as TKey, value], i++));
 	}
 
 	append(key: TKey, value: TValue): HashMap<TKey, TValue> {
-		return HashMap({ ...this._inner, [key]: value }) as HashMap<TKey, TValue>;
+		return new HashMapInner(this._inner.concat([[key, value]]));
 	}
 
 	at(key: TKey): TValue | undefined {
-		return this._inner[key];
+		return this._inner.get(key);
 	}
 
 	remove(key: TKey): HashMap<TKey, TValue> {
-		const { [key]: omit, ...rest } = this._inner;
-		return HashMap(rest) as HashMap<TKey, TValue>;
+		return new HashMapInner( this._inner.remove(key) );
 	}
 
 	update(key: TKey, map: (value: TValue) => TValue): HashMap<TKey, TValue> {
-		const target = this._inner[key];
-		return target != null
-			? HashMap({ ...this._inner, [key]: map(target) })
-			: this;
-	}
-
-	updateWhere(predicate: (kv: [TKey, TValue]) => boolean, map: (keyValue: [TKey, TValue]) => TValue): HashMap<TKey, TValue> {
-		const json: { [key: string]: TValue } = {};
-		for (let key in this._inner) {
-			const keyValue: [TKey, TValue] = [key as TKey, this._inner[key]];
-			json[key] = predicate(keyValue) ? map(keyValue) : this._inner[key];
-		}
-		return HashMap(json) as HashMap<TKey, TValue>;
+		return new HashMapInner(this._inner.update(key, map));
 	}
 
 	union(rhs: HashMap<TKey, TValue>): HashMap<TKey, TValue> {
-		return HashMap({
-			...this._inner,
-			...rhs._inner
-		});
+		return new HashMapInner(this._inner.concat(rhs._inner));
 	}
 
-	values(): TValue[] {
-		const array: TValue[] = [];
-		for (let key in this._inner) {
-			array.push( this._inner[key] );
-		}
-		return array;
+	values(): IterableIterator<TValue> {
+		return this._inner.values();
+	}
+
+	toMap(): Map<TKey, TValue> {
+		return this._inner;
 	}
 }
 
 export interface HashMap<TKey extends string, TValue> extends HashMapInner<TKey, TValue> { };
 
 export const HashMap = Object.assign(
-	<TKey extends string, TValue>(json: { [key: string]: TValue }): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(json),
+	<TKey extends string, TValue>(json: Map<TKey, TValue>): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(Map(json)),
 	{
-		fromArray: <K extends string, T, U = T>(array: T[], keySelector: (value: T) => K, valueSelector: (value: T) => U): HashMap<K, U> => HashMap(array.reduce((prev, curr) => ({ ...prev, [keySelector(curr) as string]: valueSelector(curr) }), {}))
+		fromMap: <K extends string, T>(map: Map<K, T>) => new HashMapInner<K, T>(map),
+		fromArray: <K extends string, T>(array: [K, T][]) => new HashMapInner<K, T>(Map(array.map(([k, v]) => [k, v] as [K, T])))
 	}
 );

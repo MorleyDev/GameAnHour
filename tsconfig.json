@@ -14,7 +14,8 @@
         "alwaysStrict": true,
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
-        "outDir": "dist"
+        "outDir": "dist",
+        "sourceMap": true
     },
     "exclude": [
         "webpack.config.js",

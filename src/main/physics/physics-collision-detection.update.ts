@@ -16,7 +16,7 @@ const applyPhysicsCollisionDetectionToState = <TState extends PhysicsState>(stat
 	}
 
 	const targetEntityIds = state.componentEntityLinks.at("PHYS_PhysicsCollidableComponent");
-	const targetEntities = state.entities.subset(targetEntityIds).values();
+	const targetEntities = Array.from( state.entities.subset(targetEntityIds).values() );
 
 	let addedCollisions: [EntityId, EntityId][] = [];
 	let removedCollisions: [EntityId, EntityId][] = [];
@@ -32,13 +32,13 @@ const applyPhysicsCollisionDetectionToState = <TState extends PhysicsState>(stat
 				physical: rhsEntity.components.at("PHYS_PhysicsPhysicalComponent") as PhysicsPhysicalComponent | undefined,
 				collision: rhsEntity.components.at("PHYS_PhysicsCollidableComponent")! as PhysicsCollidableComponent
 			};
-			
+
 			const isLhsRest = lhs.physical == null || lhs.physical.properties.velocity.x === 0 && lhs.physical.properties.velocity.y === 0;
 			const isRhsRest = rhs.physical == null || rhs.physical.properties.velocity.x === 0 && rhs.physical.properties.velocity.y === 0;
 			if (isLhsRest && isRhsRest) {
 				continue;
 			}
-			
+
 			const rhsModel = rhs.physical == null
 				? rhs.collision.properties.collision
 				: Shape2.add(rhs.collision.properties.collision, rhs.physical.properties.position);

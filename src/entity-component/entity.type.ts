@@ -9,5 +9,5 @@ export type Entity<TComponent extends BaseComponent> = BaseEntity & {
 
 export const Entity = <TComponent extends BaseComponent>(name: string, ...components: TComponent[]): Entity<TComponent> => ({
 	id: name + EntityId(),
-	components: HashMap.fromArray<string, TComponent>(components, k => k.name, k => k)
+	components: HashMap.fromArray<string, TComponent>(components.map(component => [component.name, component] as [string, TComponent]))
 });

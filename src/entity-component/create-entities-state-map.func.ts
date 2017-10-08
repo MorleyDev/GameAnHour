@@ -8,12 +8,12 @@ export function createEntitiesStateMap<
 	TResult,
 	TEntity extends BaseEntity = BaseEntity,
 	TComponent extends BaseComponent = BaseComponent
-	>(withComponents: string[], mapper: (entityId: EntityId, ...components: TComponent[]) => TResult): (state: TState) => TResult[] {
-	return (state: TState): TResult[] => {
+	>(withComponents: string[], mapper: (entityId: EntityId, ...components: TComponent[]) => TResult): (state: TState) => Iterable<TResult> {
+	return (state: TState): Iterable<TResult> => {
 		const entityIdSubset = intersect(...withComponents.map(componentName => state.componentEntityLinks.at(componentName)));
 		return state.entities
 			.subset(entityIdSubset)
 			.map(([entityId, entity]) => ({ entityId, map: entity.components.subset(withComponents) }))
-			.map(({ entityId, map }) => mapper(entityId, ...map.values() as TComponent[]))
+			.map(({ entityId, map }) => mapper(entityId, ...withComponents.map(component => map.at(component)! as TComponent)));
 	};
 }

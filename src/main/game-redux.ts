@@ -1,17 +1,16 @@
-import { Key } from "../core/models/keys.model";
-import { SystemAction } from "../functional/system.action";
-import { KeyUpAction } from "../functional/system-keyup.action";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 
 import { Vector2 } from "../core/maths/vector.maths";
+import { Key } from "../core/models/keys.model";
 import { Point2, Shape2 } from "../core/models/shapes.model";
 import { Seconds } from "../core/models/time.model";
 import { createEntitiesStateMap } from "../entity-component/create-entities-state-map.func";
 import { createEntityReducer } from "../entity-component/create-entity-reducer.func";
 import { EntityId } from "../entity-component/entity-base.type";
 import { entityComponentReducer } from "../entity-component/entity-component.reducer";
-import { Clear, FrameCollection, Origin, Stroke } from "../functional/render-frame.model";
+import { Clear, Fill, FrameCollection, Origin } from "../functional/render-frame.model";
+import { SystemAction } from "../functional/system.action";
 import { initialState } from "./game-initial-state";
 import { GameAction, GameState } from "./game-models";
 import { applyPhysicsAdvanceIntegration } from "./physics/physics-advance-integration.update";
@@ -24,8 +23,8 @@ import { PhysicsPhysicalComponent } from "./physics/physics-physical.component";
 
 const renderCollisionMaps = createEntitiesStateMap<GameState, FrameCollection>(
 	["PHYS_PhysicsPhysicalComponent", "PHYS_PhysicsCollidableComponent", "RENDER_Colour"],
-	(_: EntityId, physical: PhysicsPhysicalComponent, collidable: PhysicsCollidableComponent, renderColour: ({ name: "RENDER_Colour", colour: string })) => [
-		Stroke(Shape2.add(collidable.properties.collision, physical.properties.position), renderColour.colour)
+	(_, physical: PhysicsPhysicalComponent, collidable: PhysicsCollidableComponent, renderColour: ({ name: "RENDER_Colour", colour: string })) => [
+		Fill(Shape2.add(collidable.properties.collision, physical.properties.position), renderColour.colour)
 	]
 );
 
@@ -83,7 +82,7 @@ const render = (state: GameState): FrameCollection => {
 	return [
 		Clear,
 		Origin({ x: 320, y: 240 }, [
-			renderCollisionMaps(state)
+			Array.from(renderCollisionMaps(state))
 		])
 	];
 }
@@ -114,10 +113,11 @@ const epic = (action$: Observable<GameAction>, state: () => GameState): Observab
 			.mergeMap(action => onCollision(state(), action)),
 		action$
 			.filter(action => action.type === "GAME_CreateExplosion")
-			.mergeMap((action: any) => applyExplosionForce(action.position, action.magnitude)(state()).merge() as GameAction[]),
+			.mergeMap((action: any) => Array.from(applyExplosionForce(action.position, action.magnitude)(state())))
+			.mergeMap(actions => actions),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.Space)
-			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 0), magnitude: 1000 }) as GameAction)
+			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 240), magnitude: 480 }) as GameAction)
 	);
 }
 

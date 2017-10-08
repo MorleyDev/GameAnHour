@@ -12,7 +12,7 @@ export function entityComponentReducer<TState extends EntitiesState>(state: TSta
 		return {
 			...(state as EntitiesState),
 			entities: state.entities.append(action.entity.id, action.entity),
-			componentEntityLinks: state.componentEntityLinks.appendSet(action.entity.components.map(([_, component]) => [_, action.entity.id] as [string, EntityId]))
+			componentEntityLinks: state.componentEntityLinks.appendMap(action.entity.components.hmap(([_, component]) => [_, action.entity.id]))
 		} as TState;
 	} else if (EntityComponentAction.DestroyEntity(action)) {
 		return {

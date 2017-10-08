@@ -5,10 +5,11 @@ import { GenericAction } from "../../functional/generic.action";
 import { GameState } from "../game-models";
 import { applyPhysicsForceReducer } from "./physics-apply-force.reducer";
 import { PhysicsChangeActiveCollisionsAction } from "./physics-change-active-collisions.action";
-import { applyPhysicsIntegrator } from "./physics-integrator.func";
+import { applyPhysicsGravity, applyPhysicsIntegrator } from "./physics-integrator.func";
 
 export const physicsIntegratorReducer = createReducer<GameState, GenericAction>(
 	["PHYS_PhysicsAdvanceIntegrationAction", applyPhysicsIntegrator],
+	["PHYS_PhysicsAdvanceIntegrationAction", applyPhysicsGravity],
 	["PHYS_PhysicsApplyForceAction", applyPhysicsForceReducer],
 	["PHYS_PhysicsChangeActiveCollisionsAction", (state, action: PhysicsChangeActiveCollisionsAction) => ({
 		...state,
