@@ -1,4 +1,4 @@
-import { Blittable } from "../core/assets/asset.model";
+import { BlittableAsset } from "../core/assets/asset.model";
 import { Radian } from "../core/maths/angles.maths";
 import { Point2, Rectangle, Shape2 } from "../core/models/shapes.model";
 
@@ -26,5 +26,5 @@ export const Fill = (dst: Shape2, colour: string): Fill => ["fill", dst, colour]
 export type Stroke = ["stroke", Shape2, string];
 export const Stroke = (dst: Shape2, colour: string): Stroke => ["stroke", dst, colour];
 
-export type Blit = ["blit", Blittable, Point2] | ["blit", Blittable, Rectangle, Rectangle];
-export const Blit = (image: Blittable, dst: Point2 | Rectangle, src?: Rectangle): Blit => src != null ? ["blit", image, dst, src] : ["blit", image, dst];
+export type Blit = ["blit", BlittableAsset, Point2] | ["blit", BlittableAsset, Rectangle, Rectangle];
+export const Blit = (image: BlittableAsset, dst: Point2 | Rectangle, src?: Rectangle): Blit => src != null ? ["blit", image, dst, src] : ["blit", image, dst];

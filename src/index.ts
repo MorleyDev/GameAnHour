@@ -1,3 +1,11 @@
-import { Game } from "./main/game";
+import "rxjs/add/operator/filter";
+import "rxjs/add/operator/map";
+import "rxjs/add/operator/mergeMap";
+import "rxjs/add/operator/bufferCount";
 
-const app = new Game();
+import "./core/extensions";
+import "./main/game";
+
+if ((module as any).hot) {
+	(module as any).hot.accept();
+}

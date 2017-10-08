@@ -1,4 +1,8 @@
-export type Blittable = Image | Video;
+import { Howl } from "howler";
 
-export type Image = HTMLImageElement | ImageBitmap;
-export type Video = HTMLVideoElement;
+export type BlittableAsset = ImageAsset | VideoAsset;
+
+export type ImageAsset = HTMLImageElement | ImageBitmap;
+export type VideoAsset = HTMLVideoElement;
+
+export type AudioAsset = Howl;

@@ -1,4 +1,4 @@
-import { Blittable } from "../assets/asset.model";
+import { BlittableAsset } from "../assets/asset.model";
 import { Radian } from "../maths/angles.maths";
 import { Circle, Line2, Point2, Rectangle, Shape2, Text2 } from "../models/shapes.model";
 import { Renderer } from "./renderer.service";
@@ -81,7 +81,7 @@ export class CanvasRenderer implements Renderer {
 		return this;
 	}
 
-	public blit(image: Blittable, dst: Point2 | Rectangle, str?: Rectangle): this {
+	public blit(image: BlittableAsset, dst: Point2 | Rectangle, str?: Rectangle): this {
 		if (Rectangle.is(dst)) {
 			if (str != null) {
 				this.context.drawImage(image, str.x, str.y, str.width, str.height, dst.x, dst.y, dst.width, dst.height);

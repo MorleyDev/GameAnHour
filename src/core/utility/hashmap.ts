@@ -15,6 +15,9 @@ interface IHashMap<TKey extends string, TValue> {
 	remove(key: TKey): HashMap<TKey, TValue>;
 
 	at(key: TKey): TValue | undefined;
+	subset(keys: ReadonlyArray<TKey>): HashMap<TKey, TValue>;
+
+	values(): TValue[];
 }
 
 class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue> {
@@ -57,6 +60,17 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 		return HashMap(json) as HashMap<TKey, TValue>;
 	}
 
+	subset(keys: ReadonlyArray<TKey>): HashMap<TKey, TValue> {
+		const json: { [key: string]: TValue } = {};
+		for (let key of keys) {
+			const current = this._inner[key];
+			if (current != null) {
+				json[key] = this._inner[key];
+			}
+		}
+		return HashMap(json) as HashMap<TKey, TValue>;
+	}
+
 	forEach(invoke: (kv: [TKey, TValue]) => void): void {
 		for (let key in this._inner) {
 			invoke([key as TKey, this._inner[key]]);
@@ -73,11 +87,14 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 
 	remove(key: TKey): HashMap<TKey, TValue> {
 		const { [key]: omit, ...rest } = this._inner;
-		return  HashMap(rest) as HashMap<TKey, TValue>;
+		return HashMap(rest) as HashMap<TKey, TValue>;
 	}
 
 	update(key: TKey, map: (value: TValue) => TValue): HashMap<TKey, TValue> {
-		return HashMap({ ...this._inner, [key]: map(this._inner[key])  });
+		const target = this._inner[key];
+		return target != null
+			? HashMap({ ...this._inner, [key]: map(target) })
+			: this;
 	}
 
 	updateWhere(predicate: (kv: [TKey, TValue]) => boolean, map: (keyValue: [TKey, TValue]) => TValue): HashMap<TKey, TValue> {
@@ -94,6 +111,14 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 			...this._inner,
 			...rhs._inner
 		});
+	}
+
+	values(): TValue[] {
+		const array: TValue[] = [];
+		for (let key in this._inner) {
+			array.push( this._inner[key] );
+		}
+		return array;
 	}
 }
 

@@ -16,8 +16,14 @@ module.exports = {
       { test: /\.tsx?$/, loader: 'ts-loader' }
     ]
   },
+  devServer: {
+    hot: true
+  },
   plugins: (isProd
     ? [new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })]
-    : [new webpack.HotModuleReplacementPlugin()]
+    : [
+        new webpack.HotModuleReplacementPlugin(),
+        new webpack.NamedModulesPlugin()
+      ]
   )
 }

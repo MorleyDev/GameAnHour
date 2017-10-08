@@ -6,6 +6,7 @@ import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
 import { filter } from "rxjs/operator/filter";
 import { map } from "rxjs/operator/map";
 import { Subject } from "rxjs/Subject";
+import { Subscription } from "rxjs/Subscription";
 
 import { App } from "../core/App";
 import { AppConstructor } from "../core/App.constructor";
@@ -23,9 +24,10 @@ import { KeyUpAction } from "./system-keyup.action";
 export function createReduxApp<
 	TState,
 	TAction
->(app: ReduxApp<TState, TAction>): AppConstructor {
+>(appFactory: () => ReduxApp<TState, TAction>) {
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
+	let app = appFactory();
 
 	return class implements App {
 		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
@@ -46,9 +48,22 @@ export function createReduxApp<
 			}))
 		);
 
+		public subscriptions: Subscription[] = [];
+
+		public hot(appFactory: () => ReduxApp<TState, TAction>) {
+			app = appFactory();
+			this.initialise(app);
+		}
+
 		constructor(private events: EventHandler, private shutdown: () => void) {
+			this.initialise(app);
+		}
+
+		initialise(app: ReduxApp<TState, TAction>) {
+			this.store.replaceReducer(app.reducer as any);
+
 			// Good lord this would be cleaned up by :: sooooooo much
-			const keypresses$ = keyPresses(events.keyDown(), events.keyUp());
+			const keypresses$ = keyPresses(this.events.keyDown(), this.events.keyUp());
 			const latest$tickState$ = fcall(this.tick$, map, (deltaTime: Seconds) => ({ state: this.store.getState(), deltaTime })) as Observable<{ state: TState; deltaTime: Seconds }>;
 			const merged$actions$ = merge(app.update(latest$tickState$), keypresses$);
 
@@ -62,12 +77,20 @@ export function createReduxApp<
 			const merged$actions$subscription = merged$actions$.subscribe(action => this.store.dispatch(action as any));
 
 			const latest$state$terminated$subscription = latest$state$terminated.subscribe(() => {
-				shutdown();
-
-				latest$render$frame$subscription.unsubscribe();
-				merged$actions$subscription.unsubscribe();
-				latest$state$terminated$subscription.unsubscribe();
+				this.shutdown();
+				this.dispose();
 			});
+			this.subscriptions = [
+				latest$state$terminated$subscription,
+				latest$render$frame$subscription,
+				merged$actions$subscription,
+				latest$state$terminated$subscription
+			];
+		}
+
+		dispose(): void {
+			this.subscriptions.forEach(subscription => subscription.unsubscribe());
+			this.subscriptions = [];
 		}
 
 		update(deltaTime: Seconds): void {

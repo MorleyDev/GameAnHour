@@ -3,13 +3,17 @@ import { fmerge } from "../extensions/Array.merge.func";
 
 interface IHashMultiMap<TKey extends string, TValue> {
 	map<U>(mapper: (kv: [TKey, TValue]) => U): U[];
-	filter<U>(predicate: (kv: [TKey, TValue]) => boolean): HashMultiMap<TKey, TValue>;
+	groupMap<TResult>(mapper: (kv: [TKey, ReadonlyArray<TValue>]) => TResult): TResult[];
 
+	filter<U>(predicate: (kv: [TKey, TValue]) => boolean): HashMultiMap<TKey, TValue>;
+	subset(keys: ReadonlyArray<TKey>): HashMultiMap<TKey, TValue>;
+	
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue>;
 	appendSet(set: [TKey, TValue][]): HashMultiMap<TKey, TValue>;
 	remove(key: TKey): HashMultiMap<TKey, TValue>;
 
 	at(key: TKey): ReadonlyArray<TValue>;
+	values(): TValue[][];	
 }
 
 class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TKey, TValue> {
@@ -27,12 +31,31 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 		return fmerge(mapped);
 	}
 
+	groupMap<TResult>(mapper: (kv: [TKey, ReadonlyArray<TValue>]) => TResult): TResult[] {
+		const result: TResult[] = [];
+		for (let key in this._inner) {
+			result.push( mapper([key as TKey, this._inner[key]]) );
+		}
+		return result;
+	}
+
 	filter<U>(predicate: (kv: [TKey, TValue]) => boolean): HashMultiMap<TKey, TValue> {
 		const json: { [key: string]: TValue[] } = {};
 		for (let key in this._inner) {
 			const innerItems = [key as TKey, this._inner[key].filter(v => predicate([key as TKey, v]))];
 			if (innerItems[1].length > 0) {
 				json[key] = innerItems[1] as TValue[];
+			}
+		}
+		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
+	}
+
+	subset(keys: ReadonlyArray<TKey>): HashMultiMap<TKey, TValue> {
+		const json: { [key: string]: ReadonlyArray<TValue> } = {};
+		for (let key of keys) {
+			const current = this._inner[key];
+			if (current != null) {
+				json[key] = this._inner[key];
 			}
 		}
 		return HashMultiMap(json) as HashMultiMap<TKey, TValue>;
@@ -60,7 +83,7 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 
 	removeWhere(key: TKey, predicate: (value: TValue) => boolean): HashMultiMap<TKey, TValue> {
 		const { [key]: omit, ...rest } = this._inner;
-		const filtered = (omit as TValue[]).filter(predicate);
+		const filtered = (omit as TValue[]).filter(value => !predicate(value));
 		if (filtered.length === 0) {
 			return HashMultiMap(rest);
 		} else {
@@ -70,6 +93,14 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 
 	at(key: TKey): ReadonlyArray<TValue> {
 		return this._inner[key] || [];
+	}
+
+	values(): TValue[][] {
+		const array: TValue[][] = [];
+		for (let key in this._inner) {
+			array.push( [...this._inner[key]] );
+		}
+		return array;
 	}
 }
 
