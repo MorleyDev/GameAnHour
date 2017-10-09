@@ -30,10 +30,23 @@ export function createReduxApp<
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
+	const stats: { [key: string]: { count: number; max: number; min: number, avg: number; } } = {};
+	(window as any).stats = stats;
+
 	const reduxScan = (self: Observable<TAction>, scanner: (state: TState, action: TAction) => TState, initial: TState): Observable<TState> => {
 		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
 		return fcall(self, scan, (state: TState, action: TAction): TState => {
+			const startTime = new Date().valueOf();
 			store.dispatch(action as any);
+			const endTime = new Date().valueOf();
+			const takenTime = endTime - startTime;
+			const currentStats = stats[((action as any).type as string)] || { count: 0, max: takenTime, min: takenTime, avg: takenTime };
+			stats[((action as any).type as string)] = {
+				count: currentStats.count + 1,
+				max: Math.max(takenTime, currentStats.max),
+				min: Math.min(takenTime, currentStats.min),
+				avg: (takenTime + currentStats.avg) / 2
+			};
 			return store.getState();
 		}, initial);
 	};

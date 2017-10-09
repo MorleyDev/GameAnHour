@@ -12,6 +12,7 @@ export type PhysicsState = EntitiesState & {
 		integrator: {
 			enabled: boolean;
 			gravity: Vector2;
+			scale: number;
 		}
 	};
 };
@@ -24,7 +25,8 @@ export const PhysicsState = <TState extends EntitiesState>(state: TState): TStat
 		},
 		integrator: {
 			enabled: true,
-			gravity: Vector2(0, 980)
+			gravity: Vector2(0, 0),
+			scale: 100
 		}
 	}
 } as TState & PhysicsState);

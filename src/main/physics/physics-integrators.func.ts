@@ -6,7 +6,7 @@ import { PhysicsPhysicalComponent } from "./physics-physical.component";
 
 export const applyPhysicsIntegrator = createEntityReducer<GameState>(
 	["PHYS_PhysicsPhysicalComponent"],
-	(action: TickAction, physics: PhysicsPhysicalComponent) => {
+	(state: GameState, action: TickAction, physics: PhysicsPhysicalComponent) => {
 		if (physics.properties.velocity.x === 0 && physics.properties.velocity.y === 0) {
 			return [physics];
 		}
@@ -20,15 +20,15 @@ export const applyPhysicsIntegrator = createEntityReducer<GameState>(
 	}
 );
 
-export const applyPhysicsGravity = (state: GameState, action: TickAction) => createEntityReducer<GameState>(
+export const applyPhysicsGravity = createEntityReducer<GameState>(
 	["PHYS_PhysicsPhysicalComponent"],
-	(action: TickAction, physics: PhysicsPhysicalComponent) => {
+	(state: GameState, action: TickAction, physics: PhysicsPhysicalComponent) => {
 		return [{
 			...physics,
 			properties: {
 				...physics.properties,
-				velocity: Vector2.add(physics.properties.velocity, Vector2.multiply(state.physics.integrator.gravity, action.deltaTime)),
+				velocity: Vector2.add(physics.properties.velocity, Vector2.multiply(state.physics.integrator.gravity, state.physics.integrator.scale * action.deltaTime)),
 			}
 		} as PhysicsPhysicalComponent];
 	}
-)(state, action);
+);

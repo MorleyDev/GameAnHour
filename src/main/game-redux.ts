@@ -62,7 +62,7 @@ function boundAtWalls(physical: PhysicsPhysicalComponent): PhysicsPhysicalCompon
 }
 
 const constrainedPhysics = createReducer<GameState>(
-	["@@TICK", createEntityReducer(["PHYS_PhysicsPhysicalComponent"], (action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)])],
+	["@@TICK", createEntityReducer(["PHYS_PhysicsPhysicalComponent"], (state, action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)])],
 	["@@TICK", (state: GameState, action: TickAction) => {
 		const delta = findPhysicsCollisionDetectionDelta(state);
 		return delta.active
@@ -105,26 +105,27 @@ const epic = (action$: Observable<GameAction>): Observable<GameAction> => {
 	return merge(
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.DownArrow)
-			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 290), magnitude: 1000 }) as GameAction),
+			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 260), magnitude: 640 }) as GameAction),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.UpArrow)
-			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, -290), magnitude: 1000 }) as GameAction),
+			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, -260), magnitude: 640 }) as GameAction),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.LeftArrow)
-			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(-360, 0), magnitude: 1000 }) as GameAction),
+			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(-340, 0), magnitude: 640 }) as GameAction),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.RightArrow)
-			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(360, 0), magnitude: 1000 }) as GameAction),
+			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(340, 0), magnitude: 640 }) as GameAction),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.Space)
-			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 0), magnitude: 1000 }) as GameAction)
+			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 0), magnitude: 640 }) as GameAction)
 	);
 };
 
 const applyExplosionForce = createEntitiesStateMap(["PHYS_PhysicsPhysicalComponent"], (entityId: EntityId, physical: PhysicsPhysicalComponent, position: Point2, magnitude: number) => {
 	const distance = Vector2.subtract(physical.properties.position, position);
-	return (Vector2.magnitudeSquared(distance) <= magnitude * magnitude)
-		? [PhysicsApplyForceAction(entityId, Vector2.multiply(Vector2.normalise(distance), magnitude - Vector2.magnitude(distance)))]
+	const distanceM = Vector2.magnitude(distance);
+	return (distanceM <= magnitude)
+		? [PhysicsApplyForceAction(entityId, Vector2.multiply(Vector2.normalise(distance), magnitude - distanceM))]
 		: [];
 });
 

@@ -1,3 +1,4 @@
+import { applyPhysicsForceReducer } from "./physics-apply-force.reducer";
 import { createReducer } from "../../functional/create-reducer.func";
 import { GenericAction } from "../../functional/generic.action";
 import { GameState } from "../game-models";
@@ -5,5 +6,6 @@ import { applyPhysicsGravity, applyPhysicsIntegrator } from "./physics-integrato
 
 export const physicsIntegratorReducer = createReducer<GameState, GenericAction>(
 	["@@TICK", applyPhysicsIntegrator],
-	["@@TICK", applyPhysicsGravity]
+	["@@TICK", applyPhysicsGravity],
+	["PHYS_PhysicsApplyForceAction", applyPhysicsForceReducer]
 );
