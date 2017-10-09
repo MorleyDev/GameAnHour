@@ -1,3 +1,4 @@
+import { applyPhysicsForceReducer } from "./physics/physics-apply-force.reducer";
 import { createReducer } from "../functional/create-reducer.func";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
@@ -21,6 +22,7 @@ import { PhysicsCollidableComponent } from "./physics/physics-collidable.compone
 import { applyPhysicsCollisionDetection } from "./physics/physics-collision-detection.update";
 import { physicsIntegratorReducer } from "./physics/physics-integrator.reducer";
 import { PhysicsPhysicalComponent } from "./physics/physics-physical.component";
+import { List } from "immutable";
 
 const renderCollisionMaps = createEntitiesStateMap<GameState, FrameCollection>(
 	["PHYS_PhysicsPhysicalComponent", "PHYS_PhysicsCollidableComponent", "RENDER_Colour"],
@@ -66,7 +68,13 @@ const reducer = (state: GameState, action: GameAction): GameState => {
 		["PHYS_PhysicsAdvanceIntegrationAction", createEntityReducer(
 			["PHYS_PhysicsPhysicalComponent"],
 			(action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)]
-		)]
+		)],
+		["GAME_StartCollision", (state, action) => onCollision(state, action)],
+		["GAME_CreateExplosion", (state, action) => {
+			const actions = List(applyExplosionForce(action.position, action.magnitude)(state));
+			
+			return actions.reduce((state, actions) => actions.reduce((state, action) => applyPhysicsForceReducer(state, action), state), state);
+		}]
 	);
 
 	return entityComponentReducer(constrainedPhysics(physicsIntegratorReducer(state, action), action), action);
@@ -87,7 +95,8 @@ const render = (state: GameState): FrameCollection => {
 		])
 	];
 }
-const onCollision = (state: GameState, action: any): PhysicsApplyForceAction[] => {
+
+const onCollision = (state: GameState, action: any): GameState => {
 	const { lhs, rhs } = action as { lhs: EntityId; rhs: EntityId; };
 	const lhsEntity = state.entities.at(lhs)!;
 	const rhsEntity = state.entities.at(rhs)!;
@@ -100,22 +109,15 @@ const onCollision = (state: GameState, action: any): PhysicsApplyForceAction[] =
 	return [
 		PhysicsApplyForceAction(rhs, newForceLeft),
 		PhysicsApplyForceAction(lhs, newForceRight)
-	];
+	].reduce((state, action) => applyPhysicsForceReducer(state, action), state);
 };
 
-const epic = (action$: Observable<GameAction>, state: () => GameState): Observable<GameAction> => {
+const epic = (action$: Observable<GameAction>): Observable<GameAction> => {
 	return merge(
 		action$
 			.filter(action => action.type === "PHYS_PhysicsChangeActiveCollisionsAction")
 			.mergeMap((action: PhysicsChangeActiveCollisionsAction) => action.active)
 			.map(([lhs, rhs]: [EntityId, EntityId]) => ({ type: "GAME_StartCollision", lhs, rhs })),
-		action$
-			.filter(action => action.type === "GAME_StartCollision")
-			.mergeMap(action => onCollision(state(), action)),
-		action$
-			.filter(action => action.type === "GAME_CreateExplosion")
-			.mergeMap((action: any) => Array.from(applyExplosionForce(action.position, action.magnitude)(state())))
-			.mergeMap(actions => actions),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.Space)
 			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 290), magnitude: 4800 }) as GameAction)

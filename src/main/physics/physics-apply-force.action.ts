@@ -6,6 +6,7 @@ export type PhysicsApplyForceAction = {
 	readonly target: EntityId;
 	readonly force: Vector2;
 };
+
 export const PhysicsApplyForceAction = (target: EntityId, force: Vector2): PhysicsApplyForceAction => ({
 	type: "PHYS_PhysicsApplyForceAction",
 	target,

@@ -37,7 +37,7 @@ export function createReduxApp<
 		public readonly store: Store<TState> = createStore<TState>(
 			app.reducer as any,
 			app.initialState,
-			compose(applyMiddleware(createEpicMiddleware(combineEpics(action$ => app.epic(action$ as any, () => this.store.getState())) as any), store => next => action => {
+			compose(applyMiddleware(createEpicMiddleware(combineEpics(action$ => app.epic(action$ as any)) as any), store => next => action => {
 				const prevState: TState = store.getState() as any;
 				const result = next(action);
 				const nextState: TState = store.getState() as any;
