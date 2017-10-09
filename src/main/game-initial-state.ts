@@ -7,11 +7,11 @@ import { SystemState } from "../functional/system.state";
 import { GameEntity, GameState } from "./game-models";
 import { PhysicsState } from "./physics/physics-state";
 
-const initialEntities: GameEntity[] = Array(6).fill(0).mergeMap((_, j) => Array(6).fill(0).map((_, i) => [i, j]))
+const initialEntities: GameEntity[] = Array(9).fill(0).mergeMap((_, j) => Array(9).fill(0).map((_, i) => [i, j]))
 	.map(([i,j]) => GameEntity(
 		"Ball",
 		({ name: "RENDER_Colour", colour: `rgb(${255 - (i * (255 / 3))}, ${255 - (j * (255 / 3))}, 255)` } as any),
-		PhysicsPhysicalComponent(Point2(i * 30 + 15 - 160, j * 30 + 15 - 120), Vector2(0, 0), 1),
+		PhysicsPhysicalComponent(Point2(i * 30 + 15 - 160, j * 30 + 15 - 180), Vector2(0, 0), 1),
 		PhysicsCollidableComponent(Circle(0, 0, 10))
 	));
 

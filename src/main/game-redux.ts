@@ -69,10 +69,10 @@ const reducer = (state: GameState, action: GameAction): GameState => {
 			["PHYS_PhysicsPhysicalComponent"],
 			(action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)]
 		)],
-		["GAME_StartCollision", (state, action) => onCollision(state, action)],
+		["PHYS_PhysicsChangeActiveCollisionsAction", (state, action: PhysicsChangeActiveCollisionsAction) => action.active.reduce((state, active) => onCollision(state, active[0], active[1]), state)],
 		["GAME_CreateExplosion", (state, action) => {
 			const actions = List(applyExplosionForce(action.position, action.magnitude)(state));
-			
+
 			return actions.reduce((state, actions) => actions.reduce((state, action) => applyPhysicsForceReducer(state, action), state), state);
 		}]
 	);
@@ -94,10 +94,9 @@ const render = (state: GameState): FrameCollection => {
 			Array.from(renderCollisionMaps(state))
 		])
 	];
-}
+};
 
-const onCollision = (state: GameState, action: any): GameState => {
-	const { lhs, rhs } = action as { lhs: EntityId; rhs: EntityId; };
+const onCollision = (state: GameState, lhs: EntityId, rhs: EntityId): GameState => {
 	const lhsEntity = state.entities.at(lhs)!;
 	const rhsEntity = state.entities.at(rhs)!;
 	const lhsPhysical = lhsEntity.components.at("PHYS_PhysicsPhysicalComponent")! as PhysicsPhysicalComponent;
@@ -114,10 +113,6 @@ const onCollision = (state: GameState, action: any): GameState => {
 
 const epic = (action$: Observable<GameAction>): Observable<GameAction> => {
 	return merge(
-		action$
-			.filter(action => action.type === "PHYS_PhysicsChangeActiveCollisionsAction")
-			.mergeMap((action: PhysicsChangeActiveCollisionsAction) => action.active)
-			.map(([lhs, rhs]: [EntityId, EntityId]) => ({ type: "GAME_StartCollision", lhs, rhs })),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.Space)
 			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 290), magnitude: 4800 }) as GameAction)
