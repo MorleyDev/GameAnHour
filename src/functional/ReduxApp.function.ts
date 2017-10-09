@@ -51,8 +51,8 @@ export function createReduxApp<
 		public subscriptions: Subscription[] = [];
 
 		public hot(appFactory: () => ReduxApp<TState, TAction>) {
-			app = appFactory();
-			this.initialise(app);
+			this.dispose();
+			this.initialise(appFactory());
 		}
 
 		constructor(private events: EventHandler, private shutdown: () => void) {

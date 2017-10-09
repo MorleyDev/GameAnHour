@@ -36,15 +36,15 @@ const reducer = (state: GameState, action: GameAction): GameState => {
 		let velocityX = physical.properties.velocity.x;
 		let velocityY = physical.properties.velocity.y;
 		if (constrainedX === 320) {
-			velocityX = -Math.abs(velocityX);
+			velocityX = -Math.abs(velocityX * 0.5);
 		} else if (constrainedX === -320) {
-			velocityX = Math.abs(velocityX);
+			velocityX = Math.abs(velocityX * 0.5);
 		}
 
 		if (constrainedY === 240) {
-			velocityY = -Math.abs(velocityY);
+			velocityY = -Math.abs(velocityY * 0.5);
 		} else if (constrainedY === -240) {
-			velocityY = Math.abs(velocityY);
+			velocityY = Math.abs(velocityY * 0.5);
 		}
 		return {
 			...physical,
@@ -118,7 +118,7 @@ const epic = (action$: Observable<GameAction>, state: () => GameState): Observab
 			.mergeMap(actions => actions),
 		action$
 			.filter(action => SystemAction.KeyDown(action) && action.key === Key.Space)
-			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 240), magnitude: 480 }) as GameAction)
+			.map(() => ({ type: "GAME_CreateExplosion", position: Point2(0, 290), magnitude: 4800 }) as GameAction)
 	);
 }
 

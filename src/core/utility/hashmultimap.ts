@@ -70,7 +70,7 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 	}
 
 	removeWhere(key: TKey, predicate: (value: TValue) => boolean): HashMultiMap<TKey, TValue> {
-		return new HashMultiMapInner(this._inner.update(key, value => value.filter(predicate)));
+		return new HashMultiMapInner(this._inner.update(key, value => value.filter(v => !predicate(v))));
 	}
 
 	at(key: TKey): List<TValue> {
