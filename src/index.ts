@@ -5,7 +5,3 @@ import "rxjs/add/operator/bufferCount";
 
 import "./core/extensions";
 import "./main/game";
-
-if ((module as any).hot) {
-	(module as any).hot.accept();
-}

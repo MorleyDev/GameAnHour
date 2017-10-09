@@ -15,7 +15,7 @@ const initialEntities: GameEntity[] = Array(9).fill(0).mergeMap((_, j) => Array(
 		PhysicsCollidableComponent(Circle(0, 0, 10))
 	));
 
-export const initialState: GameState = {}
+export const initialState: GameState = { }
 	.pipe(SystemState)
 	.pipe(EntitiesState(initialEntities))
 	.pipe(PhysicsState);

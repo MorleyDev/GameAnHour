@@ -25,9 +25,7 @@ import { KeyUpAction } from "./system-keyup.action";
 export function createReduxApp<
 	TState,
 	TAction
->(appFactory: () => ReduxApp<TState, TAction>) {
-	let app = appFactory();
-
+>(app: ReduxApp<TState, TAction>) {
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
@@ -50,6 +48,7 @@ export function createReduxApp<
 		public readonly render$: Subject<Renderer> = new Subject<Renderer>();
 		public readonly actions$: Subject<TAction> = new Subject<TAction>();
 		public subscriptions: Subscription[] = [];
+		public prevState: TState | undefined = undefined;
 
 		constructor(private events: EventHandler, private shutdown: () => void) {
 			this.initialise(app);
@@ -62,8 +61,9 @@ export function createReduxApp<
 			const epic$actions$ = new Subject<TAction>();
 			const actions$ = merge(system$actions$, epic$actions$);
 			const merged$actions$ = merge(actions$, fcall(app.epic(actions$), _do, (action: TAction) => epic$actions$.next(action)));
-			const scan$state$ = reduxScan(merged$actions$, (state: TState, action: TAction) => app.reducer(state, action), app.initialState);
+			const scan$state$ = reduxScan(merged$actions$, (state: TState, action: TAction) => app.reducer(state, action), this.prevState || app.initialState);
 			const state$ = fcall(scan$state$, _do, (state: any) => {
+				this.prevState = state;
 				if (state && state.system && state.system.terminate) {
 					this.shutdown();
 				}
@@ -81,9 +81,10 @@ export function createReduxApp<
 			this.subscriptions = [];
 		}
 
-		public hot(appFactory: () => ReduxApp<TState, TAction>) {
+		public hot(app: ReduxApp<TState, TAction>) {
+			console.log("ReduxApp::hot(", app, ")");
 			this.dispose();
-			this.initialise(appFactory());
+			this.initialise(app);
 		}
 
 		update(deltaTime: Seconds): void {

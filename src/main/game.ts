@@ -8,7 +8,9 @@ const run = main(app);
 
 if ((module as any).hot) {
 	(window as any).app = run;
-	(module as any).hot.accept(() => {
-		run.hot(game.app);
+	(module as any).hot.accept("./game-redux", () => {
+		const newGame: typeof game = require("./game-redux");
+		console.log("Accepting the new game-redux", newGame.app.initialState);
+		run.hot(newGame.app);
 	});
 }

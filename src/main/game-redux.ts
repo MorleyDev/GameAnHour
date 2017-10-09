@@ -128,9 +128,9 @@ const applyExplosionForce = createEntitiesStateMap(["PHYS_PhysicsPhysicalCompone
 		: [];
 });
 
-export const app = () => ({
+export const app = {
 	epic,
 	initialState,
 	reducer,
 	render
-});
+};
