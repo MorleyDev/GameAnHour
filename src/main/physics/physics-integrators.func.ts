@@ -1,7 +1,6 @@
-import { TickAction } from "../../functional/tick.action";
 import { Vector2 } from "../../core/maths/vector.maths";
 import { createEntityReducer } from "../../entity-component/create-entity-reducer.func";
-import { GenericAction } from "../../functional/generic.action";
+import { TickAction } from "../../functional/system-tick.action";
 import { GameState } from "../game-models";
 import { PhysicsPhysicalComponent } from "./physics-physical.component";
 

@@ -1,14 +1,11 @@
-import { compose as productionCompose } from "redux";
+import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of as of$ } from "rxjs/observable/of";
 import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
-import { filter } from "rxjs/operator/filter";
 import { _do } from "rxjs/operator/do";
-import { letProto } from "rxjs/operator/let";
 import { map } from "rxjs/operator/map";
 import { scan } from "rxjs/operator/scan";
-import { mergeMap } from "rxjs/operator/mergeMap";
 import { switchMap } from "rxjs/operator/switchMap";
 import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
@@ -31,6 +28,23 @@ export function createReduxApp<
 >(appFactory: () => ReduxApp<TState, TAction>) {
 	let app = appFactory();
 
+	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
+	const compose = devCompose || productionCompose;
+
+	const reduxScan = (self: Observable<TAction>, scanner: (state: TState, action: TAction) => TState, initial: TState): Observable<TState> => {
+		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
+		return fcall(self, scan, (state: TState, action: TAction): TState => {
+			store.dispatch(action as any);
+			return store.getState();
+		}, initial);
+	};
+	const fastScan = (self: Observable<TAction>, scanner: (state: TState, action: TAction) => TState, initial: TState): Observable<TState> =>
+		fcall(self, scan, scanner, initial);
+
+	const appScan = process && process.env && process.env["NODE_ENV"] === "Production"
+		? fastScan
+		: reduxScan;
+
 	return class implements App {
 		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
 		public readonly render$: Subject<Renderer> = new Subject<Renderer>();
@@ -48,8 +62,12 @@ export function createReduxApp<
 			const epic$actions$ = new Subject<TAction>();
 			const actions$ = merge(system$actions$, epic$actions$);
 			const merged$actions$ = merge(actions$, fcall(app.epic(actions$), _do, (action: TAction) => epic$actions$.next(action)));
-			const scan$state$ = fcall(merged$actions$, scan, (state: TState, action: TAction) => app.reducer(state, action), app.initialState);
-			const state$ = fcall(scan$state$, _do, (state: any) => (state && state.system && state.system.terminate && this.shutdown()));
+			const scan$state$ = reduxScan(merged$actions$, (state: TState, action: TAction) => app.reducer(state, action), app.initialState);
+			const state$ = fcall(scan$state$, _do, (state: any) => {
+				if (state && state.system && state.system.terminate) {
+					this.shutdown();
+				}
+			});
 
 			const latest$render$state$ = fcall(state$, switchMap, (state: TState) => fcall(this.render$, map, (renderer: Renderer) => [renderer, state]) as Observable<[Renderer, TState]>);
 			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, app.render(state)]) as Observable<[Renderer, FrameCollection]>;

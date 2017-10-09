@@ -27,4 +27,4 @@ export const PhysicsState = <TState extends EntitiesState>(state: TState): TStat
 			gravity: Vector2(0, 980)
 		}
 	}
-} as TState & PhysicsState)
+} as TState & PhysicsState);

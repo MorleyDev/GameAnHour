@@ -1,7 +1,7 @@
-import { TickAction } from "./tick.action";
 import { GenericAction } from "./generic.action";
-import { KeyUpAction } from "./system-keyup.action";
 import { KeyDownAction } from "./system-keydown.action";
+import { KeyUpAction } from "./system-keyup.action";
+import { TickAction } from "./system-tick.action";
 
 export type SystemAction = KeyDownAction | KeyUpAction | TickAction;
 
