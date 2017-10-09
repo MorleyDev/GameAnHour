@@ -32,7 +32,7 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 	}
 
 	groupMap<TResult>(mapper: (kv: [TKey, Iterable<TValue>]) => TResult): List<TResult> {
-		return this._inner.map((value, key) => mapper([key, value])).toList()
+		return this._inner.map((value, key) => mapper([key, value])).toList();
 	}
 
 	filter<U>(predicate: (kv: [TKey, TValue]) => boolean): HashMultiMap<TKey, TValue> {
@@ -87,7 +87,7 @@ export const HashMultiMap = Object.assign(
 			json != null
 				? Map(Object.keys(json).map(key => [key, List(json[key])] as [TKey, List<TValue>]))
 				: Map<TKey, List<TValue>>()
-		),	
+		),
 		fromArray: <T, K extends string, U = T>(array: T[], keySelector: (value: T) => K, valueSelector?: (value: T) => U): HashMultiMap<K, U> => HashMultiMap.fromJson(fgroupBy(array, keySelector, valueSelector) as { [key: string]: U[] }),
 		fromBidirectPairs: <T, K extends string>(array: [T, T][], keySelector: (value: T) => K): HashMultiMap<K, T> => HashMultiMap.fromJson(fgroupBy(array.concat(array.map(x => [x[1], x[0]] as [T, T])), k => keySelector(k[0]), k => k[1]) as { [key: string]: T[] })
 	}

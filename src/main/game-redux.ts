@@ -1,5 +1,4 @@
-import { applyPhysicsForceReducer } from "./physics/physics-apply-force.reducer";
-import { createReducer } from "../functional/create-reducer.func";
+import { Seq } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 
@@ -11,18 +10,19 @@ import { createEntitiesStateMap } from "../entity-component/create-entities-stat
 import { createEntityReducer } from "../entity-component/create-entity-reducer.func";
 import { EntityId } from "../entity-component/entity-base.type";
 import { entityComponentReducer } from "../entity-component/entity-component.reducer";
+import { createReducer } from "../functional/create-reducer.func";
 import { Clear, Fill, FrameCollection, Origin } from "../functional/render-frame.model";
 import { SystemAction } from "../functional/system.action";
 import { initialState } from "./game-initial-state";
 import { GameAction, GameState } from "./game-models";
 import { applyPhysicsAdvanceIntegration } from "./physics/physics-advance-integration.update";
 import { PhysicsApplyForceAction } from "./physics/physics-apply-force.action";
+import { applyPhysicsForceReducer } from "./physics/physics-apply-force.reducer";
 import { PhysicsChangeActiveCollisionsAction } from "./physics/physics-change-active-collisions.action";
 import { PhysicsCollidableComponent } from "./physics/physics-collidable.component";
 import { applyPhysicsCollisionDetection } from "./physics/physics-collision-detection.update";
 import { physicsIntegratorReducer } from "./physics/physics-integrator.reducer";
 import { PhysicsPhysicalComponent } from "./physics/physics-physical.component";
-import { List } from "immutable";
 
 const renderCollisionMaps = createEntitiesStateMap<GameState, FrameCollection>(
 	["PHYS_PhysicsPhysicalComponent", "PHYS_PhysicsCollidableComponent", "RENDER_Colour"],
@@ -31,54 +31,51 @@ const renderCollisionMaps = createEntitiesStateMap<GameState, FrameCollection>(
 	]
 );
 
-const reducer = (state: GameState, action: GameAction): GameState => {
-	function boundAtWalls(physical: PhysicsPhysicalComponent): PhysicsPhysicalComponent {
-		const constrainedX = Math.max(-320, Math.min(320, physical.properties.position.x));
-		const constrainedY = Math.max(-240, Math.min(240, physical.properties.position.y));
-		let velocityX = physical.properties.velocity.x;
-		let velocityY = physical.properties.velocity.y;
-		if (constrainedX === 320) {
-			velocityX = -Math.abs(velocityX * 0.5);
-		} else if (constrainedX === -320) {
-			velocityX = Math.abs(velocityX * 0.5);
-		}
-
-		if (constrainedY === 240) {
-			velocityY = -Math.abs(velocityY * 0.5);
-		} else if (constrainedY === -240) {
-			velocityY = Math.abs(velocityY * 0.5);
-		}
-		return {
-			...physical,
-			properties: {
-				...physical.properties,
-				position: {
-					x: constrainedX,
-					y: constrainedY
-				},
-				velocity: {
-					x: velocityX,
-					y: velocityY
-				}
-			}
-		};
+function boundAtWalls(physical: PhysicsPhysicalComponent): PhysicsPhysicalComponent {
+	const constrainedX = Math.max(-320, Math.min(320, physical.properties.position.x));
+	const constrainedY = Math.max(-240, Math.min(240, physical.properties.position.y));
+	let velocityX = physical.properties.velocity.x;
+	let velocityY = physical.properties.velocity.y;
+	if (constrainedX === 320) {
+		velocityX = -Math.abs(velocityX * 0.5);
+	} else if (constrainedX === -320) {
+		velocityX = Math.abs(velocityX * 0.5);
 	}
 
-	const constrainedPhysics = createReducer<GameState>(
-		["PHYS_PhysicsAdvanceIntegrationAction", createEntityReducer(
-			["PHYS_PhysicsPhysicalComponent"],
-			(action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)]
-		)],
-		["PHYS_PhysicsChangeActiveCollisionsAction", (state, action: PhysicsChangeActiveCollisionsAction) => action.active.reduce((state, active) => onCollision(state, active[0], active[1]), state)],
-		["GAME_CreateExplosion", (state, action) => {
-			const actions = List(applyExplosionForce(action.position, action.magnitude)(state));
+	if (constrainedY === 240) {
+		velocityY = -Math.abs(velocityY * 0.5);
+	} else if (constrainedY === -240) {
+		velocityY = Math.abs(velocityY * 0.5);
+	}
+	return {
+		...physical,
+		properties: {
+			...physical.properties,
+			position: {
+				x: constrainedX,
+				y: constrainedY
+			},
+			velocity: {
+				x: velocityX,
+				y: velocityY
+			}
+		}
+	};
+}
 
-			return actions.reduce((state, actions) => actions.reduce((state, action) => applyPhysicsForceReducer(state, action), state), state);
-		}]
-	);
+const constrainedPhysics = createReducer<GameState>(
+	["PHYS_PhysicsAdvanceIntegrationAction", createEntityReducer(
+		["PHYS_PhysicsPhysicalComponent"],
+		(action, physical: PhysicsPhysicalComponent) => [boundAtWalls(physical)]
+	)],
+	["PHYS_PhysicsChangeActiveCollisionsAction", (state, action: PhysicsChangeActiveCollisionsAction) => action.active.reduce((state, active) => onCollision(state, active[0], active[1]), state)],
+	["GAME_CreateExplosion", (state, action) =>  Seq(applyExplosionForce(action.position, action.magnitude)(state)).reduce((state, actions) => actions.reduce((state, action) => applyPhysicsForceReducer(state, action), state), state)]
+);
 
-	return entityComponentReducer(constrainedPhysics(physicsIntegratorReducer(state, action), action), action);
-};
+const reducer = (state: GameState, action: GameAction): GameState => state
+	.pipe(physicsIntegratorReducer, action)
+	.pipe(constrainedPhysics, action)
+	.pipe(entityComponentReducer, action);
 
 const update = (tick$: Observable<{ state: GameState, deltaTime: Seconds }>): Observable<GameAction> => {
 	return merge(
