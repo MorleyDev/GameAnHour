@@ -6,6 +6,7 @@ import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
 import { _do } from "rxjs/operator/do";
 import { map } from "rxjs/operator/map";
 import { scan } from "rxjs/operator/scan";
+import { filter } from "rxjs/operator/filter";
 import { switchMap } from "rxjs/operator/switchMap";
 import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
@@ -47,8 +48,9 @@ export function createReduxApp<
 		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
 		public readonly render$: Subject<Renderer> = new Subject<Renderer>();
 		public readonly actions$: Subject<TAction> = new Subject<TAction>();
-		public subscriptions: Subscription[] = [];
-		public prevState: TState | undefined = undefined;
+
+		private _subscriptions: Subscription[] = [];
+		private _prevState: TState | undefined = undefined;
 
 		constructor(private events: EventHandler, private shutdown: () => void) {
 			this.initialise(app);
@@ -57,13 +59,16 @@ export function createReduxApp<
 		initialise(app: ReduxApp<TState, TAction>) {
 			const tick$action$ = fcall(this.tick$, map, (deltaTime: Seconds) => ({ type: "@@TICK", deltaTime }));
 			const keypresses$ = keyPresses(this.events.keyDown(), this.events.keyUp());
-			const system$actions$ = merge(of$({ type: "@@INIT" }), tick$action$, keypresses$, this.actions$) as Observable<TAction>;
+			const core$actions$ = merge(of$({ type: "@@INIT" }), tick$action$, keypresses$, this.actions$) as Observable<TAction>;
+
 			const epic$actions$ = new Subject<TAction>();
-			const actions$ = merge(system$actions$, epic$actions$);
-			const merged$actions$ = merge(actions$, fcall(app.epic(actions$), _do, (action: TAction) => epic$actions$.next(action)));
-			const scan$state$ = reduxScan(merged$actions$, (state: TState, action: TAction) => app.reducer(state, action), this.prevState || app.initialState);
+			const merged$core$epic$actions$ = merge(core$actions$, epic$actions$);
+			const epic$reemitting$actions$ = fcall(app.epic(merged$core$epic$actions$), filter, (action: TAction) => { epic$actions$.next(action); return false; });
+			const all$actions$ = merge(merged$core$epic$actions$, epic$reemitting$actions$);
+
+			const scan$state$ = reduxScan(all$actions$, (state: TState, action: TAction) => app.reducer(state, action), this._prevState || app.initialState);
 			const state$ = fcall(scan$state$, _do, (state: any) => {
-				this.prevState = state;
+				this._prevState = state;
 				if (state && state.system && state.system.terminate) {
 					this.shutdown();
 				}
@@ -73,12 +78,12 @@ export function createReduxApp<
 			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, app.render(state)]) as Observable<[Renderer, FrameCollection]>;
 			const latest$render$frame$subscription = latest$render$frame$.subscribe(([render, frame]) => Render(render, frame));
 
-			this.subscriptions = [ latest$render$frame$subscription ];
+			this._subscriptions = [ latest$render$frame$subscription ];
 		}
 
 		dispose(): void {
-			this.subscriptions.forEach(subscription => subscription.unsubscribe());
-			this.subscriptions = [];
+			this._subscriptions.forEach(subscription => subscription.unsubscribe());
+			this._subscriptions = [];
 		}
 
 		public hot(app: ReduxApp<TState, TAction>) {
