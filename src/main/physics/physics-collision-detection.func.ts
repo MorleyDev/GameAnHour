@@ -1,22 +1,19 @@
-import { Observable } from "rxjs/Observable";
-
-import { intersect } from "../../core/extensions/Array.intersect.func";
 import { Shape2 } from "../../core/models/shapes.model";
-import { Seconds } from "../../core/models/time.model";
+import { HashMultiMap } from "../../core/utility/hashmultimap";
 import { EntityId } from "../../entity-component/entity-base.type";
-import { GenericAction } from "../../functional/generic.action";
-import { PhysicsChangeActiveCollisionsAction } from "./physics-change-active-collisions.action";
+import { GameState } from "../game-models";
 import { PhysicsCollidableComponent } from "./physics-collidable.component";
+import { PhysicsActiveCollisionsDelta } from "./physics-collision-delta.model";
 import { PhysicsPhysicalComponent } from "./physics-physical.component";
 import { PhysicsState } from "./physics-state";
 
-const applyPhysicsCollisionDetectionToState = <TState extends PhysicsState>(state: TState): GenericAction[] => {
+export const findPhysicsCollisionDetectionDelta = <TState extends PhysicsState>(state: TState): PhysicsActiveCollisionsDelta => {
 	if (!state.physics.collisions.enabled) {
-		return [];
-	}
+		return PhysicsActiveCollisionsDelta([], []);
+	};
 
 	const targetEntityIds = state.componentEntityLinks.at("PHYS_PhysicsCollidableComponent");
-	const targetEntities = Array.from( state.entities.subset(targetEntityIds).values() );
+	const targetEntities = Array.from(state.entities.subset(targetEntityIds).values());
 
 	let addedCollisions: [EntityId, EntityId][] = [];
 	let removedCollisions: [EntityId, EntityId][] = [];
@@ -57,10 +54,40 @@ const applyPhysicsCollisionDetectionToState = <TState extends PhysicsState>(stat
 	}
 
 	return addedCollisions.length > 0 || removedCollisions.length > 0
-		? [PhysicsChangeActiveCollisionsAction(addedCollisions, removedCollisions)]
-		: [];
+		? PhysicsActiveCollisionsDelta(addedCollisions, removedCollisions)
+		: PhysicsActiveCollisionsDelta([], []);
+};
+
+export function applyCollisionDetectionDelta(state: GameState, delta: PhysicsActiveCollisionsDelta) {
+	if (delta.active.length + delta.inactive.length === 0) {
+		return state;
+	}
+	return ({
+		...state,
+		physics: {
+			...state.physics,
+			collisions: {
+				...state.physics.collisions,
+				active: state.physics.collisions.active
+					.pipe(removeInactiveCollisions, delta.inactive)
+					.pipe(appendActiveCollisions, delta.active)
+			}
+		}
+	});
 }
 
-export const applyPhysicsCollisionDetection = <TState extends PhysicsState>(tick$: Observable<{ deltaTime: Seconds; state: TState }>): Observable<GenericAction> => {
-	return tick$.mergeMap(tick => applyPhysicsCollisionDetectionToState(tick.state));
+function removeInactiveCollisions(current: HashMultiMap<EntityId, EntityId>, inactiveSet: [EntityId, EntityId][]) {
+	return inactiveSet.reduce((collisions, inactive) =>
+		collisions
+			.removeWhere(inactive[0], v => v === inactive[1])
+			.removeWhere(inactive[1], v => v === inactive[0]), current
+	);
+}
+
+function appendActiveCollisions(current: HashMultiMap<EntityId, EntityId>, activeSet: [EntityId, EntityId][]) {
+	return activeSet.reduce((collisions, active) =>
+		collisions
+			.append(active[0], active[1])
+			.append(active[1], active[0]), current
+	);
 }
