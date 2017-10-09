@@ -3,13 +3,13 @@ import { combineEpics, createEpicMiddleware } from "redux-observable";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
+import { switchMap } from "rxjs/operator/switchMap";
 import { filter } from "rxjs/operator/filter";
 import { map } from "rxjs/operator/map";
 import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
 
 import { App } from "../core/App";
-import { AppConstructor } from "../core/App.constructor";
 import { EventHandler } from "../core/events/eventhandler.service";
 import { fcall } from "../core/extensions/Object.fcall.func";
 import { Renderer } from "../core/graphics/renderer.service";
@@ -64,10 +64,11 @@ export function createReduxApp<
 
 			// Good lord this would be cleaned up by :: sooooooo much
 			const keypresses$ = keyPresses(this.events.keyDown(), this.events.keyUp());
-			const latest$tickState$ = fcall(this.tick$, map, (deltaTime: Seconds) => ({ state: this.store.getState(), deltaTime })) as Observable<{ state: TState; deltaTime: Seconds }>;
+
+			const latest$tickState$ = fcall(this.state$, switchMap, (state: TState) => fcall(this.tick$, map, (deltaTime: Seconds) => ({ state, deltaTime })));
 			const merged$actions$ = merge(app.update(latest$tickState$), keypresses$);
 
-			const latest$render$state$ = fcall(this.render$, map, (renderer: Renderer) => [renderer, this.store.getState()]) as Observable<[Renderer, TState]>;
+			const latest$render$state$ = fcall(this.state$, switchMap, (state: TState) => fcall(this.render$, map, (renderer: Renderer) => [renderer, state]) as Observable<[Renderer, TState]>);
 			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, app.render(state)]) as Observable<[Renderer, FrameCollection]>;
 
 			const latest$state$ = fcall(this.state$, distinctUntilChanged);
@@ -77,8 +78,8 @@ export function createReduxApp<
 			const merged$actions$subscription = merged$actions$.subscribe(action => this.store.dispatch(action as any));
 
 			const latest$state$terminated$subscription = latest$state$terminated.subscribe(() => {
-				this.shutdown();
 				this.dispose();
+				this.shutdown();
 			});
 			this.subscriptions = [
 				latest$state$terminated$subscription,
@@ -86,6 +87,8 @@ export function createReduxApp<
 				merged$actions$subscription,
 				latest$state$terminated$subscription
 			];
+
+			this.state$.next(this.store.getState());
 		}
 
 		dispose(): void {
