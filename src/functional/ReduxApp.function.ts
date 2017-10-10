@@ -81,7 +81,7 @@ export function createReduxApp<
 			const epic$reemitting$actions$ = fcall(app.epic(merged$core$epic$actions$), filter, (action: TAction) => { epic$actions$.next(action); return false; });
 			const all$actions$ = merge(merged$core$epic$actions$, epic$reemitting$actions$);
 
-			const scan$state$ = reduxScan(all$actions$, (state: TState, action: TAction) => app.reducer(state, action), this._prevState || app.initialState);
+			const scan$state$ = reduxScan(all$actions$, (state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState);
 			const state$ = fcall(scan$state$, _do, (state: any) => {
 				this._prevState = state;
 				if (state && state.system && state.system.terminate) {
