@@ -1,16 +1,23 @@
-import { main } from "../core/main";
-import { createReduxApp } from "../functional/ReduxApp.function";
-import { GameAction, GameState } from "./game-models";
-import * as game from "./game-redux";
+import { Observable } from "rxjs/Observable";
+import { merge } from "rxjs/observable/merge";
 
-const app = createReduxApp<GameState, GameAction>(game.app);
-const run = main(app);
+import { Vector2 } from "../core/maths/vector.maths";
+import { entityComponentReducer } from "../entity-component/entity-component.reducer";
+import { Clear, Origin, Scale } from "../functional/render-frame.model";
+import { GameState, initialState } from "./game-initial-state";
+import { GameAction } from "./game-models";
 
-if ((module as any).hot) {
-	(window as any).app = run;
-	(module as any).hot.accept("./game-redux", () => {
-		const newGame: typeof game = require("./game-redux");
-		console.log("Accepting the new game-redux", newGame.app.initialState);
-		run.hot(newGame.app);
-	});
-}
+const reducer = (state: GameState, action: GameAction) => state
+	.pipe(entityComponentReducer, action);
+
+const render = (state: GameState) => [
+	Clear,
+	Origin({ x: 320, y: 240 }, [
+		Scale(Vector2(320, 240), [
+		])
+	])
+];
+
+const epic = (action$: Observable<GameAction>) => merge();
+
+export const app = { epic, initialState, reducer, render };

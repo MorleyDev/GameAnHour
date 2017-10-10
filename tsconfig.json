@@ -15,7 +15,8 @@
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
         "outDir": "dist",
-        "sourceMap": true
+        "sourceMap": true,
+        "allowJs": true
     },
     "exclude": [
         "webpack.config.js",

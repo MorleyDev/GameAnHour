@@ -4,9 +4,10 @@ import { merge } from "rxjs/observable/merge";
 import { of as of$ } from "rxjs/observable/of";
 import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
 import { _do } from "rxjs/operator/do";
+import { filter } from "rxjs/operator/filter";
+import { publish } from "rxjs/operator/publish";
 import { map } from "rxjs/operator/map";
 import { scan } from "rxjs/operator/scan";
-import { filter } from "rxjs/operator/filter";
 import { switchMap } from "rxjs/operator/switchMap";
 import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
@@ -22,6 +23,7 @@ import { Render } from "./render-frame.function";
 import { FrameCollection } from "./render-frame.model";
 import { KeyDownAction } from "./system-keydown.action";
 import { KeyUpAction } from "./system-keyup.action";
+import { ConnectableObservable } from "rxjs/observable/ConnectableObservable";
 
 export function createReduxApp<
 	TState,
@@ -75,7 +77,7 @@ export function createReduxApp<
 			const core$actions$ = merge(of$({ type: "@@INIT" }), tick$action$, keypresses$, this.actions$) as Observable<TAction>;
 
 			const epic$actions$ = new Subject<TAction>();
-			const merged$core$epic$actions$ = merge(core$actions$, epic$actions$);
+			const merged$core$epic$actions$ = fcall(merge(core$actions$, epic$actions$), publish) as ConnectableObservable<TAction>;
 			const epic$reemitting$actions$ = fcall(app.epic(merged$core$epic$actions$), filter, (action: TAction) => { epic$actions$.next(action); return false; });
 			const all$actions$ = merge(merged$core$epic$actions$, epic$reemitting$actions$);
 
@@ -91,7 +93,10 @@ export function createReduxApp<
 			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, app.render(state)]) as Observable<[Renderer, FrameCollection]>;
 			const latest$render$frame$subscription = latest$render$frame$.subscribe(([render, frame]) => Render(render, frame));
 
-			this._subscriptions = [ latest$render$frame$subscription ];
+			this._subscriptions = [
+				latest$render$frame$subscription,
+				merged$core$epic$actions$.connect()
+			];
 		}
 
 		dispose(): void {

@@ -21,6 +21,9 @@ function RenderCommand(canvas: Renderer, command: Frame): Renderer {
 			case "rotate":
 				return RenderRotate(canvas, command as Rotate);
 
+			case "scale":
+				return RenderScale(canvas, command as Scale);
+
 			case "fill":
 				return RenderFill(canvas, command as Fill);
 

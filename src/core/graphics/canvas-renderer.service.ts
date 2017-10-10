@@ -47,7 +47,7 @@ export class CanvasRenderer implements Renderer {
 			}
 			this.context.fill();
 		} else if (Text2.is(pos)) {
-			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}`;
+			this.context.font = `${pos.fontSize || "1em"} ${pos.fontFamily || "Arial"}`;
 			this.context.fillText(pos.text, pos.x, pos.y, pos.width);
 		} else if (Rectangle.is(pos)) {
 			this.context.fillRect(pos.x, pos.y, pos.width, pos.height);
@@ -69,7 +69,7 @@ export class CanvasRenderer implements Renderer {
 			}
 			this.context.stroke();
 		} else if (Text2.is(pos)) {
-			this.context.font = `${pos.fontFamily || "Arial"} ${pos.fontSize || "1em"}`;
+			this.context.font = `${pos.fontSize || "10px"} ${pos.fontFamily || "serif"}`;
 			this.context.strokeText(pos.text, pos.x, pos.y, pos.width);
 		} else if (Rectangle.is(pos)) {
 			this.context.strokeRect(pos.x, pos.y, pos.width, pos.height);
