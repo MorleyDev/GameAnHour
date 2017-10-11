@@ -1,12 +1,16 @@
+import { empty } from "rxjs/observable/empty";
+import { GenericAction } from "./generic.action";
+import { profile } from "../core/profiler";
 import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
+import { ConnectableObservable } from "rxjs/observable/ConnectableObservable";
 import { merge } from "rxjs/observable/merge";
 import { of as of$ } from "rxjs/observable/of";
 import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
 import { _do } from "rxjs/operator/do";
 import { filter } from "rxjs/operator/filter";
-import { publish } from "rxjs/operator/publish";
 import { map } from "rxjs/operator/map";
+import { publish } from "rxjs/operator/publish";
 import { scan } from "rxjs/operator/scan";
 import { switchMap } from "rxjs/operator/switchMap";
 import { Subject } from "rxjs/Subject";
@@ -23,34 +27,20 @@ import { Render } from "./render-frame.function";
 import { FrameCollection } from "./render-frame.model";
 import { KeyDownAction } from "./system-keydown.action";
 import { KeyUpAction } from "./system-keyup.action";
-import { ConnectableObservable } from "rxjs/observable/ConnectableObservable";
 
 export function createReduxApp<
 	TState,
-	TAction
+	TAction extends GenericAction = GenericAction
 >(app: ReduxApp<TState, TAction>) {
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
-	const stats: { [key: string]: { count: number; max: number; min: number, avg: number; } } = {};
-	(window as any).stats = stats;
-
 	const reduxScan = (self: Observable<TAction>, scanner: (state: TState, action: TAction) => TState, initial: TState): Observable<TState> => {
 		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
-		return fcall(self, scan, (state: TState, action: TAction): TState => {
-			const startTime = new Date().valueOf();
+		return fcall(self, scan, (state: TState, action: TAction): TState => profile(action.type, () => {
 			store.dispatch(action as any);
-			const endTime = new Date().valueOf();
-			const takenTime = endTime - startTime;
-			const currentStats = stats[((action as any).type as string)] || { count: 0, max: takenTime, min: takenTime, avg: takenTime };
-			stats[((action as any).type as string)] = {
-				count: currentStats.count + 1,
-				max: Math.max(takenTime, currentStats.max),
-				min: Math.min(takenTime, currentStats.min),
-				avg: (takenTime + currentStats.avg) / 2
-			};
 			return store.getState();
-		}, initial);
+		}), initial);
 	};
 	const fastScan = (self: Observable<TAction>, scanner: (state: TState, action: TAction) => TState, initial: TState): Observable<TState> =>
 		fcall(self, scan, scanner, initial);
@@ -74,14 +64,14 @@ export function createReduxApp<
 		initialise(app: ReduxApp<TState, TAction>) {
 			const tick$action$ = fcall(this.tick$, map, (deltaTime: Seconds) => ({ type: "@@TICK", deltaTime }));
 			const keypresses$ = keyPresses(this.events.keyDown(), this.events.keyUp());
-			const core$actions$ = merge(of$({ type: "@@INIT" }), tick$action$, keypresses$, this.actions$) as Observable<TAction>;
+			const core$actions$ = merge(of$({ type: "@@INIT" }), tick$action$, keypresses$, this.actions$, app.bootstrap || empty()) as Observable<TAction>;
 
 			const epic$actions$ = new Subject<TAction>();
 			const merged$core$epic$actions$ = fcall(merge(core$actions$, epic$actions$), publish) as ConnectableObservable<TAction>;
 			const epic$reemitting$actions$ = fcall(app.epic(merged$core$epic$actions$), filter, (action: TAction) => { epic$actions$.next(action); return false; });
 			const all$actions$ = merge(merged$core$epic$actions$, epic$reemitting$actions$);
 
-			const scan$state$ = reduxScan(all$actions$, (state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState);
+			const scan$state$ = appScan(all$actions$, (state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState);
 			const state$ = fcall(scan$state$, _do, (state: any) => {
 				this._prevState = state;
 				if (state && state.system && state.system.terminate) {
@@ -90,8 +80,8 @@ export function createReduxApp<
 			});
 
 			const latest$render$state$ = fcall(state$, switchMap, (state: TState) => fcall(this.render$, map, (renderer: Renderer) => [renderer, state]) as Observable<[Renderer, TState]>);
-			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, app.render(state)]) as Observable<[Renderer, FrameCollection]>;
-			const latest$render$frame$subscription = latest$render$frame$.subscribe(([render, frame]) => Render(render, frame));
+			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, profile("@@PRERENDER", () => app.render(state))]) as Observable<[Renderer, FrameCollection]>;
+			const latest$render$frame$subscription = latest$render$frame$.subscribe(([render, frame]) => profile("@@RENDER", () => Render(render, frame)));
 
 			this._subscriptions = [
 				latest$render$frame$subscription,
@@ -105,7 +95,7 @@ export function createReduxApp<
 		}
 
 		public hot(app: ReduxApp<TState, TAction>) {
-			console.log("ReduxApp::hot(", app, ")");
+			console.warn("ReduxApp::hot(", app, ")");
 			this.dispose();
 			this.initialise(app);
 		}

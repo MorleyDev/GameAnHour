@@ -1,4 +1,5 @@
 import { Vector2 } from "./vector.maths";
+
 export type Radian = number;
 export type Degree = number;
 

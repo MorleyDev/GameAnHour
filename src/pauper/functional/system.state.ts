@@ -1,10 +1,14 @@
 export type SystemState = {
 	system: {
 		terminate: boolean;
+		tick: boolean;
 	}
 };
 
 export const SystemState = <TState>(state: TState): TState & SystemState => ({
-	system: { terminate: false },
-	...(state as any)
-});
+	...(state as any),
+	system: {
+		terminate: false,
+		tick: true
+	}
+} as TState & SystemState);

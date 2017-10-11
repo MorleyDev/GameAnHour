@@ -1,7 +1,7 @@
-import { EntitiesState } from "../entity-component/entities.state";
-import { SystemState } from "../functional/system.state";
+import { EntitiesState } from "../pauper/entity-component";
+import { SystemState } from "../pauper/functional";
+import { GameState } from "./game.model";
 
-export type GameState = EntitiesState & SystemState;
 export const initialState: GameState = { }
 	.pipe(SystemState)
-	.pipe(EntitiesState([]));
+	.pipe(EntitiesState());

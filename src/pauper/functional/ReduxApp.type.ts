@@ -5,6 +5,7 @@ import { FrameCollection } from "./render-frame.model";
 
 export type ReduxApp<TState, TAction> = {
 	initialState: TState;
+	bootstrap: Observable<TAction>;
 	reducer: (prev: TState, curr: TAction) => TState;
 	render: (state: TState) => FrameCollection;
 	epic: (action: Observable<TAction>) => Observable<TAction>;

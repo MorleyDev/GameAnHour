@@ -82,7 +82,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 export interface HashMap<TKey extends string, TValue> extends HashMapInner<TKey, TValue> { };
 
 export const HashMap = Object.assign(
-	<TKey extends string, TValue>(json: Map<TKey, TValue>): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(Map(json)),
+	<TKey extends string, TValue>(json?: Map<TKey, TValue>): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(json ? Map(json) : Map()),
 	{
 		fromMap: <K extends string, T>(map: Map<K, T>) => new HashMapInner<K, T>(map),
 		fromArray: <K extends string, T>(array: [K, T][]) => new HashMapInner<K, T>(Map(array.map(([k, v]) => [k, v] as [K, T])))

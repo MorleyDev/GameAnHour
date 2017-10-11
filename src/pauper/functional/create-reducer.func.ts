@@ -1,8 +1,9 @@
-import { HashMultiMap } from "../core/utility/hashmultimap";
-import { GenericAction } from "./generic.action";
 import { List } from "immutable";
 
-export function createReducer<TState, TAction extends GenericAction = GenericAction>(...reducer: [string, (state: TState, action: TAction) => TState][]) {
+import { GenericAction } from "./generic.action";
+import { SpecificReducer } from "./reducer.type";
+
+export function createReducer<TState, TAction extends GenericAction = GenericAction>(...reducer: [string, (state: TState, action: TAction) => TState][]): SpecificReducer<TState, TAction> {
 	const reducerMap = List(reducer)
 		.groupBy(r => r[0])
 		.map(r => r.map(l => l[1]));

@@ -1,3 +1,4 @@
+import { SpecificReducer } from "../functional/reducer.type";
 import { List, Map, Set } from "immutable";
 
 import { HashMap } from "../core/utility/hashmap";
@@ -11,7 +12,7 @@ export function createEntityReducer<
 	TAction extends GenericAction = GenericAction,
 	TEntity extends BaseEntity = BaseEntity,
 	TComponent extends BaseComponent = BaseComponent
-	>(components: string[], reducer: (state: TState, action: TAction, ...components: TComponent[]) => Iterable<TComponent>): (state: TState, action: TAction) => TState {
+	>(components: string[], reducer: (state: TState, action: TAction, ...components: TComponent[]) => Iterable<TComponent>): SpecificReducer<TState, TAction> {
 	return updateEntities<TState, TAction>(components)((state, entity, action) => {
 		const newComponents = reducer(state, action as TAction, ...components.map(name => entity.components.at(name)! as TComponent));
 		const newComponentPairs = List(newComponents).map(component => [component.name, component] as [string, TComponent]);
