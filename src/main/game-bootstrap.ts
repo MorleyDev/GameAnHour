@@ -1,28 +1,18 @@
-import { Point2 } from "../pauper/core/models/shapes.model";
-import { Circle } from "../pauper/core/models/circle/circle.model";
+import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of as of$ } from "rxjs/observable/of";
 
 import { EntityId } from "../pauper/entity-component/entity-base.type";
-import { AttachComponentAction, CreateEntityAction } from "../pauper/entity-component/entity-component.actions";
-import { Fill } from "../pauper/functional/render-frame.model";
+import { GenericAction } from "../pauper/functional/generic.action";
+import { CreateBallEntityActions } from "./entities/BallEntity";
+import { CreateBlockEntityActions } from "./entities/BlockEntity";
+import { CreatePaddleEntityActions } from "./entities/PaddleEntity";
 
-const createBall$ = of$(EntityId())
+const blockGrid = Array(5).fill(0).mergeMap((_, j) => Array(12).fill(0).map((_, i) => [i, j]));
+
+export const bootstrap: Observable<GenericAction> = of$(EntityId())
 	.mergeMap(entityId => [
-		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, {
-			name: "RENDER_SIMPLE", render: () => [
-				Fill(Circle(0, 0, 10), "blue")
-			]
-		}),
-		AttachComponentAction(entityId, {
-			name: "POSITION", position: Point2(-100, 100)
-		}),
-		AttachComponentAction(entityId, {
-			name: "ROTATE"
-		})
+		...CreateBallEntityActions(),
+		...CreatePaddleEntityActions(),
+		...blockGrid.mergeMap(([x, y]) => CreateBlockEntityActions(x, y))
 	]);
-
-export const bootstrap = merge(
-	createBall$
-);

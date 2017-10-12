@@ -1,3 +1,6 @@
+import { PositionComponent } from "./components/PositionComponent";
+import { RenderComponent } from "./components/RenderComponent";
+import { ShapeComponent } from "./components/ShapeComponent";
 import { createReducer } from "../pauper/functional/create-reducer.func";
 import { TickAction } from "../pauper/functional/system-tick.action";
 import { rotate2d } from "../pauper/core/maths/angles.maths";
@@ -7,38 +10,24 @@ import { EntityId } from "../pauper/entity-component/entity-base.type";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 
-import { Circle, Point2 } from "../pauper/core/models/shapes.model";
+import { Circle, Point2, Shape2 } from "../pauper/core/models/shapes.model";
 import { entityComponentReducer, createEntitiesStateMap } from "../pauper/entity-component";
 import { Clear, Fill, FrameCollection, Origin } from "../pauper/functional/render-frame.model";
 import { GameAction, GameState } from "./game.model";
 
-const rotator = createReducer(
-	["@@TICK", createEntityReducer(
-	["POSITION", "ROTATE"],
-	(state: GameState, action: TickAction, position: { name: string; position: Point2 }, rotate: BaseComponent) => [
-		{ ...position, position: rotate2d(position.position, action.deltaTime) },
-		rotate
-	])]
-);
-
 export const reducer = (state: GameState, action: GameAction) => state
-	.pipe(entityComponentReducer, action)
-	.pipe(rotator, action);
+	.pipe(entityComponentReducer, action);
 
-const renderPositionedSimple = createEntitiesStateMap(
-	["POSITION", "RENDER_SIMPLE"],
-	(entityId: EntityId, { position }: { position: Point2 }, { render }: { render: () => FrameCollection }) => {
-		return Origin(position, [
-			render()
-		]);
-	}
+const renderShapes = createEntitiesStateMap(
+	[PositionComponent, ShapeComponent, RenderComponent],
+	(_: EntityId, position: PositionComponent, shape: ShapeComponent, render: RenderComponent) => 
+	Fill(Shape2.add(shape.shape, position.position), render.colour)
 );
 
 export const render = (state: GameState) => [
 	Clear,
 	Origin(Point2(320, 240), [
-		Fill(Circle(0, 0, 100), "red"),
-		...renderPositionedSimple(state)
+		...renderShapes(state)
 	])
 ];
 
