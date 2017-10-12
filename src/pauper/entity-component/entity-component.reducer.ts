@@ -18,8 +18,7 @@ import { createReducer } from "../functional/create-reducer.func";
 export const entityComponentReducer: GenericReducer = createReducer<EntitiesState, GenericAction>(
 	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => ({
 		...state,
-		entities: state.entities.append(action.entity.id, action.entity),
-		componentEntityLinks: state.componentEntityLinks.appendMap(action.entity.components.hmap(([_, component]) => [_, action.entity.id]))
+		entities: state.entities.append(action.id, { id: action.id, components: HashMap<EntityId, BaseComponent>() }),
 	})],
 	["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => ({
 		...state,
