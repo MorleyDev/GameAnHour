@@ -1,6 +1,4 @@
 dist/
 out/
-.vscode/
-!.vscode/settings.json
 yarn.lock
 node_modules

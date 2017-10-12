@@ -53,6 +53,7 @@ export function createReduxApp<
 		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
 		public readonly render$: Subject<Renderer> = new Subject<Renderer>();
 		public readonly actions$: Subject<TAction> = new Subject<TAction>();
+		public readonly enableTick: boolean = true;
 
 		private _subscriptions: Subscription[] = [];
 		private _prevState: TState | undefined = undefined;
@@ -101,6 +102,10 @@ export function createReduxApp<
 		}
 
 		update(deltaTime: Seconds): void {
+			if (!this.enableTick) {
+				return;
+			}
+
 			this.tick$.next(deltaTime);
 		}
 
