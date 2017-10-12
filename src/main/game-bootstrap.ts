@@ -14,5 +14,6 @@ export const bootstrap: Observable<GenericAction> = of$(EntityId())
 	.mergeMap(entityId => [
 		...CreateBallEntityActions(),
 		...CreatePaddleEntityActions(),
-		...blockGrid.mergeMap(([x, y]) => CreateBlockEntityActions(x, y))
+		...blockGrid.mergeMap(([x, y]) => CreateBlockEntityActions(x, y)),
+		{ type: "GameReady" }
 	]);

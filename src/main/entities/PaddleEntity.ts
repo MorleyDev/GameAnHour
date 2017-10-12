@@ -7,9 +7,10 @@ import { EntityId } from "../../pauper/entity-component/entity-base.type";
 import { AttachComponentAction, CreateEntityAction } from "../../pauper/entity-component/entity-component.actions";
 
 export const CreatePaddleEntityActions = () => {
-	const entityId = EntityId();
+	const entityId = "Paddle" + EntityId();
 	return [
 		CreateEntityAction(entityId),
+		AttachComponentAction(entityId, { name: "Paddle" }),
 		AttachComponentAction(entityId, CreatePositionComponent(Point2(0, 220))),
 		AttachComponentAction(entityId, CreateShapeComponent(Rectangle(-20, -5, 40, 10))),
 		AttachComponentAction(entityId, CreateRenderComponent("red"))

@@ -12,7 +12,7 @@ export type EntitiesState = {
 	readonly componentEntityLinks: HashMultiMap<string, EntityId>;
 };
 
-export const EntitiesState = <TState>(): (state: TState) => TState & EntitiesState => state => ({
+export const EntitiesState = <TState>(state: TState): TState & EntitiesState => ({
 	...(state as any),
 	entities: HashMap<EntityId, BaseEntity>(),
 	componentEntityLinks: HashMultiMap<string, EntityId>()

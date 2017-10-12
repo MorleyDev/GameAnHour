@@ -16,29 +16,47 @@ import {
 import { createReducer } from "../functional/create-reducer.func";
 
 export const entityComponentReducer: GenericReducer = createReducer<EntitiesState, GenericAction>(
-	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => ({
-		...state,
-		entities: state.entities.append(action.id, { id: action.id, components: HashMap<EntityId, BaseComponent>() }),
-	})],
-	["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => ({
-		...state,
-		entities: state.entities.remove(action.id),
-		componentEntityLinks: state.componentEntityLinks.filter(([_, entityId]) => entityId === action.id)
-	})],
-	["EC_AttachComponentAction", (state: EntitiesState, action: AttachComponentAction) => ({
-		...state,
-		entities: state.entities.update(action.id, entity => ({
-			...entity,
-			components: entity.components.append(action.component.name, action.component)
-		})),
-		componentEntityLinks: state.componentEntityLinks.append(action.component.name, action.id)
-	})],
-	["EC_DetachComponentAction", (state: EntitiesState, action: DetachComponentAction) => ({
-		...state,
-		entities: state.entities.update(action.id, entity => ({
-			...entity,
-			components: entity.components.remove(action.component)
-		})),
-		componentEntityLinks: state.componentEntityLinks.removeWhere(action.component, entityId => entityId === action.id)
-	})]
+	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => createEntity(state, action.id)],
+	["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => destroyEntity(state, action.id)],
+	["EC_AttachComponentAction", (state: EntitiesState, action: AttachComponentAction) => attachComponent(state, action.id, action.component)],
+	["EC_DetachComponentAction", (state: EntitiesState, action: DetachComponentAction) => detachComponent(state, action.id, action.component)]
 ) as GenericReducer;
+
+export function createEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
+	return {
+		...(state as any),
+		entities: state.entities.append(id, { id, components: HashMap<EntityId, BaseComponent>() }),
+	};
+}
+
+export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
+	return {
+		...(state as any),
+		entities: state.entities.remove(id),
+		componentEntityLinks: state.componentEntityLinks.filter(([_, entityId]) => entityId !== id)
+	};
+}
+
+export function attachComponent<TState extends EntitiesState>(state: TState, id: EntityId, component: BaseComponent): TState {
+	return {
+		...(state as any),
+		entities: state.entities.update(id, entity => ({
+			...entity,
+			components: entity.components.append(component.name, component)
+		})),
+		componentEntityLinks: state.componentEntityLinks.append(component.name, id)
+	};
+}
+
+export function detachComponent<TState extends EntitiesState>(state: TState, id: EntityId, componentName: string): TState {
+	return {
+		...(state as any),
+		entities: state.entities.update(id, entity => ({
+			...entity,
+			components: entity.components.remove(componentName)
+		})),
+		componentEntityLinks: state.componentEntityLinks.removeWhere(componentName, entityId => entityId === id)
+	};
+}
+
+
