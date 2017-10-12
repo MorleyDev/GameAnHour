@@ -38,96 +38,72 @@ const velocityPositionTickReducer = createEntityReducer(
 	]
 );
 
+function bounceBall(ballId: EntityId, state: GameState, direction: CardinalDirection | null): GameState {
+	if (direction == null) {
+		return state;
+	}
+	return {
+		...state,
+		entities: state.entities.update(ballId, entity => ({
+			...entity,
+			components: entity.components.update(VelocityComponent, (component: VelocityComponent) => ({
+				...component,
+				velocity: Vector2(
+					patternMatch(direction,
+						[CardinalDirection.Left, () => -Math.abs(component.velocity.x)],
+						[CardinalDirection.Right, () => Math.abs(component.velocity.x)],
+						[_, () => component.velocity.x]
+					),
+					patternMatch(direction,
+						[CardinalDirection.Up, () => -Math.abs(component.velocity.y)],
+						[CardinalDirection.Down, () => Math.abs(component.velocity.y)],
+						[_, () => component.velocity.y]
+					),
+				)
+			}))
+		}))
+	};
+}
+
 function ballBlockCollisionDetectionReducer(state: GameState, action: TickAction): GameState {
 	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
 	const blocks = state.componentEntityLinks.at("Block").map(id => state.entities.at(id)!);
 
-	let nextState = state;
-	balls.forEach(ball => {
+	return balls.reduce((state, ball) => {
 		const ballCollision = Shape2.add((ball.components.at(ShapeComponent)! as ShapeComponent).shape, (ball.components.at(PositionComponent)! as PositionComponent).position);
-		blocks.forEach(block => {
+		return blocks.reduce((state, block) => {
 			const blockCollision = Shape2.add((block.components.at(ShapeComponent)! as ShapeComponent).shape, (block.components.at(PositionComponent)! as PositionComponent).position);
-
-			if (Shape2.collision(ballCollision, blockCollision)) {
-				const shapeLines = Rectangle.lines(blockCollision as Rectangle);
-				nextState = destroyEntity(state, block.id);
-
-				const bounceDir = patternMatch(_,
-					[() => Shape2.collision(ballCollision, shapeLines.bottom), () => CardinalDirection.Down],
-					[() => Shape2.collision(ballCollision, shapeLines.top), () => CardinalDirection.Up],
-					[() => Shape2.collision(ballCollision, shapeLines.right), () => CardinalDirection.Left],
-					[() => Shape2.collision(ballCollision, shapeLines.left), () => CardinalDirection.Right],
-					[_, () => null]
-				);
-				if (bounceDir != null) {
-					nextState = {
-						...nextState,
-						entities: nextState.entities.update(ball.id, entity => ({
-							...entity,
-							components: entity.components.update(VelocityComponent, (component: VelocityComponent) => ({
-								...component,
-								velocity: Vector2(
-									patternMatch(bounceDir,
-										[CardinalDirection.Left, () => -Math.abs(component.velocity.x)],
-										[CardinalDirection.Right, () => Math.abs(component.velocity.x)],
-										[_, () => component.velocity.x]
-									),
-									patternMatch(bounceDir,
-										[CardinalDirection.Up, () => -Math.abs(component.velocity.y)],
-										[CardinalDirection.Down, () => Math.abs(component.velocity.y)],
-										[_, () => component.velocity.y]
-									),
-								)
-							}))
-						}))
-					};
-				}
+			if (!Shape2.collision(ballCollision, blockCollision)) {
+				return state;
 			}
-		});
-	});
-	return nextState;
+
+			const shapeLines = Rectangle.lines(blockCollision as Rectangle);
+			const bounceDir = patternMatch(_,
+				[() => Shape2.collision(ballCollision, shapeLines.bottom), () => CardinalDirection.Down],
+				[() => Shape2.collision(ballCollision, shapeLines.top), () => CardinalDirection.Up],
+				[() => Shape2.collision(ballCollision, shapeLines.right), () => CardinalDirection.Left],
+				[() => Shape2.collision(ballCollision, shapeLines.left), () => CardinalDirection.Right],
+				[_, () => null]
+			);
+			return bounceBall(ball.id, destroyEntity(state, block.id), bounceDir);
+		}, state);
+	}, state);
 }
 
-
 function ballWallCollisionDetectionReducer(state: GameState, action: TickAction): GameState {
-	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
-
-	let nextState = state;
-	balls.forEach(ball => {
-		const ballCollision = Shape2.add((ball.components.at(ShapeComponent)! as ShapeComponent).shape, (ball.components.at(PositionComponent)! as PositionComponent).position);
-
-		const bounce = patternMatch(ballCollision,
-			[b => Shape2.collision(b, Line2(Point2(-320, -240), Point2(-320, 240))), () => CardinalDirection.Right],
-			[b => Shape2.collision(b, Line2(Point2(320, -240), Point2(320, 240))), () => CardinalDirection.Left],
-			[b => Shape2.collision(b, Line2(Point2(-320, 240), Point2(320, 240))), () => CardinalDirection.Up],
-			[b => Shape2.collision(b, Line2(Point2(-320, -240), Point2(320, -240))), () => CardinalDirection.Down],
-			[_, () => null]
-		);
-		if (bounce != null) {
-			nextState = {
-				...nextState,
-				entities: nextState.entities.update(ball.id, entity => ({
-					...entity,
-					components: entity.components.update(VelocityComponent, (component: VelocityComponent) => ({
-						...component,
-						velocity: Vector2(
-							patternMatch(bounce,
-								[CardinalDirection.Left, () => -Math.abs(component.velocity.x)],
-								[CardinalDirection.Right, () => Math.abs(component.velocity.x)],
-								[_, () => component.velocity.x]
-							),
-							patternMatch(bounce,
-								[CardinalDirection.Up, () => -Math.abs(component.velocity.y)],
-								[CardinalDirection.Down, () => Math.abs(component.velocity.y)],
-								[_, () => component.velocity.y]
-							),
-						)
-					}))
-				}))
-			};
-		}
-	});
-	return nextState;
+	return state.componentEntityLinks.at("Ball")
+		.map(id => state.entities.at(id)!)
+		.reduce((state, ball) => {
+			const ballCollision = Shape2.add((ball.components.at(ShapeComponent)! as ShapeComponent).shape, (ball.components.at(PositionComponent)! as PositionComponent).position);
+			const bounce = patternMatch(ballCollision,
+				[b => Shape2.collision(b, Line2(Point2(-320, -240), Point2(-320, 240))), () => CardinalDirection.Right],
+				[b => Shape2.collision(b, Line2(Point2(320, -240), Point2(320, 240))), () => CardinalDirection.Left],
+				[b => Shape2.collision(b, Line2(Point2(-320, 240), Point2(320, 240))), () => CardinalDirection.Up],
+				[b => Shape2.collision(b, Line2(Point2(-320, -240), Point2(320, -240))), () => CardinalDirection.Down],
+				[_, () => null]
+			);
+			return bounceBall(ball.id, state, bounce);
+		}, state);
 }
 
 const breakoutGameReducer = createReducer(
