@@ -1,27 +1,25 @@
-import { empty } from "rxjs/observable/empty";
-import { GenericAction } from "./generic.action";
-import { profile } from "../core/profiler";
 import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
-import { ConnectableObservable } from "rxjs/observable/ConnectableObservable";
+import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
 import { of as of$ } from "rxjs/observable/of";
-import { distinctUntilChanged } from "rxjs/operator/distinctUntilChanged";
-import { _do } from "rxjs/operator/do";
-import { filter } from "rxjs/operator/filter";
-import { map } from "rxjs/operator/map";
-import { publish } from "rxjs/operator/publish";
-import { scan } from "rxjs/operator/scan";
-import { switchMap } from "rxjs/operator/switchMap";
+import { Observer } from "rxjs/Observer";
+import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
+import { map } from "rxjs/operators/map";
+import { scan } from "rxjs/operators/scan";
+import { reduce } from "rxjs/operators/reduce";
+import { switchMap } from "rxjs/operators/switchMap";
+import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
 
 import { App } from "../core/App";
 import { EventHandler } from "../core/events/eventhandler.service";
-import { fcall } from "../core/extensions/Object.fcall.func";
 import { Renderer } from "../core/graphics/renderer.service";
 import { Key } from "../core/models/keys.model";
 import { Seconds } from "../core/models/time.model";
+import { profile } from "../core/profiler";
+import { GenericAction } from "./generic.action";
 import { ReduxApp } from "./ReduxApp.type";
 import { Render } from "./render-frame.function";
 import { FrameCollection } from "./render-frame.model";
@@ -31,23 +29,23 @@ import { KeyUpAction } from "./system-keyup.action";
 export function createReduxApp<
 	TState,
 	TAction extends GenericAction = GenericAction
->(app: ReduxApp<TState, TAction>) {
+	>(app: ReduxApp<TState, TAction>) {
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
-	const reduxScan = (self: Observable<TAction>, scanner: (state: TState, action: TAction) => TState, initial: TState): Observable<TState> => {
+	const reduxScan = (scanner: (state: TState, action: TAction) => TState, initial: TState): (input: Observable<TAction>) => Observable<TState> => {
 		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
-		return fcall(self, scan, (state: TState, action: TAction): TState => profile(action.type, () => {
+
+		return self => self.let(scan((state: TState, action: TAction): TState => profile(action.type, () => {
 			store.dispatch(action as any);
 			return store.getState();
-		}), initial);
+		}), initial));
 	};
-	const fastScan = (self: Observable<TAction>, scanner: (state: TState, action: TAction) => TState, initial: TState): Observable<TState> =>
-		fcall(self, scan, scanner, initial);
+	const fastScan = scan;
 
 	const appScan = process && process.env && process.env["NODE_ENV"] === "Production"
 		? fastScan
-		: reduxScan;
+		: (() => { console.log("using reduxScan"); return reduxScan; })();
 
 	return class implements App {
 		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
@@ -59,35 +57,48 @@ export function createReduxApp<
 		private _prevState: TState | undefined = undefined;
 
 		constructor(private events: EventHandler, private shutdown: () => void) {
-			this.initialise(app);
+			this._subscriptions = [
+				this.initialise(app).subscribe(
+					(x) => { },
+					(err) => console.error(err),
+					() => console.log("???")
+				)
+			];
 		}
 
-		initialise(app: ReduxApp<TState, TAction>) {
-			const tick$action$ = fcall(this.tick$, map, (deltaTime: Seconds) => ({ type: "@@TICK", deltaTime }));
-			const keypresses$ = keyPresses(this.events.keyDown(), this.events.keyUp());
-			const core$actions$ = merge(of$({ type: "@@INIT" }), tick$action$, keypresses$, this.actions$, app.bootstrap || empty()) as Observable<TAction>;
+		initialise(app: ReduxApp<TState, TAction>): Observable<{}> {
+			console.log("initialise", app);
+			return (merge(
+				// Init
+				of$({ type: "@@INIT" }),
 
-			const epic$actions$ = new Subject<TAction>();
-			const merged$core$epic$actions$ = fcall(merge(core$actions$, epic$actions$), publish) as ConnectableObservable<TAction>;
-			const epic$reemitting$actions$ = fcall(app.epic(merged$core$epic$actions$), filter, (action: TAction) => { epic$actions$.next(action); return false; });
-			const all$actions$ = merge(merged$core$epic$actions$, epic$reemitting$actions$);
+				// Tick
+				this.tick$
+					.let(map((deltaTime: Seconds) => ({ type: "@@TICK", deltaTime }))),
 
-			const scan$state$ = appScan(all$actions$, (state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState);
-			const state$ = fcall(scan$state$, _do, (state: any) => {
-				this._prevState = state;
-				if (state && state.system && state.system.terminate) {
-					this.shutdown();
-				}
-			});
+				// Key presses
+				merge(
+					this.events.keyDown().let(map((key: Key) => ({ type: 0, key }))),
+					this.events.keyUp().let(map((key: Key) => ({ type: 1, key })))
+				)
+					.let(distinctUntilChanged((a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key))
+					.let(map((e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDownAction(e.key) : KeyUpAction(e.key))),
 
-			const latest$render$state$ = fcall(state$, switchMap, (state: TState) => fcall(this.render$, map, (renderer: Renderer) => [renderer, state]) as Observable<[Renderer, TState]>);
-			const latest$render$frame$ = fcall(latest$render$state$, map, ([renderer, state]: [Renderer, TState]) => [renderer, profile("@@PRERENDER", () => app.render(state))]) as Observable<[Renderer, FrameCollection]>;
-			const latest$render$frame$subscription = latest$render$frame$.subscribe(([render, frame]) => profile("@@RENDER", () => Render(render, frame)));
-
-			this._subscriptions = [
-				latest$render$frame$subscription,
-				merged$core$epic$actions$.connect()
-			];
+				this.actions$,
+				app.bootstrap || empty()
+			) as Observable<TAction>)
+				.let(selfFeeding(app.epic))
+				.let(appScan((state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState))
+				.let(tap((state: any) => {
+					this._prevState = state;
+					if (state && state.system && state.system.terminate) {
+						this.shutdown();
+					}
+				}))
+				.let(switchMap((state: TState) => this.render$.let(map((renderer: Renderer) => [renderer, state] as [Renderer, TState]))))
+				.let(map(([renderer, state]: [Renderer, TState]) => [renderer, profile("@@PRERENDER", () => app.render(state))] as [Renderer, FrameCollection]))
+				.let(map(([render, frame]) => profile("@@RENDER", () => Render(render, frame))))
+				.let(reduce((prev, curr) => ({ })));
 		}
 
 		dispose(): void {
@@ -98,7 +109,13 @@ export function createReduxApp<
 		public hot(app: ReduxApp<TState, TAction>) {
 			console.warn("ReduxApp::hot(", app, ")");
 			this.dispose();
-			this.initialise(app);
+			this._subscriptions = [
+				this.initialise(app).subscribe(
+					(x) => { },
+					(err) => console.error(err),
+					() => console.log("???")
+				)
+			];
 		}
 
 		update(deltaTime: Seconds): void {
@@ -115,12 +132,22 @@ export function createReduxApp<
 	};
 }
 
-function keyPresses(keydown: Observable<Key>, keyup: Observable<Key>): Observable<KeyUpAction | KeyDownAction> {
-	const keydown$ = fcall(keydown, map, (key: Key) => ({ type: 0, key }));
-	const keyup$ = fcall(keyup, map, (key: Key) => ({ type: 1, key }));
-	const merged$keyup$keydown$ = merge(keydown$, keyup$);
-	const keypress$ = fcall(merged$keyup$keydown$, distinctUntilChanged, (a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key);
-	const keypress$actions$ = fcall(keypress$, map, (e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDownAction(e.key) : KeyUpAction(e.key));
+function selfFeeding<T>(set: (o$: Observable<T>) => Observable<T>): (self: Observable<T>) => Observable<T> {
+	return bootstrap$ => {
+		return Observable.create((observer: Observer<T>) => {
+			const subject = new Subject<T>();
+			const boot = bootstrap$
+				.subscribe(bootstrap => {
+					subject.next(bootstrap);
+					observer.next(bootstrap);
+				}, err => observer.error(err), () => observer.complete());
 
-	return keypress$actions$ as Observable<KeyUpAction | KeyDownAction>;
+			const followUps = set(subject).subscribe(observer);
+
+			return () => {
+				boot.unsubscribe();
+				followUps.unsubscribe();
+			};
+		});
+	};
 }

@@ -11,6 +11,7 @@ const game: any = require("./main/game");
 const App = createReduxApp({ ...game, initialState, bootstrap });
 const app = main(App);
 
+console.log("Running game");
 if ((module as any).hot) {
 	(window as any).app = app;
 	(module as any).hot.accept("./main/game", () => {

@@ -19,4 +19,8 @@ export type GameState
 export type GameAction
 	= SystemAction
 	| { type: "GameReady" }
-	| { type: "RequestStartGame" };
+	| { type: "RequestStartGame" }
+	| { type: "Player_StartMovingLeft" }
+	| { type: "Player_StopMovingLeft" }
+	| { type: "Player_StartMovingRight" }
+	| { type: "Player_StopMovingRight" };
