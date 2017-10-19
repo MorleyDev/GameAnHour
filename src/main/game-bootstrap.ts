@@ -1,7 +1,6 @@
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of as of$ } from "rxjs/observable/of";
-
 import { EntityId } from "../pauper/entity-component/entity-base.type";
 import { GenericAction } from "../pauper/functional/generic.action";
 import { CreateBallEntityActions } from "./entities/BallEntity";

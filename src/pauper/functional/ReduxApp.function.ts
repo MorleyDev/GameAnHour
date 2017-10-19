@@ -6,8 +6,8 @@ import { of as of$ } from "rxjs/observable/of";
 import { Observer } from "rxjs/Observer";
 import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
 import { map } from "rxjs/operators/map";
-import { scan } from "rxjs/operators/scan";
 import { reduce } from "rxjs/operators/reduce";
+import { scan } from "rxjs/operators/scan";
 import { switchMap } from "rxjs/operators/switchMap";
 import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
@@ -36,7 +36,7 @@ export function createReduxApp<
 	const reduxScan = (scanner: (state: TState, action: TAction) => TState, initial: TState): (input: Observable<TAction>) => Observable<TState> => {
 		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
 
-		return self => self.let(scan((state: TState, action: TAction): TState => profile(action.type, () => {
+		return self => self.pipe(scan((state: TState, action: TAction): TState => profile(action.type, () => {
 			store.dispatch(action as any);
 			return store.getState();
 		}), initial));
@@ -51,12 +51,14 @@ export function createReduxApp<
 		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
 		public readonly render$: Subject<Renderer> = new Subject<Renderer>();
 		public readonly actions$: Subject<TAction> = new Subject<TAction>();
-		public readonly enableTick: boolean = true;
+		public readonly enableTick: boolean = false;
 
 		private _subscriptions: Subscription[] = [];
 		private _prevState: TState | undefined = undefined;
 
 		constructor(private events: EventHandler, private shutdown: () => void) {
+			const app$ = this.initialise(app);
+			(window as any).app$ = app$;
 			this._subscriptions = [
 				this.initialise(app).subscribe(
 					(x) => { },
@@ -67,38 +69,37 @@ export function createReduxApp<
 		}
 
 		initialise(app: ReduxApp<TState, TAction>): Observable<{}> {
-			console.log("initialise", app);
 			return (merge(
 				// Init
 				of$({ type: "@@INIT" }),
 
 				// Tick
 				this.tick$
-					.let(map((deltaTime: Seconds) => ({ type: "@@TICK", deltaTime }))),
+					.pipe(map((deltaTime: Seconds) => ({ type: "@@TICK", deltaTime }))),
 
 				// Key presses
 				merge(
-					this.events.keyDown().let(map((key: Key) => ({ type: 0, key }))),
-					this.events.keyUp().let(map((key: Key) => ({ type: 1, key })))
+					this.events.keyDown().pipe(map((key: Key) => ({ type: 0, key }))),
+					this.events.keyUp().pipe(map((key: Key) => ({ type: 1, key })))
 				)
-					.let(distinctUntilChanged((a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key))
-					.let(map((e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDownAction(e.key) : KeyUpAction(e.key))),
+					.pipe(distinctUntilChanged((a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key))
+					.pipe(map((e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDownAction(e.key) : KeyUpAction(e.key))),
 
 				this.actions$,
 				app.bootstrap || empty()
 			) as Observable<TAction>)
-				.let(selfFeeding(app.epic))
-				.let(appScan((state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState))
-				.let(tap((state: any) => {
+				.pipe(selfFeeding(app.epic))
+				.pipe(appScan((state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState))
+				.pipe(tap((state: any) => {
 					this._prevState = state;
 					if (state && state.system && state.system.terminate) {
 						this.shutdown();
 					}
 				}))
-				.let(switchMap((state: TState) => this.render$.let(map((renderer: Renderer) => [renderer, state] as [Renderer, TState]))))
-				.let(map(([renderer, state]: [Renderer, TState]) => [renderer, profile("@@PRERENDER", () => app.render(state))] as [Renderer, FrameCollection]))
-				.let(map(([render, frame]) => profile("@@RENDER", () => Render(render, frame))))
-				.let(reduce((prev, curr) => ({ })));
+				.pipe(switchMap((state: TState) => this.render$.pipe(map((renderer: Renderer) => [renderer, state] as [Renderer, TState]))))
+				.pipe(map(([renderer, state]: [Renderer, TState]) => [renderer, profile("@@PRERENDER", () => app.render(state))] as [Renderer, FrameCollection]))
+				.pipe(map(([render, frame]) => profile("@@RENDER", () => Render(render, frame))))
+				.pipe(reduce((prev, curr) => ({ })));
 		}
 
 		dispose(): void {
@@ -113,7 +114,7 @@ export function createReduxApp<
 				this.initialise(app).subscribe(
 					(x) => { },
 					(err) => console.error(err),
-					() => console.log("???")
+					() => { }
 				)
 			];
 		}

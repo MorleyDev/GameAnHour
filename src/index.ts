@@ -1,5 +1,4 @@
 import "./pauper/core/extensions";
-import "rxjs/Rx";
 
 import { bootstrap } from "./main/game-bootstrap";
 import { initialState } from "./main/game-initial-state";
