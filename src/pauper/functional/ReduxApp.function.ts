@@ -4,7 +4,6 @@ import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
 import { of as of$ } from "rxjs/observable/of";
 import { Observer } from "rxjs/Observer";
-import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
 import { map } from "rxjs/operators/map";
 import { reduce } from "rxjs/operators/reduce";
 import { scan } from "rxjs/operators/scan";
@@ -14,17 +13,14 @@ import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
 
 import { App } from "../core/App";
-import { EventHandler } from "../core/events/eventhandler.service";
 import { Renderer } from "../core/graphics/renderer.service";
-import { Key } from "../core/models/keys.model";
 import { Seconds } from "../core/models/time.model";
 import { profile } from "../core/profiler";
 import { GenericAction } from "./generic.action";
 import { ReduxApp } from "./ReduxApp.type";
 import { Render } from "./render-frame.function";
 import { FrameCollection } from "./render-frame.model";
-import { KeyDownAction } from "./system-keydown.action";
-import { KeyUpAction } from "./system-keyup.action";
+import { SystemState } from "./system.state";
 
 export function createReduxApp<
 	TState,
@@ -33,19 +29,20 @@ export function createReduxApp<
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
-	const reduxScan = (scanner: (state: TState, action: TAction) => TState, initial: TState): (input: Observable<TAction>) => Observable<TState> => {
+	const storeBackedScan = (scanner: (state: TState, action: TAction) => TState, initial: TState): (input: Observable<TAction>) => Observable<TState> => {
 		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
 
-		return self => self.pipe(scan((state: TState, action: TAction): TState => profile(action.type, () => {
-			store.dispatch(action as any);
-			return store.getState();
-		}), initial));
+		return self => self.pipe(
+			scan((state: TState, action: TAction): TState => profile(action.type, () => {
+				store.dispatch(action as any);
+				return store.getState();
+			}), initial));
 	};
 	const fastScan = scan;
 
-	const appScan = process && process.env && process.env["NODE_ENV"] === "Production"
+	const reduxScan = process && process.env && process.env["NODE_ENV"] === "Production"
 		? fastScan
-		: (() => { console.log("using reduxScan"); return reduxScan; })();
+		: (() => { console.log("using reduxScan"); return storeBackedScan; })();
 
 	return class implements App {
 		public readonly tick$: Subject<Seconds> = new Subject<Seconds>();
@@ -56,7 +53,7 @@ export function createReduxApp<
 		private _subscriptions: Subscription[] = [];
 		private _prevState: TState | undefined = undefined;
 
-		constructor(private events: EventHandler, private shutdown: () => void) {
+		constructor(private shutdown: () => void) {
 			const app$ = this.initialise(app);
 			(window as any).app$ = app$;
 			this._subscriptions = [
@@ -69,7 +66,7 @@ export function createReduxApp<
 		}
 
 		initialise(app: ReduxApp<TState, TAction>): Observable<{}> {
-			return (merge(
+			const actions$ = (merge(
 				// Init
 				of$({ type: "@@INIT" }),
 
@@ -77,29 +74,20 @@ export function createReduxApp<
 				this.tick$
 					.pipe(map((deltaTime: Seconds) => ({ type: "@@TICK", deltaTime }))),
 
-				// Key presses
-				merge(
-					this.events.keyDown().pipe(map((key: Key) => ({ type: 0, key }))),
-					this.events.keyUp().pipe(map((key: Key) => ({ type: 1, key })))
-				)
-					.pipe(distinctUntilChanged((a: { type: 0 | 1; key: Key }, b: { type: 0 | 1; key: Key }) => a.type === b.type && a.key === b.key))
-					.pipe(map((e: { type: 0 | 1; key: Key }) => e.type === 0 ? KeyDownAction(e.key) : KeyUpAction(e.key))),
-
 				this.actions$,
 				app.bootstrap || empty()
-			) as Observable<TAction>)
-				.pipe(selfFeeding(app.epic))
-				.pipe(appScan((state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState))
-				.pipe(tap((state: any) => {
-					this._prevState = state;
-					if (state && state.system && state.system.terminate) {
-						this.shutdown();
-					}
-				}))
-				.pipe(switchMap((state: TState) => this.render$.pipe(map((renderer: Renderer) => [renderer, state] as [Renderer, TState]))))
-				.pipe(map(([renderer, state]: [Renderer, TState]) => [renderer, profile("@@PRERENDER", () => app.render(state))] as [Renderer, FrameCollection]))
-				.pipe(map(([render, frame]) => profile("@@RENDER", () => Render(render, frame))))
-				.pipe(reduce((prev, curr) => ({ })));
+			) as Observable<TAction>);
+
+			return actions$.pipe(
+				selfFeeding(app.epic),
+				reduxScan((state: TState, action: TAction) => app.reducer(state, action), app.initialState || this._prevState),
+				tap(state => { this._prevState = state; }),
+				tap((state: Partial<SystemState>) => state && state.system && state.system.terminate && this.shutdown()),
+				switchMap((state: TState) => map((renderer: Renderer) => [renderer, state] as [Renderer, TState])(this.render$)),
+				map(([renderer, state]: [Renderer, TState]) => [renderer, profile("@@PRERENDER", () => app.render(state))] as [Renderer, FrameCollection]),
+				map(([render, frame]) => profile("@@RENDER", () => Render(render, frame))),
+				reduce((prev, curr) => ({}))
+			);
 		}
 
 		dispose(): void {

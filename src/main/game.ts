@@ -1,5 +1,8 @@
+import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
+import { fromEvent } from "rxjs/observable/fromEvent";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
+import { filter, takeUntil, map } from "rxjs/operators";
 
 import { Vector2 } from "../pauper/core/maths/vector.maths";
 import { CardinalDirection } from "../pauper/core/models/direction.model";
@@ -14,7 +17,6 @@ import { destroyEntity } from "../pauper/entity-component/entity-component.reduc
 import { KeyUpAction, TickAction } from "../pauper/functional";
 import { createReducer } from "../pauper/functional/create-reducer.func";
 import { Clear, Fill, Origin } from "../pauper/functional/render-frame.model";
-import { KeyDownAction } from "../pauper/functional/system-keydown.action";
 import { _, patternMatch } from "../pauper/functional/utility-pattern-match.function";
 import { PositionComponent } from "./components/PositionComponent";
 import { RenderComponent } from "./components/RenderComponent";
@@ -35,7 +37,7 @@ const startPlayerMove = (cardinal: CardinalDirection.Left | CardinalDirection.Ri
 	(state, action, velocity: VelocityComponent, paddle: any) => [
 		{
 			...velocity,
-			velocity: Vector2(cardinal == CardinalDirection.Left ? -PaddleSpeed : PaddleSpeed, 0)
+			velocity: Vector2(cardinal === CardinalDirection.Left ? -PaddleSpeed : PaddleSpeed, 0)
 		},
 		paddle
 	]
@@ -45,7 +47,7 @@ const stopPlayerMove = (cardinal: CardinalDirection.Left | CardinalDirection.Rig
 	(state, action, velocity: VelocityComponent, paddle: any) => [
 		{
 			...velocity,
-			velocity: Vector2(cardinal == CardinalDirection.Left ? Math.max(velocity.velocity.x, 0) : Math.min(velocity.velocity.x, 0), 0)
+			velocity: Vector2(cardinal === CardinalDirection.Left ? Math.max(velocity.velocity.x, 0) : Math.min(velocity.velocity.x, 0), 0)
 		},
 		paddle
 	]
@@ -197,33 +199,35 @@ export const render = (state: GameState) => [
 	])
 ];
 
-function onKeyDown(k: Key, action: () => GameAction): (action$: Observable<GameAction>) => Observable<GameAction> {
-	return (action$: Observable<GameAction>) => action$
-		.filter(KeyDownAction.is)
-		.map((action: KeyDownAction) => action.key)
-		.filter(key => key === k)
-		.map(_ => action());
+function onKeyDown(k: Key, action: () => GameAction): Observable<GameAction> {
+	return fromEvent(document, "keydown")
+		.pipe(
+			filter((key: KeyboardEvent) => key.keyCode === k),
+			distinctUntilChanged(),
+			map(action)
+		);
 }
 
-function onKeyUp(k: Key, action: () => GameAction): (action$: Observable<GameAction>) => Observable<GameAction> {
-	return (action$: Observable<GameAction>) => action$
-		.filter(KeyUpAction.is)
-		.map((action: KeyUpAction) => action.key)
-		.filter(key => key === k)
-		.map(_ => action());
+function onKeyUp(k: Key, action: () => GameAction): Observable<GameAction> {
+	return fromEvent(document, "keyup")
+		.pipe(
+			filter((key: KeyboardEvent) => key.keyCode === k),
+			distinctUntilChanged(),
+			map(action)
+		);
 }
 
 
-const requestStartGame = onKeyDown(Key.Space, () => ({ type: "RequestStartGame" }))
-const playerMoveLeftStart = onKeyDown(Key.LeftArrow, () => ({ type: "Player_StartMovingLeft" }))
-const playerMoveRightStart = onKeyDown(Key.RightArrow, () => ({ type: "Player_StartMovingRight" }))
-const playerMoveLeftStop = onKeyUp(Key.LeftArrow, () => ({ type: "Player_StopMovingLeft" }))
-const playerMoveRightStop = onKeyUp(Key.RightArrow, () => ({ type: "Player_StopMovingRight" }))
+const requestStartGame = onKeyDown(Key.Space, () => ({ type: "RequestStartGame" }));
+const playerMoveLeftStart = onKeyDown(Key.LeftArrow, () => ({ type: "Player_StartMovingLeft" }));
+const playerMoveRightStart = onKeyDown(Key.RightArrow, () => ({ type: "Player_StartMovingRight" }));
+const playerMoveLeftStop = onKeyUp(Key.LeftArrow, () => ({ type: "Player_StopMovingLeft" }));
+const playerMoveRightStop = onKeyUp(Key.RightArrow, () => ({ type: "Player_StopMovingRight" }));
 
 export const epic = (action$: Observable<GameAction>) => merge(
-	requestStartGame(action$),
-	playerMoveLeftStart(action$),
-	playerMoveLeftStop(action$),
-	playerMoveRightStart(action$),
-	playerMoveRightStop(action$)
+	requestStartGame,
+	playerMoveLeftStart,
+	playerMoveLeftStop,
+	playerMoveRightStart,
+	playerMoveRightStop
 );
