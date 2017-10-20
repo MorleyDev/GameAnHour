@@ -24,4 +24,4 @@ export type GameAction
 	| { readonly type: "Player_StopMovingLeft" }
 	| { readonly type: "Player_StartMovingRight" }
 	| { readonly type: "Player_StopMovingRight" }
-	| { readonly type: "PlaySound"; readonly soundName: "Boing" };
+	| { readonly type: "PlaySoundEffect"; readonly soundId: string; };

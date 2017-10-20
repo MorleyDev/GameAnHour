@@ -1,14 +1,13 @@
-import { fromPromise } from "rxjs/observable/fromPromise";
-import { WebAssetLoader } from "../pauper/core/assets/web-asset-loader.service";
-import { WebAudioService } from "../pauper/core/audio/web-audio.service";
 import { Observable } from "rxjs/Observable";
 import { concat } from "rxjs/observable/concat";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
-import { debounceTime, filter, map, mergeMap, switchMap, tap } from "rxjs/operators";
+import { filter, ignoreElements, map, mergeMap, tap } from "rxjs/operators";
 
+import { WebAssetLoader } from "../pauper/core/assets/web-asset-loader.service";
+import { WebAudioService } from "../pauper/core/audio/web-audio.service";
 import { Vector2 } from "../pauper/core/maths/vector.maths";
 import { CardinalDirection } from "../pauper/core/models/direction.model";
 import { Key } from "../pauper/core/models/keys.model";
@@ -86,7 +85,7 @@ function bounceBall(ballId: EntityId, state: GameState, direction: CardinalDirec
 	}
 	return {
 		...state,
-		effects: state.effects.concat([{ type: "PlaySound", soundName: "Boing" }]),
+		effects: state.effects.concat([{ type: "PlaySoundEffect", soundId: "boing" }]),
 		entities: state.entities.update(ballId, entity => ({
 			...entity,
 			components: entity.components.update(VelocityComponent, (component: VelocityComponent) => ({
@@ -254,10 +253,9 @@ export const epic = (action$: Observable<GameAction>) => merge(
 	playerMoveRightStart,
 	playerMoveRightStop,
 	action$.pipe(
-		filter(action => action.type === "PlaySound"),
-		tap(soundEffect => audioPlayer.play(boing)),
-		map(() => ({ type: "PlaySound", soundFile: "boing" })),
-		filter(() => false)
+		filter(action => action.type === "PlaySoundEffect"),
+		tap((action: { readonly type: "PlaySoundEffect"; readonly soundId: string; }) => audioPlayer.play(assetLoader.getAudio(action.soundId))),
+		ignoreElements()
 	)
 );
 

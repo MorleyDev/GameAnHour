@@ -11,7 +11,7 @@ export class WebAssetLoader implements AssetLoader {
 		if (audio) {
 			return audio;
 		} else {
-			const howl = new Howl({ src: path || `./assets/${id}.ogg` });
+			const howl = new Howl({ src: path || [`./assets/${id}.ogg`, `./assets/${id}.flac`, `./assets/${id}.mp3`, `./assets/${id}.wav`] });
 			this.audio[id] = howl;
 			return howl;
 		}
