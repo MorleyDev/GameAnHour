@@ -1,6 +1,6 @@
 export const _ = Symbol();
 
-type Pattern<T,> = T | typeof _ | ((check: T) => boolean);
+type Pattern<T> = T | typeof _ | ((check: T) => boolean);
 
 type PatternSet<T, U> =
 	[T, (t: T) => U]

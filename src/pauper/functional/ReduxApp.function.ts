@@ -1,3 +1,4 @@
+import { tap } from "rxjs/operators/tap";
 import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
@@ -37,27 +38,17 @@ export function createReduxApp<
 
 	const actions$ = merge(of$({ type: "@@INIT" }), app.bootstrap || empty()).pipe(share()) as Observable<TAction>;
 
-	return merge(actions$, app.epic(actions$)).pipe(
+	return actions$.pipe(
+		selfFeeding(app.epic),
 		reduxScan((state: TState, action: TAction) => app.reducer(state, action), app.initialState)
 	);
 }
 
 function selfFeeding<T>(set: (o$: Observable<T>) => Observable<T>): (self: Observable<T>) => Observable<T> {
 	return bootstrap$ => {
-		return Observable.create((observer: Observer<T>) => {
-			const subject = new Subject<T>();
-			const boot = bootstrap$
-				.subscribe(bootstrap => {
-					subject.next(bootstrap);
-					observer.next(bootstrap);
-				}, err => observer.error(err), () => observer.complete());
-
-			const followUps = set(subject).subscribe(observer);
-
-			return () => {
-				boot.unsubscribe();
-				followUps.unsubscribe();
-			};
-		});
+		const subject = new Subject<T>();
+		return merge(bootstrap$, set(subject)).pipe(
+			tap(action => subject.next(action))
+		);
 	};
 }

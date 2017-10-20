@@ -63,7 +63,7 @@ function loadImageFromUrl(path: string): Promise<HTMLImageElement> {
 function loadAudioFromUrl(path: string): Promise<Howl> {
 	return new Promise<Howl>((resolve, reject) => {
 		const howl = new Howl({ src: path, html5: true });
-		if (howl.state() == "loaded") {
+		if (howl.state() === "loaded") {
 			return howl;
 		} else {
 			howl.once("load", () => resolve(howl));

@@ -52,7 +52,7 @@ export const Shape2 = {
 			const bottomRight = { x: Math.max(lhs[0].x, lhs[1].x, lhs[2].x), y: Math.max(lhs[0].y, lhs[1].y, lhs[2].y) };
 			return Rectangle.fromTopLeftBottomRight(topLeft, bottomRight);
 		} else if (Circle.is(lhs)) {
-			return Rectangle(lhs.x - lhs.radius, lhs.y - lhs.radius, lhs.radius*2, lhs.radius*2);
+			return Rectangle(lhs.x - lhs.radius, lhs.y - lhs.radius, lhs.radius * 2, lhs.radius * 2);
 		} else if (Rectangle.is(lhs)) {
 			return lhs;
 		} else if (Point2.is(lhs)) {
@@ -88,4 +88,4 @@ export const Shape2 = {
 		console.warn("Line To between", lhs, "and", rhs, "is not currently supported");
 		return [Point2(0, 0), Point2(0, 0)];
 	}
-}
+};

@@ -11,7 +11,7 @@ interface IHashMultiMap<TKey extends string, TValue> {
 	subset(keys: Iterable<TKey>): HashMultiMap<TKey, TValue>;
 
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue>;
-	appendMap(map: HashMap<TKey, TValue>): HashMultiMap<TKey, TValue>
+	appendMap(map: HashMap<TKey, TValue>): HashMultiMap<TKey, TValue>;
 	remove(key: TKey): HashMultiMap<TKey, TValue>;
 
 	at(key: TKey): List<TValue>;
@@ -49,7 +49,7 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue> {
 		return new HashMultiMapInner(
 			this._inner.update(key, List<TValue>([value]), list => list.push(value))
-		)
+		);
 	}
 
 	appendMap(map: HashMap<TKey, TValue>): HashMultiMap<TKey, TValue> {

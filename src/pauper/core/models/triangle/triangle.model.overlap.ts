@@ -63,5 +63,5 @@ export function overlapsPoint2([v1, v2, v3]: Triangle2Type, rhs: Point2Type): bo
 	const b1 = sign(rhs, v1, v2) < 0.0;
 	const b2 = sign(rhs, v2, v3) < 0.0;
 	const b3 = sign(rhs, v3, v1) < 0.0;
-	return ((b1 == b2) && (b2 == b3));
+	return ((b1 === b2) && (b2 === b3));
 }

@@ -16,13 +16,13 @@ export function lineTo(lhs: Line2Type, rhs: Shape2Type): Line2Type {
 	} else if (isTri2(rhs)) {
 		console.warn("lineTo Line2 -> Triangle not properly implemented");
 		return [
-				lineToLine2(lhs, [rhs[0], rhs[1]]), 
-				lineToLine2(lhs, [rhs[1], rhs[0]]),
-				lineToLine2(lhs, [rhs[2], rhs[0]])
-			].map(line => ({
-				segment: line,
-				length2: magnitudeSquared(subtract(line[1], line[0]))
-			}))
+			lineToLine2(lhs, [rhs[0], rhs[1]]),
+			lineToLine2(lhs, [rhs[1], rhs[0]]),
+			lineToLine2(lhs, [rhs[2], rhs[0]])
+		].map(line => ({
+			segment: line,
+			length2: magnitudeSquared(subtract(line[1], line[0]))
+		}))
 			.reduce((prev, curr) => prev.length2 > curr.length2 ? prev : curr)
 			.segment;
 	} else if (isCircle(rhs)) {
@@ -31,14 +31,14 @@ export function lineTo(lhs: Line2Type, rhs: Shape2Type): Line2Type {
 		console.warn("lineTo Line2 -> Rectangle not properly implemented");
 		const lineSet = lines(rhs);
 		return [
-				lineToLine2(lhs, lineSet.top), 
-				lineToLine2(lhs, lineSet.bottom),
-				lineToLine2(lhs, lineSet.left),
-				lineToLine2(lhs, lineSet.right)
-			].map(line => ({
-				segment: line,
-				length2: magnitudeSquared(subtract(line[1], line[0]))
-			}))
+			lineToLine2(lhs, lineSet.top),
+			lineToLine2(lhs, lineSet.bottom),
+			lineToLine2(lhs, lineSet.left),
+			lineToLine2(lhs, lineSet.right)
+		].map(line => ({
+			segment: line,
+			length2: magnitudeSquared(subtract(line[1], line[0]))
+		}))
 			.reduce((prev, curr) => prev.length2 > curr.length2 ? prev : curr)
 			.segment;
 	} else {
@@ -69,7 +69,7 @@ export function lineToPoint2(lhs: Line2Type, rhs: Point2Type): Line2Type {
 	}
 
 	const lengthSquaredOfLine = magnitudeBetweenPointsSquared(a1, a2);
-	if (lengthSquaredOfLine == 0) {
+	if (lengthSquaredOfLine === 0) {
 		return [a1, a0];
 	}
 

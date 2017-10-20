@@ -2,7 +2,8 @@ import "./pauper/core/extensions";
 
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
-import { map, reduce, switchMap, tap, throttleTime } from "rxjs/operators";
+import { merge } from "rxjs/observable/merge";
+import { auditTime, map, reduce, share, switchMap, tap, throttleTime } from "rxjs/operators";
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
 
@@ -27,22 +28,22 @@ const canvas = new CanvasRenderer(document.getElementById("render-target")!);
 let latestBootstrap = bootstrap;
 let latestState = initialState;
 
-const rememberState = (module as any).hot
+const devRememberState = (module as any).hot
 	? tap((state: any) => {
 		latestState = state;
 		latestBootstrap = empty();
 	})
 	: (state$: Observable<any>): Observable<any> => state$;
 
-const app$ = game$
-	.pipe(
-		switchMap(game => createReduxApp({ ...game, initialState: latestState, bootstrap: latestBootstrap }).pipe(
-			rememberState,
-			map(state => profile("@@RENDER", () => game.render(state)))
-		)),
-		throttleTime(10, animationFrame),
-		reduce((canvas: Renderer, frames: FrameCollection) => Render(canvas, frames), canvas)
-	);
+const app$ = game$.pipe(
+	switchMap(game => createReduxApp({ ...game, initialState: latestState, bootstrap: latestBootstrap }).pipe(
+		devRememberState,
+		map(state => profile("@@RENDER", () => game.render(state)))
+	)),
+	auditTime(16, animationFrame),
+	reduce((canvas: Renderer, frames: FrameCollection) => Render(canvas, frames), canvas)
+);
+
 
 app$.subscribe();
 game$.next(gameFactory());

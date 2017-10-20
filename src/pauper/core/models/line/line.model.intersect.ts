@@ -38,12 +38,12 @@ export function intersectsCircle(lhs: Line2Type, rhs: CircleType): boolean {
 
 export function intersectsPoint2([a1, a2]: Line2Type, a0: Point2Type, tolerance: number): boolean {
 	function distToSegmentSquared(a0: Point2Type, a1: Point2Type, a2: Point2Type) {
-		function magnitudeBetweenPointsSquared(v: Point2Type, w: Point2Type) { 
-			return (v.x - w.x)**2 + (v.y - w.y)**2;
+		function magnitudeBetweenPointsSquared(v: Point2Type, w: Point2Type) {
+			return (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
 		}
 
 		const lengthSquaredOfLine = magnitudeBetweenPointsSquared(a1, a2);
-		if (lengthSquaredOfLine == 0) {
+		if (lengthSquaredOfLine === 0) {
 			return magnitudeBetweenPointsSquared(a0, a1);
 		}
 
@@ -51,7 +51,8 @@ export function intersectsPoint2([a1, a2]: Line2Type, a0: Point2Type, tolerance:
 		if (angleOfAttack < 0) {
 			return magnitudeBetweenPointsSquared(a0, a1);
 		} else if (angleOfAttack > 1) {
-			return magnitudeBetweenPointsSquared(a0, a2); }
+			return magnitudeBetweenPointsSquared(a0, a2);
+		}
 		else {
 			const pointOnLine = {
 				x: a1.x + angleOfAttack * (a2.x - a1.x),

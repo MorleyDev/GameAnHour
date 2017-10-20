@@ -42,7 +42,7 @@ export class CanvasRenderer implements Renderer {
 		this.context.fillStyle = colour;
 		if (Array.isArray(pos)) {
 			this.context.moveTo(pos[0].x, pos[0].y);
-			for(let i = 1; i < pos.length; ++i) {
+			for (let i = 1; i < pos.length; ++i) {
 				this.context.lineTo(pos[i].x, pos[i].y);
 			}
 			this.context.fill();
@@ -64,7 +64,7 @@ export class CanvasRenderer implements Renderer {
 		this.context.strokeStyle = colour;
 		if (Array.isArray(pos)) {
 			this.context.moveTo(pos[0].x, pos[0].y);
-			for(let i = 1; i < pos.length; ++i) {
+			for (let i = 1; i < pos.length; ++i) {
 				this.context.lineTo(pos[i].x, pos[i].y);
 			}
 			this.context.stroke();

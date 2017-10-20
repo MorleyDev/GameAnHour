@@ -6,7 +6,7 @@ import { main } from "./core/main";
 export const Maths = {
 	angles: { rotate2d, toDegrees, toRadians },
 	Vector2
-}
+};
 
 export const Shapes = {
 	Circle,

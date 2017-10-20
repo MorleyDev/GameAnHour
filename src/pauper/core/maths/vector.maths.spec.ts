@@ -2,18 +2,18 @@ import { Vector2 } from "./vector.maths";
 import * as tape from "tape";
 
 import {
-    abs,
-    add,
-    constraint,
-    divide,
-    dotProduct,
-    invert,
-    magnitude,
-    magnitudeSquared,
-    multiply,
-    normal,
-    normalise,
-    subtract,
+	abs,
+	add,
+	constraint,
+	divide,
+	dotProduct,
+	invert,
+	magnitude,
+	magnitudeSquared,
+	multiply,
+	normal,
+	normalise,
+	subtract,
 } from "./vector.maths.func";
 import { Vector2Type } from "./vector.maths.type";
 import { Unit } from "./vector.maths.values";
@@ -33,7 +33,7 @@ tape("core/maths/vector.maths", test => {
 			test.true(
 				value.x >= low.x && value.y >= low.y && value.x <= high.x && value.y <= high.y,
 				`(${value.x}, ${value.y}) should be between (${low.x}, ${low.y}) and (${high.x}, ${high.y})`
-		);
+			);
 
 	test.test("basic creation", test => {
 		const expected = { x: Math.random(), y: Math.random() };
@@ -91,35 +91,35 @@ tape("core/maths/vector.maths", test => {
 	});
 
 	test.test("normalise", test => {
-		between(test, make(0.4472, 0.8944), make(0.4473, 0.8945))( normalise(make(10, 20)) );
-		within(test, 0.999, 1.001)(  magnitude( normalise(make(10, 20)) ) );
+		between(test, make(0.4472, 0.8944), make(0.4473, 0.8945))(normalise(make(10, 20)));
+		within(test, 0.999, 1.001)(magnitude(normalise(make(10, 20))));
 		test.end();
 	});
 
 	test.test("dot product", test => {
-		test.equal( dotProduct(make(9, 4), make(3, 5)), 47 );
-		test.equal( dotProduct(make(9, -4), make(3, 5)), 7 );
-		test.equal( dotProduct(make(9, 4), make(-3, 5)), -7 );
+		test.equal(dotProduct(make(9, 4), make(3, 5)), 47);
+		test.equal(dotProduct(make(9, -4), make(3, 5)), 7);
+		test.equal(dotProduct(make(9, 4), make(-3, 5)), -7);
 		test.end();
 	});
 
 	test.test("normal", test => {
-		test.deepEqual( normal(make(9, 4)), make(-4, 9) );
-		test.deepEqual( normal(make(-9, 4)), make(-4, -9) );
-		test.deepEqual( normal(make(9, -4)), make(4, 9) );
-		test.deepEqual( normal(make(0, 0)), make(0, 0) );
-		test.deepEqual( normal(make(9, 9)), make(-9, 9) );
+		test.deepEqual(normal(make(9, 4)), make(-4, 9));
+		test.deepEqual(normal(make(-9, 4)), make(-4, -9));
+		test.deepEqual(normal(make(9, -4)), make(4, 9));
+		test.deepEqual(normal(make(0, 0)), make(0, 0));
+		test.deepEqual(normal(make(9, 9)), make(-9, 9));
 		test.end();
 	});
 
 	test.test("constraint", test => {
-		test.deepEqual( constraint(make(0, 0), make(-10, -10), make(10, 10)), make(0, 0) );
-		test.deepEqual( constraint(make(-20, 0), make(-10, -10), make(10, 10)), make(-10, 0) );
-		test.deepEqual( constraint(make(20, 0), make(-10, -10), make(10, 10)), make(10, 0) );
-		test.deepEqual( constraint(make(0, -20), make(-10, -10), make(10, 10)), make(0, -10) );
-		test.deepEqual( constraint(make(0, 20), make(-10, -10), make(10, 10)), make(0, 10) );
-		test.deepEqual( constraint(make(20, 20), make(-10, -10), make(10, 10)), make(10, 10) );
-		test.deepEqual( constraint(make(-20, -20), make(-10, -10), make(10, 10)), make(-10, -10) );
+		test.deepEqual(constraint(make(0, 0), make(-10, -10), make(10, 10)), make(0, 0));
+		test.deepEqual(constraint(make(-20, 0), make(-10, -10), make(10, 10)), make(-10, 0));
+		test.deepEqual(constraint(make(20, 0), make(-10, -10), make(10, 10)), make(10, 0));
+		test.deepEqual(constraint(make(0, -20), make(-10, -10), make(10, 10)), make(0, -10));
+		test.deepEqual(constraint(make(0, 20), make(-10, -10), make(10, 10)), make(0, 10));
+		test.deepEqual(constraint(make(20, 20), make(-10, -10), make(10, 10)), make(10, 10));
+		test.deepEqual(constraint(make(-20, -20), make(-10, -10), make(10, 10)), make(-10, -10));
 		test.end();
 	});
 

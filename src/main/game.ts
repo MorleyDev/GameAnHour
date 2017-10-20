@@ -4,7 +4,7 @@ import { fromEvent } from "rxjs/observable/fromEvent";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
-import { filter, map, mergeMap } from "rxjs/operators";
+import { filter, map, mergeMap, takeUntil } from "rxjs/operators";
 
 import { Vector2 } from "../pauper/core/maths/vector.maths";
 import { CardinalDirection } from "../pauper/core/models/direction.model";
