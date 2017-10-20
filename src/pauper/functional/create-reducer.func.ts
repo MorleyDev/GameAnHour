@@ -14,5 +14,5 @@ export function createReducer<TState, TAction extends GenericAction = GenericAct
 		return reducer != null
 			? reducer.reduce((prev, curr) => curr(prev, action), state)
 			: state;
-	}
+	};
 }

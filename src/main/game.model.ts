@@ -1,4 +1,4 @@
-import { SystemAction } from "../pauper/functional/system.action";
+import { Seconds } from "../pauper/core/models/time.model";
 import { EntitiesState } from "../pauper/entity-component";
 import { SystemState } from "../pauper/functional";
 
@@ -7,7 +7,7 @@ export enum GameStateFlag {
 	Ready,
 	Playing,
 	GameOver
-};
+}
 
 export type GameState
 	= EntitiesState
@@ -17,7 +17,8 @@ export type GameState
 	};
 
 export type GameAction
-	= SystemAction
+	= { type: "@@TICK", deltaTime: Seconds }
+	| { type: "RequestGameRestart" }
 	| { type: "GameReady" }
 	| { type: "RequestStartGame" }
 	| { type: "Player_StartMovingLeft" }

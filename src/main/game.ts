@@ -1,8 +1,10 @@
-import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
-import { fromEvent } from "rxjs/observable/fromEvent";
 import { Observable } from "rxjs/Observable";
+import { concat } from "rxjs/observable/concat";
+import { fromEvent } from "rxjs/observable/fromEvent";
+import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { filter, takeUntil, map } from "rxjs/operators";
+import { of } from "rxjs/observable/of";
+import { filter, map, mergeMap } from "rxjs/operators";
 
 import { Vector2 } from "../pauper/core/maths/vector.maths";
 import { CardinalDirection } from "../pauper/core/models/direction.model";
@@ -10,11 +12,11 @@ import { Key } from "../pauper/core/models/keys.model";
 import { Line2 } from "../pauper/core/models/line/line.model";
 import { Rectangle } from "../pauper/core/models/rectangle/rectangle.model";
 import { Point2, Shape2 } from "../pauper/core/models/shapes.model";
+import { Seconds } from "../pauper/core/models/time.model";
 import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
 import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
 import { EntityId } from "../pauper/entity-component/entity-base.type";
 import { destroyEntity } from "../pauper/entity-component/entity-component.reducer";
-import { KeyUpAction, TickAction } from "../pauper/functional";
 import { createReducer } from "../pauper/functional/create-reducer.func";
 import { Clear, Fill, Origin } from "../pauper/functional/render-frame.model";
 import { _, patternMatch } from "../pauper/functional/utility-pattern-match.function";
@@ -22,6 +24,8 @@ import { PositionComponent } from "./components/PositionComponent";
 import { RenderComponent } from "./components/RenderComponent";
 import { ShapeComponent } from "./components/ShapeComponent";
 import { VelocityComponent } from "./components/VelocityComponent";
+import { bootstrap } from "./game-bootstrap";
+import { initialState } from "./game-initial-state";
 import { GameAction, GameState, GameStateFlag } from "./game.model";
 
 const PaddleSpeed = 250;
@@ -29,7 +33,13 @@ const InitialBallSpeed = 200;
 
 const requestStartGameEntityReducer = createEntityReducer(
 	[VelocityComponent, "Ball"],
-	((state, action, velocity: VelocityComponent, ball: any) => [{ ...velocity, velocity: Vector2.multiply(Vector2.invert(Vector2.normal(Vector2.Unit)), InitialBallSpeed) }, ball])
+	((state, action, velocity: VelocityComponent, ball: any) => [
+		{
+			...velocity,
+			velocity: Vector2.multiply(Vector2.invert(Vector2.normal(Vector2.Unit)), InitialBallSpeed)
+		},
+		ball
+	])
 );
 
 const startPlayerMove = (cardinal: CardinalDirection.Left | CardinalDirection.Right) => createEntityReducer(
@@ -55,7 +65,7 @@ const stopPlayerMove = (cardinal: CardinalDirection.Left | CardinalDirection.Rig
 
 const velocityPositionTickReducer = createEntityReducer(
 	[VelocityComponent, PositionComponent],
-	(state: GameState, action: TickAction, velocity: VelocityComponent, position: PositionComponent) => [
+	(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }, velocity: VelocityComponent, position: PositionComponent) => [
 		velocity,
 		{
 			name: PositionComponent,
@@ -91,7 +101,7 @@ function bounceBall(ballId: EntityId, state: GameState, direction: CardinalDirec
 	};
 }
 
-function ballBlockCollisionDetectionReducer(state: GameState, action: TickAction): GameState {
+function ballBlockCollisionDetectionReducer(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }): GameState {
 	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
 	const blocks = state.componentEntityLinks.at("Block").map(id => state.entities.at(id)!);
 
@@ -116,7 +126,7 @@ function ballBlockCollisionDetectionReducer(state: GameState, action: TickAction
 	}, state);
 }
 
-function ballPaddleCollisionDetectionReducer(state: GameState, action: TickAction): GameState {
+function ballPaddleCollisionDetectionReducer(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }): GameState {
 	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
 	const paddles = state.componentEntityLinks.at("Paddle").map(id => state.entities.at(id)!);
 
@@ -141,7 +151,7 @@ function ballPaddleCollisionDetectionReducer(state: GameState, action: TickActio
 	}, state);
 }
 
-function ballWallCollisionDetectionReducer(state: GameState, action: TickAction): GameState {
+function ballWallCollisionDetectionReducer(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }): GameState {
 	return state.componentEntityLinks.at("Ball")
 		.map(id => state.entities.at(id)!)
 		.reduce((state, ball) => {
@@ -162,6 +172,7 @@ const breakoutGameReducer = createReducer(
 	["@@TICK", ballBlockCollisionDetectionReducer],
 	["@@TICK", ballWallCollisionDetectionReducer],
 	["@@TICK", ballPaddleCollisionDetectionReducer],
+	["RequestGameRestart", () => initialState],
 	["Player_StartMovingLeft", startPlayerMove(CardinalDirection.Left)],
 	["Player_StartMovingRight", startPlayerMove(CardinalDirection.Right)],
 	["Player_StopMovingLeft", stopPlayerMove(CardinalDirection.Left)],
@@ -202,8 +213,8 @@ export const render = (state: GameState) => [
 function onKeyDown(k: Key, action: () => GameAction): Observable<GameAction> {
 	return fromEvent(document, "keydown")
 		.pipe(
-			filter((key: KeyboardEvent) => key.keyCode === k),
-			distinctUntilChanged(),
+			map((key: KeyboardEvent) => key.keyCode),
+			filter(key => key === k),
 			map(action)
 		);
 }
@@ -212,20 +223,23 @@ function onKeyUp(k: Key, action: () => GameAction): Observable<GameAction> {
 	return fromEvent(document, "keyup")
 		.pipe(
 			filter((key: KeyboardEvent) => key.keyCode === k),
-			distinctUntilChanged(),
 			map(action)
 		);
 }
 
-
 const requestStartGame = onKeyDown(Key.Space, () => ({ type: "RequestStartGame" }));
+const requestGameRestart = onKeyDown(Key.Escape, () => ({ type: "RequestGameRestart" }));
 const playerMoveLeftStart = onKeyDown(Key.LeftArrow, () => ({ type: "Player_StartMovingLeft" }));
 const playerMoveRightStart = onKeyDown(Key.RightArrow, () => ({ type: "Player_StartMovingRight" }));
 const playerMoveLeftStop = onKeyUp(Key.LeftArrow, () => ({ type: "Player_StopMovingLeft" }));
 const playerMoveRightStop = onKeyUp(Key.RightArrow, () => ({ type: "Player_StopMovingRight" }));
 
 export const epic = (action$: Observable<GameAction>) => merge(
+	interval(1000 / 60).pipe( map(() => ({ type: "@@TICK", deltaTime: 1 / 60 })) ),
 	requestStartGame,
+	requestGameRestart.pipe(
+		mergeMap(action => concat(of(action), bootstrap)),
+	),
 	playerMoveLeftStart,
 	playerMoveLeftStop,
 	playerMoveRightStart,

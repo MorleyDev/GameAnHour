@@ -33,7 +33,7 @@ function updateEntities<TState extends EntitiesState, TAction extends GenericAct
 				...(state as EntitiesState),
 				entities: targetEntities.reduce((entities, target) => entities.update(target, entity => reducer(state, entity, action)), state.entities)
 			} as TState;
-		}
+		};
 	};
 }
 
