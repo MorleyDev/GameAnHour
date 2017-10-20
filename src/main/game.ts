@@ -4,7 +4,7 @@ import { fromEvent } from "rxjs/observable/fromEvent";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
-import { filter, map, mergeMap, takeUntil } from "rxjs/operators";
+import { filter, map, mergeMap } from "rxjs/operators";
 
 import { Vector2 } from "../pauper/core/maths/vector.maths";
 import { CardinalDirection } from "../pauper/core/models/direction.model";
@@ -65,7 +65,7 @@ const stopPlayerMove = (cardinal: CardinalDirection.Left | CardinalDirection.Rig
 
 const velocityPositionTickReducer = createEntityReducer(
 	[VelocityComponent, PositionComponent],
-	(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }, velocity: VelocityComponent, position: PositionComponent) => [
+	(state: GameState, action: { readonly type: "@@TICK"; readonly deltaTime: Seconds }, velocity: VelocityComponent, position: PositionComponent) => [
 		velocity,
 		{
 			name: PositionComponent,
@@ -101,7 +101,7 @@ function bounceBall(ballId: EntityId, state: GameState, direction: CardinalDirec
 	};
 }
 
-function ballBlockCollisionDetectionReducer(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }): GameState {
+function ballBlockCollisionDetectionReducer(state: GameState, action: { readonly type: "@@TICK", readonly deltaTime: Seconds }): GameState {
 	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
 	const blocks = state.componentEntityLinks.at("Block").map(id => state.entities.at(id)!);
 
@@ -126,7 +126,7 @@ function ballBlockCollisionDetectionReducer(state: GameState, action: { type: "@
 	}, state);
 }
 
-function ballPaddleCollisionDetectionReducer(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }): GameState {
+function ballPaddleCollisionDetectionReducer(state: GameState, action: { readonly type: "@@TICK", readonly deltaTime: Seconds }): GameState {
 	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
 	const paddles = state.componentEntityLinks.at("Paddle").map(id => state.entities.at(id)!);
 
@@ -151,7 +151,7 @@ function ballPaddleCollisionDetectionReducer(state: GameState, action: { type: "
 	}, state);
 }
 
-function ballWallCollisionDetectionReducer(state: GameState, action: { type: "@@TICK", deltaTime: Seconds }): GameState {
+function ballWallCollisionDetectionReducer(state: GameState, action: { readonly type: "@@TICK", readonly deltaTime: Seconds }): GameState {
 	return state.componentEntityLinks.at("Ball")
 		.map(id => state.entities.at(id)!)
 		.reduce((state, ball) => {

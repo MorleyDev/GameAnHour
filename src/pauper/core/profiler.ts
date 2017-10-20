@@ -3,7 +3,7 @@ import { isBrowser } from "./utility/is-browser";
 import { isProduction } from "./utility/is-production";
 import { Observable } from "rxjs/Observable";
 
-const stats: { [key: string]: { count: number; max: number; min: number, total: number; } } = {};
+const stats: { [key: string]: { count: number; max: number; min: number; total: number } } = {};
 if (isBrowser) {
 	(window as any).stats = stats;
 }

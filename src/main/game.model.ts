@@ -13,15 +13,15 @@ export type GameState
 	= EntitiesState
 	& SystemState
 	& {
-		currentState: GameStateFlag
+		readonly currentState: GameStateFlag
 	};
 
 export type GameAction
-	= { type: "@@TICK", deltaTime: Seconds }
-	| { type: "RequestGameRestart" }
-	| { type: "GameReady" }
-	| { type: "RequestStartGame" }
-	| { type: "Player_StartMovingLeft" }
-	| { type: "Player_StopMovingLeft" }
-	| { type: "Player_StartMovingRight" }
-	| { type: "Player_StopMovingRight" };
+	= { readonly type: "@@TICK"; readonly deltaTime: Seconds }
+	| { readonly type: "RequestGameRestart" }
+	| { readonly type: "GameReady" }
+	| { readonly type: "RequestStartGame" }
+	| { readonly type: "Player_StartMovingLeft" }
+	| { readonly type: "Player_StopMovingLeft" }
+	| { readonly type: "Player_StartMovingRight" }
+	| { readonly type: "Player_StopMovingRight" };

@@ -6,12 +6,12 @@ import { Milliseconds } from "./models/time.model";
 export function mainHtml(canvas: HTMLCanvasElement, App: AppConstructor): App {
 	let shutdown = false;
 	function requestAnimationFrameLoop(logic: () => void, framerate: Milliseconds, maxTime?: Milliseconds): void {
-		maxTime = maxTime || framerate;
+		const maximumTime = maxTime != null ? maxTime : framerate;
 
 		let prevTime: Milliseconds = new Date().valueOf();
 		(function _tick(): void {
 			const startTime: Milliseconds = new Date().valueOf();
-			let updateTime: Milliseconds = Math.min(maxTime, startTime - prevTime);
+			let updateTime: Milliseconds = Math.min(maximumTime, startTime - prevTime);
 			prevTime = startTime - updateTime;
 
 			while (updateTime >= framerate) {

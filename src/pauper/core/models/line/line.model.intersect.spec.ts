@@ -2,6 +2,8 @@ import { Line2Type } from "./line.model.type";
 import { intersects } from "./line.model.intersect";
 import * as tape from "tape";
 
+/* tslint:disable */
+
 tape("core/models/line/line.model.intersect.spec", test => {
 	const make = (x1: number, y1: number, x2: number, y2: number): Line2Type => [{ x: x1, y: y1 }, { x: x2, y: y2 }];
 

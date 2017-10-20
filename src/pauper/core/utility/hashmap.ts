@@ -25,11 +25,11 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	map<U>(mapper: (kv: [TKey, TValue]) => U): List<U> {
-		return this._inner.map((value, key) => mapper([key as TKey, value])).toList();
+		return this._inner.map((value, key) => mapper([key, value])).toList();
 	}
 
 	mergeMap<U>(mapper: (kv: [TKey, TValue]) => ReadonlyArray<U>): List<U> {
-		return this._inner.map((value, key) => mapper([key as TKey, value])).flatten(true).toList();
+		return this._inner.map((value, key) => mapper([key, value])).flatten(true).toList();
 	}
 
 	hmap<UKey extends string, UValue>(mapper: (kv: [TKey, TValue]) => [UKey, UValue]): HashMap<UKey, UValue> {
@@ -37,7 +37,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	filter(predicate: (kv: [TKey, TValue]) => boolean): HashMap<TKey, TValue> {
-		return new HashMapInner(this._inner.filter((value, key) => predicate([key as TKey, value])));
+		return new HashMapInner(this._inner.filter((value, key) => predicate([key, value])));
 	}
 
 	subset(keys: Iterable<TKey>): HashMap<TKey, TValue> {
@@ -47,7 +47,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 
 	forEach(invoke: (kv: [TKey, TValue], index: number) => void): void {
 		let i = 0;
-		this._inner.forEach((value, key) => invoke([key as TKey, value], i++));
+		this._inner.forEach((value, key) => invoke([key, value], i++));
 	}
 
 	append(key: TKey, value: TValue): HashMap<TKey, TValue> {
@@ -85,6 +85,6 @@ export const HashMap = Object.assign(
 	<TKey extends string, TValue>(json?: Map<TKey, TValue>): HashMap<TKey, TValue> => new HashMapInner<TKey, TValue>(json ? Map(json) : Map()),
 	{
 		fromMap: <K extends string, T>(map: Map<K, T>) => new HashMapInner<K, T>(map),
-		fromArray: <K extends string, T>(array: [K, T][]) => new HashMapInner<K, T>(Map(array.map(([k, v]) => [k, v] as [K, T])))
+		fromArray: <K extends string, T>(array: [K, T][]) => new HashMapInner<K, T>(Map(array))
 	}
 );

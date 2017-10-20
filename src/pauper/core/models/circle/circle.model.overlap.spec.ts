@@ -6,6 +6,8 @@ import { RectangleType } from "../rectangle/rectangle.model.type";
 import { overlaps } from "./circle.model.overlap";
 import { CircleType } from "./circle.model.type";
 
+/* tslint:disable */
+
 tape("core/models/circle/circle.model.overlap.spec", test => {
 	test.test("circle overlaps circle", test => {
 		const should = (a: CircleType, b: CircleType) => test.true(overlaps(a, b), `(${a.x},${a.y})r${a.radius}) should overlap (${b.x},${b.y})r${b.radius})`);

@@ -4,6 +4,8 @@ import * as tape from "tape";
 
 import { fcall } from "./Object.fcall.func";
 
+/* tslint:disable */
+
 tape("core/extensions/Object.fcall", test => {
 	test.equal(fcall({ x: 10 }, function (this: any) { return this.x; }), 10);
 	test.equal(fcall({ x: 10 }, function (this: any, x: number) { return this.x + x; }, 20), 30);

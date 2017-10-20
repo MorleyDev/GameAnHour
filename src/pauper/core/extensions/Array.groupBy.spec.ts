@@ -4,6 +4,7 @@ import * as tape from "tape";
 
 import { groupBy } from "./Array.groupBy.func";
 
+/* tslint:disable */
 tape("core/extensions/Array.groupBy", test => {
 	test.deepEqual(
 		groupBy.call((["abc", "cde", "acb", "bcd"]), (v: string, i: number, h: string[]) => v.charAt(0)),

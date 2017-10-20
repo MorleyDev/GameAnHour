@@ -4,6 +4,8 @@ import { RectangleType } from "./rectangle.model.type";
 import { overlaps } from "./rectangle.model.overlap";
 import * as tape from "tape";
 
+/* tslint:disable */
+
 tape("core/models/rectangle/rectangle.model.overlap.spec", test => {
 	test.test("rectangle overlaps rectangle", test => {
 		const should = (a: RectangleType, b: RectangleType) => test.true(

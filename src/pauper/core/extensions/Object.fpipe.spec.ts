@@ -4,6 +4,8 @@ import * as tape from "tape";
 
 import { fpipe } from "./Object.fpipe.func";
 
+/* tslint:disable */
+
 tape("core/extensions/Object.fpipe", test => {
 	test.equal(fpipe({ x: 10 }, function (a: any) { return a.x; }), 10);
 	test.equal(fpipe({ x: 10 }, function (a: any, x: number) { return a.x + x; }, 20), 30);
