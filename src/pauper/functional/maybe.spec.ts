@@ -2,6 +2,7 @@ import * as tape from "tape";
 
 import { hasValue, Just, match, Maybe, None, withDefault } from "./maybe";
 
+/* tslint:disable */
 tape("functional/maybe", test => {
 	test.test("withDefault :: Just X -> X", test => {
 		const justX: Maybe<number> = Just(10) as Maybe<number>;

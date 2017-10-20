@@ -26,6 +26,7 @@ export function createReduxApp<
 
 		return self => self.pipe(
 			scan((state: TState, action: TAction): TState => profile(action.type, () => {
+				// tslint:disable-next-line:no-expression-statement
 				store.dispatch(action as any);
 				return store.getState();
 			}), initial));

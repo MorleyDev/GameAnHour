@@ -3,7 +3,7 @@ import { Radian } from "../core/maths/angles.maths";
 import { Point2, Rectangle, Shape2 } from "../core/models/shapes.model";
 
 export type Frame = FrameCommand | FrameCollection;
-export const Frame = (...commands: (FrameCommand | Frame)[]) => commands;
+export const Frame = (..._commands: (FrameCommand | Frame)[]) => _commands;
 
 export interface FrameCollection extends Array<Frame | FrameCommand> { };
 export type FrameCommand = Clear | Origin | Scale | Rotate | Fill | Stroke | Blit;

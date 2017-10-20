@@ -78,7 +78,7 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 	}
 }
 
-export interface HashMultiMap<TKey extends string, TValue> extends HashMultiMapInner<TKey, TValue> { };
+export interface HashMultiMap<TKey extends string, TValue> extends HashMultiMapInner<TKey, TValue> { }
 
 export const HashMultiMap = Object.assign(
 	<TKey extends string, TValue>(map: Map<TKey, List<TValue>> = Map<TKey, List<TValue>>()): HashMultiMap<TKey, TValue> => new HashMultiMapInner(Map<TKey, List<TValue>>()),

@@ -7,8 +7,8 @@ type PatternSet<T, U> =
 	| [typeof _, (t: T) => U]
 	| [(t: T) => boolean, (t: T) => U];
 
-export function patternMatch<T, U>(target: T, ...patterns: PatternSet<T, U>[]): U {
-	for (let pattern of patterns) {
+export function patternMatch<T, U>(target: T, ..._patterns: PatternSet<T, U>[]): U {
+	for (const pattern of _patterns) {
 		const matcher = pattern[0];
 		if (matcher === target || matcher === _ || (typeof matcher === "function" && matcher(target))) {
 			const handler: (t: T) => U = pattern[1];

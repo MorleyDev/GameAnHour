@@ -4,9 +4,9 @@ import { Seconds } from "../core/models/time.model";
 import { FrameCollection } from "./render-frame.model";
 
 export type ReduxApp<TState, TAction> = {
-	initialState: TState;
-	bootstrap: Observable<TAction>;
-	reducer: (prev: TState, curr: TAction) => TState;
-	render: (state: TState) => FrameCollection;
-	epic: (action: Observable<TAction>) => Observable<TAction>;
+	readonly initialState: TState;
+	readonly bootstrap: Observable<TAction>;
+	readonly reducer: (prev: TState, curr: TAction) => TState;
+	readonly render: (state: TState) => FrameCollection;
+	readonly epic: (action: Observable<TAction>) => Observable<TAction>;
 };

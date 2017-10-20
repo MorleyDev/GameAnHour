@@ -1,6 +1,6 @@
 export type SystemState = {
-	system: {
-		terminate: boolean;
+	readonly system: {
+		readonly terminate: boolean;
 	}
 };
 

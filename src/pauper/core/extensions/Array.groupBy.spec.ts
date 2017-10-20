@@ -41,7 +41,7 @@ tape("core/extensions/Array.prototype.groupBy", test => {
 		}
 	);
 
-	enum TestEnum { One, Two };
+	enum TestEnum { One, Two }
 	test.deepEqual(
 		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: string[]) => v.charAt(0) === "a" ? TestEnum.One : TestEnum.Two),
 		{

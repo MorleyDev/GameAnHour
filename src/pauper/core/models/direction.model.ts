@@ -4,4 +4,4 @@ export enum CardinalDirection {
 	Left,
 	Down,
 	Right
-};
+}
