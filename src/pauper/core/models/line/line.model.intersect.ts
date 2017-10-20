@@ -14,31 +14,31 @@ import { Line2Type } from "./line.model.type";
 
 export function intersects(lhs: Line2Type, rhs: Shape2Type, tolerance: number = 0.001): boolean {
 	if (isLine(rhs)) {
-		return intersectsLine2(lhs, rhs);
+		return line2IntersectsLine2(lhs, rhs);
 	} else if (isTri2(rhs)) {
-		return intersectsTriangle2(lhs, rhs);
+		return line2IntersectsTriangle2(lhs, rhs);
 	} else if (isCircle(rhs)) {
-		return intersectsCircle(lhs, rhs);
+		return line2IntersectsCircle(lhs, rhs);
 	} else if (isRect(rhs)) {
-		return intersectsRectangle(lhs, rhs);
+		return line2IntersectsRectangle(lhs, rhs);
 	} else {
-		return intersectsPoint2(lhs, rhs, tolerance);
+		return line2IntersectsPoint2(lhs, rhs, tolerance);
 	}
 }
 
-export function intersectsTriangle2([a1, a2]: Line2Type, [v1, v2, v3]: Triangle2Type): boolean {
-	return intersectsLine2([v1, v2], [a1, a2])
-		|| intersectsLine2([v2, v3], [a1, a2])
-		|| intersectsLine2([v3, v1], [a1, a2]);
+export function line2IntersectsTriangle2([a1, a2]: Line2Type, [v1, v2, v3]: Triangle2Type): boolean {
+	return line2IntersectsLine2([v1, v2], [a1, a2])
+		|| line2IntersectsLine2([v2, v3], [a1, a2])
+		|| line2IntersectsLine2([v3, v1], [a1, a2]);
 }
 
-export function intersectsCircle(lhs: Line2Type, rhs: CircleType): boolean {
-	return intersectsPoint2(lhs, rhs, rhs.radius);
+export function line2IntersectsCircle(lhs: Line2Type, rhs: CircleType): boolean {
+	return line2IntersectsPoint2(lhs, rhs, rhs.radius);
 }
 
-export function intersectsPoint2([a1, a2]: Line2Type, a0: Point2Type, tolerance: number): boolean {
-	function distToSegmentSquared(a0: Point2Type, a1: Point2Type, a2: Point2Type) {
-		function magnitudeBetweenPointsSquared(v: Point2Type, w: Point2Type) {
+export function line2IntersectsPoint2([a1, a2]: Line2Type, a0: Point2Type, tolerance: number): boolean {
+	function distToSegmentSquared(a0: Point2Type, a1: Point2Type, a2: Point2Type): number {
+		function magnitudeBetweenPointsSquared(v: Point2Type, w: Point2Type): number {
 			return (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
 		}
 
@@ -64,15 +64,15 @@ export function intersectsPoint2([a1, a2]: Line2Type, a0: Point2Type, tolerance:
 	return distToSegmentSquared(a0, a1, a2) <= (tolerance * tolerance);
 }
 
-export function intersectsRectangle(lhs: Line2Type, rhs: RectangleType): boolean {
+export function line2IntersectsRectangle(lhs: Line2Type, rhs: RectangleType): boolean {
 	const { bottom, top, left, right } = lines(rhs);
-	return intersectsLine2(lhs, top)
-		|| intersectsLine2(lhs, bottom)
-		|| intersectsLine2(lhs, left)
-		|| intersectsLine2(lhs, right);
+	return line2IntersectsLine2(lhs, top)
+		|| line2IntersectsLine2(lhs, bottom)
+		|| line2IntersectsLine2(lhs, left)
+		|| line2IntersectsLine2(lhs, right);
 }
 
-export function intersectsLine2([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean {
+export function line2IntersectsLine2([a1, a2]: Line2Type, [b1, b2]: Line2Type): boolean {
 	const sameSign = (x: number, y: number): boolean => x >= 0 && y >= 0 || x <= 0 && y <= 0;
 
 	const x1 = a1.x;

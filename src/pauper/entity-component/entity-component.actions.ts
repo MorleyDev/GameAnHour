@@ -2,16 +2,30 @@ import { GenericAction } from "../functional/generic.action";
 import { BaseComponent } from "./component-base.type";
 import { BaseEntity, EntityId } from "./entity-base.type";
 
-export type CreateEntityAction = { type: "EC_CreateEntityAction", id: EntityId };
+export type CreateEntityAction = {
+	readonly type: "EC_CreateEntityAction";
+	readonly id: EntityId;
+};
 export const CreateEntityAction = (id: EntityId): CreateEntityAction => ({ type: "EC_CreateEntityAction", id });
 
-export type DestroyEntityAction = { type: "EC_DestroyEntityAction", id: EntityId };
+export type DestroyEntityAction = {
+	readonly type: "EC_DestroyEntityAction";
+	readonly id: EntityId;
+};
 export const DestroyEntityAction = (id: EntityId): DestroyEntityAction => ({ type: "EC_DestroyEntityAction", id });
 
-export type AttachComponentAction = { type: "EC_AttachComponentAction", id: EntityId, component: BaseComponent };
+export type AttachComponentAction = {
+	readonly type: "EC_AttachComponentAction";
+	readonly id: EntityId;
+	readonly component: BaseComponent;
+};
 export const AttachComponentAction = <TComponent extends BaseComponent>(id: EntityId, component: TComponent): AttachComponentAction => ({ type: "EC_AttachComponentAction", id, component });
 
-export type DetachComponentAction = { type: "EC_DetachComponentAction", id: EntityId, component: string };
+export type DetachComponentAction = {
+	readonly type: "EC_DetachComponentAction";
+	readonly id: EntityId;
+	readonly component: string;
+};
 export const DetachComponentAction = (id: EntityId, component: string): DetachComponentAction => ({ type: "EC_DetachComponentAction", id, component });
 
 export const EntityComponentAction = {

@@ -7,7 +7,7 @@ export type Entity<TComponent extends BaseComponent> = BaseEntity & {
 	readonly components: HashMap<string, TComponent>;
 };
 
-export const Entity = <TComponent extends BaseComponent>(name: string, ...components: TComponent[]): Entity<TComponent> => ({
+export const Entity = <TComponent extends BaseComponent>(name: string, ..._components: TComponent[]): Entity<TComponent> => ({
 	id: name + EntityId(),
-	components: HashMap.fromArray<string, TComponent>(components.map(component => [component.name, component] as [string, TComponent]))
+	components: HashMap.fromArray<string, TComponent>(_components.map(component => [component.name, component] as [string, TComponent]))
 });

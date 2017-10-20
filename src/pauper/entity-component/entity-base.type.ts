@@ -3,8 +3,8 @@ import { BaseComponent } from "./component-base.type";
 
 export type EntityId = string;
 
-let nextId = 0;
-export const EntityId = () => (nextId++).toString();
+let _nextId = 0;
+export const EntityId = () => (_nextId++).toString();
 
 export type BaseEntity = {
 	readonly id: EntityId;

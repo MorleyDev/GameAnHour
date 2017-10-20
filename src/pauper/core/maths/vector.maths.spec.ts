@@ -18,6 +18,7 @@ import {
 import { Vector2Type } from "./vector.maths.type";
 import { Unit } from "./vector.maths.values";
 
+/* tslint:disable */
 tape("core/maths/vector.maths", test => {
 	const make = (x: number, y: number) => ({ x, y });
 

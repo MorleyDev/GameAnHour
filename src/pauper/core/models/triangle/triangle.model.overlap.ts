@@ -1,6 +1,6 @@
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
-import { intersectsCircle, intersectsTriangle2 } from "../line/line.model.intersect";
+import { line2IntersectsCircle, line2IntersectsTriangle2 } from "../line/line.model.intersect";
 import { is as isLine } from "../line/line.model.is";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
@@ -12,52 +12,52 @@ import { is as isTri2 } from "./triangle.model.is";
 import { lines } from "./triangle.model.lines";
 import { Triangle2Type } from "./triangle.model.type";
 
-export function overlaps(lhs: Triangle2Type, rhs: Shape2Type) {
+export function overlaps(lhs: Triangle2Type, rhs: Shape2Type): boolean {
 	if (isTri2(rhs)) {
-		return overlapsTriangle2(lhs, rhs);
+		return triangle2OverlapsTriangle2(lhs, rhs);
 	} else if (isLine(rhs)) {
-		return overlapsLine2(lhs, rhs);
+		return triangle2OverlapsLine2(lhs, rhs);
 	} else if (isRect(rhs)) {
-		return overlapsRectangle(lhs, rhs);
+		return triangle2OverlapsRectangle(lhs, rhs);
 	} else if (isCircle(rhs)) {
-		return overlapsCircle(lhs, rhs);
+		return triangle2OverlapsCircle(lhs, rhs);
 	} else {
-		return overlapsPoint2(lhs, rhs);
+		return triangle2OverlapsPoint2(lhs, rhs);
 	}
 }
 
-export function overlapsCircle(lhs: Triangle2Type, rhs: CircleType): boolean {
-	if (overlapsPoint2(lhs, rhs)) {
+export function triangle2OverlapsCircle(lhs: Triangle2Type, rhs: CircleType): boolean {
+	if (triangle2OverlapsPoint2(lhs, rhs)) {
 		return true;
 	}
-	return lines(lhs).some(line => intersectsCircle(line, rhs));
+	return lines(lhs).some(line => line2IntersectsCircle(line, rhs));
 }
 
-export function overlapsRectangle(lhs: Triangle2Type, rhs: RectangleType) {
+export function triangle2OverlapsRectangle(lhs: Triangle2Type, rhs: RectangleType): boolean {
 	const { bottom, top, left, right } = rectLines(rhs);
-	const rectLineSet = [bottom, top, left, right];
+	const rectLineSet: ReadonlyArray<Line2Type> = [bottom, top, left, right];
 
-	return rectLineSet.some(line => overlapsLine2(lhs, line));
+	return rectLineSet.some(line => triangle2OverlapsLine2(lhs, line));
 }
 
-export function overlapsTriangle2(lhs: Triangle2Type, rhs: Triangle2Type): boolean {
-	if (overlapsPoint2(lhs, rhs[0]) || overlapsPoint2(lhs, rhs[1]) || overlapsPoint2(lhs, rhs[2])) {
+export function triangle2OverlapsTriangle2(lhs: Triangle2Type, rhs: Triangle2Type): boolean {
+	if (triangle2OverlapsPoint2(lhs, rhs[0]) || triangle2OverlapsPoint2(lhs, rhs[1]) || triangle2OverlapsPoint2(lhs, rhs[2])) {
 		return true;
 	}
 
 	const lhsLines = lines(lhs);
-	return lines(rhs).some(rhsLine => overlapsLine2(lhs, rhsLine));
+	return lines(rhs).some(rhsLine => triangle2OverlapsLine2(lhs, rhsLine));
 }
 
-export function overlapsLine2([v1, v2, v3]: Triangle2Type, [a, b]: Line2Type) {
-	if (overlapsPoint2([v1, v2, v3], a) || overlapsPoint2([v1, v2, v3], b)) {
+export function triangle2OverlapsLine2([v1, v2, v3]: Triangle2Type, [a, b]: Line2Type): boolean {
+	if (triangle2OverlapsPoint2([v1, v2, v3], a) || triangle2OverlapsPoint2([v1, v2, v3], b)) {
 		return false;
 	}
 
-	return intersectsTriangle2([a, b], [v1, v2, v3]);
+	return line2IntersectsTriangle2([a, b], [v1, v2, v3]);
 }
 
-export function overlapsPoint2([v1, v2, v3]: Triangle2Type, rhs: Point2Type): boolean {
+export function triangle2OverlapsPoint2([v1, v2, v3]: Triangle2Type, rhs: Point2Type): boolean {
 	const sign = (p1: Point2Type, p2: Point2Type, p3: Point2Type): number => (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
 
 	const b1 = sign(rhs, v1, v2) < 0.0;

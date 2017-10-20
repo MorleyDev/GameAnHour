@@ -26,7 +26,6 @@ export const Shape2 = {
 		} else if (Triangle2.is(lhs)) {
 			return Triangle2.overlaps(lhs, rhs);
 		} else {
-			console.warn("Collision detection between", lhs, "and", rhs, "is not currently supported");
 			return false;
 		}
 	},
@@ -83,9 +82,11 @@ export const Shape2 = {
 				return flip(Line2.lineTo(rhs, lhs));
 			} else if (Point2.is(rhs)) {
 				return [lhs, rhs];
+			} else {
+				return [Point2(0, 0), Point2(0, 0)];
 			}
+		} else {
+			return [Point2(0, 0), Point2(0, 0)];
 		}
-		console.warn("Line To between", lhs, "and", rhs, "is not currently supported");
-		return [Point2(0, 0), Point2(0, 0)];
 	}
 };

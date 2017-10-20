@@ -1,36 +1,36 @@
 import { Point2Type } from "./point.model.type";
 
-export function getTopLeft(...points: Point2Type[]): Point2Type {
+export function getTopLeft(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.min(...points.map(point => point.x)),
-		y: Math.min(...points.map(point => point.y))
+		x:  Math.min(..._points.map(point => point.x)),
+		y: Math.min(..._points.map(point => point.y))
 	};
 }
 
-export function getTopRight(...points: Point2Type[]): Point2Type {
+export function getTopRight(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.max(...points.map(point => point.x)),
-		y: Math.min(...points.map(point => point.y))
+		x:  Math.max(..._points.map(point => point.x)),
+		y: Math.min(..._points.map(point => point.y))
 	};
 }
 
-export function getBottomLeft(...points: Point2Type[]): Point2Type {
+export function getBottomLeft(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.max(...points.map(point => point.x)),
-		y: Math.min(...points.map(point => point.y))
+		x:  Math.max(..._points.map(point => point.x)),
+		y: Math.min(..._points.map(point => point.y))
 	};
 }
 
-export function getBottomRight(...points: Point2Type[]): Point2Type {
+export function getBottomRight(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.max(...points.map(point => point.x)),
-		y: Math.max(...points.map(point => point.y))
+		x:  Math.max(..._points.map(point => point.x)),
+		y: Math.max(..._points.map(point => point.y))
 	};
 }
 
-export function getCentre(...points: Point2Type[]): Point2Type {
-	const tl = getTopLeft(...points);
-	const br = getBottomRight(...points);
+export function getCentre(..._points: Point2Type[]): Point2Type {
+	const tl = getTopLeft(..._points);
+	const br = getBottomRight(..._points);
 	return {
 		x: tl.x + (br.x - tl.x) / 2,
 		y: tl.y + (br.y - tl.y) / 2

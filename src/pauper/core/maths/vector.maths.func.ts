@@ -34,6 +34,13 @@ export function multiply(lhs: Vector2Type, rhs: number): Vector2Type {
 	};
 }
 
+export function dot(lhs: Vector2Type, rhs: Vector2Type): Vector2Type {
+	return {
+		x: lhs.x * rhs.x,
+		y: lhs.y * rhs.y
+	};
+}
+
 export function divide(lhs: Vector2Type, rhs: number): Vector2Type {
 	return {
 		x: lhs.x / rhs,
@@ -69,4 +76,8 @@ export function constraint(lhs: Vector2Type, topLeft: Vector2Type, bottomRight: 
 		x: Math.min(Math.max(topLeft.x, lhs.x), bottomRight.x),
 		y: Math.min(Math.max(topLeft.y, lhs.y), bottomRight.y)
 	};
+}
+
+export function crossProduct(lhs: Vector2Type, rhs: Vector2Type): number {
+	return lhs.x * rhs.y - lhs.y * rhs.x;
 }

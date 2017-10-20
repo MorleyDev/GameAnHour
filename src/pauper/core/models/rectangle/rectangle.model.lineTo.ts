@@ -1,32 +1,45 @@
-import { add, multiply, normalise, subtract } from "../../maths/vector.maths.func";
+import { Triangle2Type } from "../triangle/triangle.model.type";
+import { add, magnitudeSquared, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { is as isLine2 } from "../line/line.model.is";
-import { is as isTri2 } from "../triangle/triangle.model.is";
+import { lineLine2ToRectangle, lineLine2ToTriangle2 } from "../line/line.model.lineTo";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { Shape2Type } from "../shapes.model.type";
+import { is as isTri2 } from "../triangle/triangle.model.is";
 import { is as isRectangle } from "./rectangle.model.is";
+import { lines } from "./rectangle.model.lines";
 import { getBottomLeft, getBottomRight, getCentre, getTopRight } from "./rectangle.model.tlbr";
 import { RectangleType } from "./rectangle.model.type";
 
 export function lineTo(lhs: RectangleType, rhs: Shape2Type): Line2Type {
 	if (isLine2(rhs)) {
-		console.warn("lineTo between rectangle and line is not currently supported");
-		return [lhs, rhs[0]];
+		const [b, a] = lineLine2ToRectangle(rhs, lhs);
+		return [a, b];
 	} else if (isTri2(rhs)) {
-		console.warn("lineTo between rectangle and triangle is not currently supported");
-		return [lhs, rhs[0]];
+		return lineRectangleToTriangle(lhs, rhs);
 	} else if (isCircle(rhs)) {
-		return lineToCircle(lhs, rhs);
+		return lineRectangleToCircle(lhs, rhs);
 	} else if (isRectangle(rhs)) {
-		return lineToRectangle(lhs, rhs);
+		return lineRectangleToRectangle(lhs, rhs);
 	} else {
-		return lineToPoint2(lhs, rhs);
+		return lineRectangleToPoint2(lhs, rhs);
 	}
 }
 
-export function lineToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Type {
+export function lineRectangleToTriangle(lhs: RectangleType, rhs: Triangle2Type): Line2Type {
+	const { left, right, top, bottom } = lines(lhs);
+	return [lineLine2ToTriangle2(left, rhs), lineLine2ToTriangle2(right, rhs), lineLine2ToTriangle2(top, rhs), lineLine2ToTriangle2(bottom, rhs)]
+		.map(line => ({
+			segment: line,
+			length2: magnitudeSquared(subtract(line[1], line[0]))
+		}))
+		.reduce((prev, curr) => prev.length2 < curr.length2 ? prev : curr)
+		.segment;
+}
+
+export function lineRectangleToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Type {
 	// WARNING: Does not produce the optimal solution
 
 	const lhsCentre = getCentre(lhs);
@@ -38,16 +51,17 @@ export function lineToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Ty
 	return [lhsEdge, rhsEdge];
 }
 
-export function lineToCircle(lhs: RectangleType, rhs: CircleType): Line2Type {
-	const [pointOnRectangle, centreOfCircle] = lineToPoint2(lhs, rhs);
+export function lineRectangleToCircle(lhs: RectangleType, rhs: CircleType): Line2Type {
+	const [pointOnRectangle, centreOfCircle] = lineRectangleToPoint2(lhs, rhs);
 	const vectorOfLine = subtract(pointOnRectangle, centreOfCircle);
 	const normalisedLine = normalise(vectorOfLine);
 	const lineOfRadiusLength = multiply(normalisedLine, rhs.radius);
 	const pointOnCircle = add(lineOfRadiusLength, centreOfCircle);
+
 	return [pointOnRectangle, pointOnCircle];
 }
 
-export function lineToPoint2(lhs: RectangleType, rhs: Point2Type): Line2Type {
+export function lineRectangleToPoint2(lhs: RectangleType, rhs: Point2Type): Line2Type {
 	if (rhs.x <= lhs.x) {
 		if (rhs.y <= lhs.y) {
 			return [lhs, rhs];
