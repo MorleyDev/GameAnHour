@@ -2,6 +2,6 @@ import { EntitiesState } from "../pauper/entity-component";
 import { SystemState } from "../pauper/functional";
 import { GameState, GameStateFlag } from "./game.model";
 
-export const initialState: GameState = { currentState: GameStateFlag.Initialising }
+export const initialState: GameState = { currentState: GameStateFlag.Initialising, effects: [] }
 	.fpipe(EntitiesState)
 	.fpipe(SystemState);

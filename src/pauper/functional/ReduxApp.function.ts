@@ -1,12 +1,10 @@
-import { tap } from "rxjs/operators/tap";
 import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
-import { of as of$ } from "rxjs/observable/of";
-import { Observer } from "rxjs/Observer";
+import { map } from "rxjs/operators/map";
 import { scan } from "rxjs/operators/scan";
-import { share } from "rxjs/operators/share";
+import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
 
 import { profile } from "../core/profiler";
@@ -25,11 +23,8 @@ export function createReduxApp<
 		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
 
 		return self => self.pipe(
-			scan((state: TState, action: TAction): TState => profile(action.type, () => {
-				// tslint:disable-next-line:no-expression-statement
-				store.dispatch(action as any);
-				return store.getState();
-			}), initial));
+			scan((state: TState, action: TAction): TState => profile(action.type, () => effect(() => store.getState(), store.dispatch(action as any))), initial)
+		);
 	};
 	const fastScan = scan;
 
@@ -37,19 +32,29 @@ export function createReduxApp<
 		? fastScan
 		: storeBackedScan;
 
-	const actions$ = merge(of$({ type: "@@INIT" }), app.bootstrap || empty()).pipe(share()) as Observable<TAction>;
+	const subject = new Subject<TAction>();
 
-	return actions$.pipe(
-		selfFeeding(app.epic),
-		reduxScan((state: TState, action: TAction) => app.reducer(state, action), app.initialState)
+	return merge(app.bootstrap || empty(), app.epic(subject)).pipe(
+		tap(action => subject.next(action)),
+		reduxScan((state: TState, action: TAction) => sideEffect(
+			app.postprocess(
+				app.reducer(state, action)
+			),
+			post => post.actions.forEach(action => subject.next(action))
+		).state, app.initialState),
 	);
 }
 
-function selfFeeding<T>(set: (o$: Observable<T>) => Observable<T>): (self: Observable<T>) => Observable<T> {
-	return bootstrap$ => {
-		const subject = new Subject<T>();
-		return merge(bootstrap$, set(subject)).pipe(
-			tap(action => subject.next(action))
-		);
-	};
+
+// Cheating the immutability by exploiting the lack of laziness!
+//----------------------------------------------------------------
+
+// Given value T, perform some sideEffect using that value and then return T
+const sideEffect = <T>(seed: T, sideEffect: (value: T) => void): T => {
+	return effectVar(seed, sideEffect(seed));
 }
+/* Allows for the value passed in to be retrieved and whatever side-effect causing values have been passed in to be evaluated and discarded */
+const effectVar = <T, U>(value: T, ..._u: U[]): T => value;
+
+/* Allows for the result of executing value to be retrieved after whatever side-effect causing values have been passed in are evaluated */
+const effect = <T, U>(value: () => T, ..._u: U[]): T => value();

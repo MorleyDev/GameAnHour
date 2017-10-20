@@ -44,7 +44,6 @@ const app$ = game$.pipe(
 	reduce((canvas: Renderer, frames: FrameCollection) => Render(canvas, frames), canvas)
 );
 
-
 app$.subscribe();
 game$.next(gameFactory());
 

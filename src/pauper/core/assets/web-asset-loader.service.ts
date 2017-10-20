@@ -1,5 +1,6 @@
 import { AssetLoader } from "./asset-loader.service";
 import { AudioAsset, ImageAsset } from "./asset.model";
+import { Howl } from "howler";
 
 export class WebAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
@@ -62,12 +63,14 @@ function loadImageFromUrl(path: string): Promise<HTMLImageElement> {
 
 function loadAudioFromUrl(path: string): Promise<Howl> {
 	return new Promise<Howl>((resolve, reject) => {
-		const howl = new Howl({ src: path, html5: true });
+		console.log("loading sound effect", path);
+		const howl = new Howl({ src: [path], html5: true });
 		if (howl.state() === "loaded") {
 			return howl;
 		} else {
 			howl.once("load", () => resolve(howl));
 			howl.once("loaderror", (id, err) => reject(err));
+			howl.load();
 			return howl;
 		}
 	});

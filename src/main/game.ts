@@ -1,10 +1,13 @@
+import { fromPromise } from "rxjs/observable/fromPromise";
+import { WebAssetLoader } from "../pauper/core/assets/web-asset-loader.service";
+import { WebAudioService } from "../pauper/core/audio/web-audio.service";
 import { Observable } from "rxjs/Observable";
 import { concat } from "rxjs/observable/concat";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
-import { filter, map, mergeMap } from "rxjs/operators";
+import { debounceTime, filter, map, mergeMap, switchMap, tap } from "rxjs/operators";
 
 import { Vector2 } from "../pauper/core/maths/vector.maths";
 import { CardinalDirection } from "../pauper/core/models/direction.model";
@@ -27,6 +30,9 @@ import { VelocityComponent } from "./components/VelocityComponent";
 import { bootstrap } from "./game-bootstrap";
 import { initialState } from "./game-initial-state";
 import { GameAction, GameState, GameStateFlag } from "./game.model";
+
+const audioPlayer = new WebAudioService();
+const assetLoader = new WebAssetLoader();
 
 const PaddleSpeed = 250;
 const InitialBallSpeed = 200;
@@ -80,6 +86,7 @@ function bounceBall(ballId: EntityId, state: GameState, direction: CardinalDirec
 	}
 	return {
 		...state,
+		effects: state.effects.concat([{ type: "PlaySound", soundName: "Boing" }]),
 		entities: state.entities.update(ballId, entity => ({
 			...entity,
 			components: entity.components.update(VelocityComponent, (component: VelocityComponent) => ({
@@ -234,6 +241,8 @@ const playerMoveRightStart = onKeyDown(Key.RightArrow, () => ({ type: "Player_St
 const playerMoveLeftStop = onKeyUp(Key.LeftArrow, () => ({ type: "Player_StopMovingLeft" }));
 const playerMoveRightStop = onKeyUp(Key.RightArrow, () => ({ type: "Player_StopMovingRight" }));
 
+const boing = assetLoader.getAudio("boing", "./assets/boing.wav");
+
 export const epic = (action$: Observable<GameAction>) => merge(
 	interval(1000 / 60).pipe( map(() => ({ type: "@@TICK", deltaTime: 1 / 60 })) ),
 	requestStartGame,
@@ -243,5 +252,19 @@ export const epic = (action$: Observable<GameAction>) => merge(
 	playerMoveLeftStart,
 	playerMoveLeftStop,
 	playerMoveRightStart,
-	playerMoveRightStop
+	playerMoveRightStop,
+	action$.pipe(
+		filter(action => action.type === "PlaySound"),
+		tap(soundEffect => audioPlayer.play(boing)),
+		map(() => ({ type: "PlaySound", soundFile: "boing" })),
+		filter(() => false)
+	)
 );
+
+export const postprocess = (state: GameState): { readonly state: GameState; readonly actions: ReadonlyArray<GameAction> } => ({
+	state: {
+		...state,
+		effects: []
+	},
+	actions: state.effects
+});

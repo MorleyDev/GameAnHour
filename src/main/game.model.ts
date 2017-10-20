@@ -12,9 +12,8 @@ export enum GameStateFlag {
 export type GameState
 	= EntitiesState
 	& SystemState
-	& {
-		readonly currentState: GameStateFlag
-	};
+	& { readonly currentState: GameStateFlag }
+	& { readonly effects: ReadonlyArray<GameAction>; };
 
 export type GameAction
 	= { readonly type: "@@TICK"; readonly deltaTime: Seconds }
@@ -24,4 +23,5 @@ export type GameAction
 	| { readonly type: "Player_StartMovingLeft" }
 	| { readonly type: "Player_StopMovingLeft" }
 	| { readonly type: "Player_StartMovingRight" }
-	| { readonly type: "Player_StopMovingRight" };
+	| { readonly type: "Player_StopMovingRight" }
+	| { readonly type: "PlaySound"; readonly soundName: "Boing" };
