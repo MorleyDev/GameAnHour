@@ -47,10 +47,9 @@ const app$ = game$.pipe(
 app$.subscribe();
 game$.next(gameFactory());
 
-console.log("Running game");
+
 if ((module as any).hot) {
 	(module as any).hot.accept("./main/game", () => {
-		console.log("Accepting the new game-redux");
 		game$.next(gameFactory());
 	});
 }
