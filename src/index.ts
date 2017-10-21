@@ -25,18 +25,22 @@ const gameFactory: () => ReduxApp<any, any> = () => require("./main/game");
 const game$ = new Subject<ReduxApp<any, any>>();
 const canvas = new CanvasRenderer(document.getElementById("render-target")!);
 
-let latestBootstrap = bootstrap;
-let latestState = initialState;
+const debugHooks = { currentState: initialState, actions$: new Subject<any>() };
+(window as any).debugHooks = debugHooks;
+
+let latestBootstrap = (module as any).hot
+	? merge(bootstrap, debugHooks.actions$)
+	: bootstrap;
 
 const devRememberState = (module as any).hot
 	? tap((state: any) => {
-		latestState = state;
-		latestBootstrap = empty();
+		debugHooks.currentState = state;
+		latestBootstrap = debugHooks.actions$;
 	})
 	: (state$: Observable<any>): Observable<any> => state$;
 
 const app$ = game$.pipe(
-	switchMap(game => createReduxApp({ ...game, initialState: latestState, bootstrap: latestBootstrap }).pipe(
+	switchMap(game => createReduxApp({ ...game, initialState: debugHooks.currentState, bootstrap: latestBootstrap }).pipe(
 		devRememberState,
 		map(state => profile("@@RENDER", () => game.render(state)))
 	)),

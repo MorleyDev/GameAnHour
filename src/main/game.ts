@@ -210,7 +210,7 @@ const renderShapes = createEntitiesStateMap(
 );
 
 export const render = (state: GameState) => [
-	Clear,
+	Clear(),
 	Origin(Point2(320, 240), [
 		...renderShapes(state)
 	])

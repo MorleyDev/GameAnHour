@@ -1,6 +1,6 @@
 import { Renderer } from "../core/graphics/renderer.service";
 import { Rectangle } from "../core/models/shapes.model";
-import { Blit, Fill, Frame, FrameCollection, Origin, Rotate, Scale, Stroke } from "./render-frame.model";
+import { Blit, Clear, Fill, Frame, FrameCollection, Origin, Rotate, Scale, Stroke } from "./render-frame.model";
 
 export function Render(canvas: Renderer, frame: FrameCollection): Renderer {
 	return frame.reduce((canvas, command) => RenderCommand(canvas, command), canvas);
@@ -13,7 +13,7 @@ function RenderCommand(canvas: Renderer, command: Frame): Renderer {
 	} else {
 		switch (commandType) {
 			case "clear":
-				return RenderClear(canvas);
+				return RenderClear(canvas, command as Clear);
 
 			case "origin":
 				return RenderOrigin(canvas, command as Origin);
@@ -73,6 +73,6 @@ function RenderStroke(canvas: Renderer, fill: Stroke): Renderer {
 	return canvas.stroke(shape, colour);
 }
 
-function RenderClear(canvas: Renderer): Renderer {
-	return canvas.clear();
+function RenderClear(canvas: Renderer, clear: Clear): Renderer {
+	return canvas.clear(clear[1]);
 }

@@ -8,8 +8,8 @@ export const Frame = (..._commands: (FrameCommand | Frame)[]) => _commands;
 export interface FrameCollection extends Array<Frame | FrameCommand> { };
 export type FrameCommand = Clear | Origin | Scale | Rotate | Fill | Stroke | Blit;
 
-export type Clear = ["clear"];
-export const Clear: Clear = ["clear"];
+export type Clear = ["clear"] | ["clear", string];
+export const Clear = (colour?: string): Clear => colour != null ? ["clear", colour] : ["clear"];
 
 export type Origin = ["origin", Point2, FrameCollection];
 export const Origin = (origin: Point2, child: FrameCollection): Origin => ["origin", origin, child];

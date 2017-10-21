@@ -12,7 +12,8 @@ export class CanvasRenderer implements Renderer {
 		this.context = this.canvas.getContext("2d")!;
 	}
 
-	public clear(): this {
+	public clear(clearColour: string = "black"): this {
+		this.canvas.style.backgroundColor = clearColour;
 		this.context.setTransform(
 			1, 0, 0,
 			1, 0, 0

@@ -4,6 +4,7 @@ import { Point2, Rectangle, Shape2 } from "../models/shapes.model";
 
 export abstract class Renderer {
 	public abstract clear(): Renderer;
+	public abstract clear(clearColour: string): Renderer;
 
 	public abstract translate(origin: Point2): Renderer;
 	public abstract scale(scale: Point2): Renderer;
