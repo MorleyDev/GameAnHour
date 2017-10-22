@@ -1,261 +1,130 @@
-import { Observable } from "rxjs/Observable";
-import { concat } from "rxjs/observable/concat";
+import { MouseButton } from "../pauper/core/models/mouseButton";
+import { AppDrivers } from "../pauper/functional/app-drivers";
 import { fromEvent } from "rxjs/observable/fromEvent";
+import { Text2 } from "../pauper/core/models/text/text.model";
+import { patternMatch } from "../pauper/functional/utility-pattern-match.function";
+import { Circle, Point2, Rectangle } from "../pauper/core/models/shapes.model";
+import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { of } from "rxjs/observable/of";
-import { filter, ignoreElements, map, mergeMap, tap } from "rxjs/operators";
+import { ignoreElements, map, tap } from "rxjs/operators";
 
 import { WebAssetLoader } from "../pauper/core/assets/web-asset-loader.service";
 import { WebAudioService } from "../pauper/core/audio/web-audio.service";
-import { Vector2 } from "../pauper/core/maths/vector.maths";
-import { CardinalDirection } from "../pauper/core/models/direction.model";
-import { Key } from "../pauper/core/models/keys.model";
-import { Line2 } from "../pauper/core/models/line/line.model";
-import { Rectangle } from "../pauper/core/models/rectangle/rectangle.model";
-import { Point2, Shape2 } from "../pauper/core/models/shapes.model";
-import { Seconds } from "../pauper/core/models/time.model";
-import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
-import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
-import { EntityId } from "../pauper/entity-component/entity-base.type";
-import { destroyEntity } from "../pauper/entity-component/entity-component.reducer";
-import { createReducer } from "../pauper/functional/create-reducer.func";
-import { Clear, Fill, Origin } from "../pauper/functional/render-frame.model";
-import { _, patternMatch } from "../pauper/functional/utility-pattern-match.function";
-import { PositionComponent } from "./components/PositionComponent";
-import { RenderComponent } from "./components/RenderComponent";
-import { ShapeComponent } from "./components/ShapeComponent";
-import { VelocityComponent } from "./components/VelocityComponent";
-import { bootstrap } from "./game-bootstrap";
-import { initialState } from "./game-initial-state";
-import { GameAction, GameState, GameStateFlag } from "./game.model";
+import { Clear, Stroke, Origin, Fill } from "../pauper/functional/render-frame.model";
+import { Cell, CellGrid, GameAction, GameState } from "./game.model";
 
 const audioPlayer = new WebAudioService();
 const assetLoader = new WebAssetLoader();
 
-const PaddleSpeed = 250;
-const InitialBallSpeed = 200;
+const getCell = (grid: CellGrid, x: number, y: number) => grid.cells[x + y * grid.width];
+const updateCell = (grid: CellGrid, x: number, y: number, map: (cell: Cell) => Cell) => ({
+	...grid,
+	cells: updateAt(grid.cells, x + y * grid.width, map)
+})
+const mapCells = <T>(grid: CellGrid, mapper: (cell: Cell, position: Point2) => T) => grid.cells.map((cell, index) => mapper(cell, Point2(index % grid.width, (index / grid.height | 0))))
 
-const requestStartGameEntityReducer = createEntityReducer(
-	[VelocityComponent, "Ball"],
-	((state, action, velocity: VelocityComponent, ball: any) => [
-		{
-			...velocity,
-			velocity: Vector2.multiply(Vector2.invert(Vector2.normal(Vector2.Unit)), InitialBallSpeed)
-		},
-		ball
-	])
-);
+const Range = (start: number, count: number) => Array(count).fill(start).map((_, i) => i + start);
 
-const startPlayerMove = (cardinal: CardinalDirection.Left | CardinalDirection.Right) => createEntityReducer(
-	[VelocityComponent, "Paddle"],
-	(state, action, velocity: VelocityComponent, paddle: any) => [
-		{
-			...velocity,
-			velocity: Vector2(cardinal === CardinalDirection.Left ? -PaddleSpeed : PaddleSpeed, 0)
-		},
-		paddle
-	]
-);
-const stopPlayerMove = (cardinal: CardinalDirection.Left | CardinalDirection.Right) => createEntityReducer(
-	[VelocityComponent, "Paddle"],
-	(state, action, velocity: VelocityComponent, paddle: any) => [
-		{
-			...velocity,
-			velocity: Vector2(cardinal === CardinalDirection.Left ? Math.max(velocity.velocity.x, 0) : Math.min(velocity.velocity.x, 0), 0)
-		},
-		paddle
-	]
-);
+const revealBoard = (board: CellGrid) => Range(0, board.width)
+	.mergeMap(x => Range(0, board.height).map(y => ({ x, y })))
+	.reduce((board, { x, y }) => updateCell(board, x, y, cell => ({
+		...cell,
+		state: "revealed"
+	})), board);
 
-const velocityPositionTickReducer = createEntityReducer(
-	[VelocityComponent, PositionComponent],
-	(state: GameState, action: { readonly type: "@@TICK"; readonly deltaTime: Seconds }, velocity: VelocityComponent, position: PositionComponent) => [
-		velocity,
-		{
-			name: PositionComponent,
-			position: Vector2.add(position.position, Vector2.multiply(velocity.velocity, action.deltaTime))
-		}
-	]
-);
+const updateAt = <T>(array: ReadonlyArray<T>, index: number, updator: (value: T) => T): ReadonlyArray<T> =>
+	array.map((item, i) => i === index ? updator(item) : item);
 
-function bounceBall(ballId: EntityId, state: GameState, direction: CardinalDirection | null): GameState {
-	if (direction == null) {
-		return state;
+const getNeighbouringCells = (board: CellGrid, currentX: number, currentY: number): ReadonlyArray<Point2> => {
+	return Range(currentY - 1, 3).mergeMap(y => Range(currentX - 1, 3).map(x => ({ x, y })))
+		.filter(({ x, y }) => x !== currentY || y !== currentY)
+		.filter(({ x, y }) => x >= 0 && x < board.width && y >= 0 && y < board.height);
+}
+
+const floodFillCells = (board: CellGrid, x: number, y: number): CellGrid => {
+	const currentCell = getCell(board, x, y);
+	if (currentCell.state === "revealed") {
+		return board;
 	}
-	return {
-		...state,
-		effects: state.effects.concat([{ type: "PlaySoundEffect", soundId: "boing" }]),
-		entities: state.entities.update(ballId, entity => ({
-			...entity,
-			components: entity.components.update(VelocityComponent, (component: VelocityComponent) => ({
-				...component,
-				velocity: Vector2(
-					patternMatch(direction,
-						[CardinalDirection.Left, () => -Math.abs(component.velocity.x)],
-						[CardinalDirection.Right, () => Math.abs(component.velocity.x)],
-						[_, () => component.velocity.x]
-					),
-					patternMatch(direction,
-						[CardinalDirection.Up, () => -Math.abs(component.velocity.y)],
-						[CardinalDirection.Down, () => Math.abs(component.velocity.y)],
-						[_, () => component.velocity.y]
-					),
-				)
-			}))
-		}))
-	};
+
+	const revealCurrent = updateCell(board, x, y, c => ({
+		...c,
+		state: "revealed"
+	}));
+	if (currentCell.neighbouringMines > 0) {
+		return revealCurrent;
+	}
+
+	return getNeighbouringCells(board, x, y)
+		.reduce((board, neighbour) => floodFillCells(board, neighbour.x, neighbour.y), revealCurrent);
 }
 
-function ballBlockCollisionDetectionReducer(state: GameState, action: { readonly type: "@@TICK", readonly deltaTime: Seconds }): GameState {
-	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
-	const blocks = state.componentEntityLinks.at("Block").map(id => state.entities.at(id)!);
-
-	return balls.reduce((state, ball) => {
-		const ballCollision = Shape2.add((ball.components.at(ShapeComponent)! as ShapeComponent).shape, (ball.components.at(PositionComponent)! as PositionComponent).position);
-		return blocks.reduce((state, block) => {
-			const blockCollision = Shape2.add((block.components.at(ShapeComponent)! as ShapeComponent).shape, (block.components.at(PositionComponent)! as PositionComponent).position);
-			if (!Shape2.collision(ballCollision, blockCollision)) {
-				return state;
+export const reducer = (state: GameState, action: GameAction): GameState => {
+	switch (action.type) {
+		case "PLANT_FLAG":
+			return {
+				...state,
+				mineboard: updateCell(state.mineboard, action.x, action.y, cell => cell.state === "unrevealed" ? ({
+					...cell,
+					state: "flagged"
+				}) : cell)
 			}
-
-			const shapeLines = Rectangle.lines(blockCollision as Rectangle);
-			const bounceDir = patternMatch(_,
-				[() => Shape2.collision(ballCollision, shapeLines.bottom), () => CardinalDirection.Down],
-				[() => Shape2.collision(ballCollision, shapeLines.top), () => CardinalDirection.Up],
-				[() => Shape2.collision(ballCollision, shapeLines.right), () => CardinalDirection.Left],
-				[() => Shape2.collision(ballCollision, shapeLines.left), () => CardinalDirection.Right],
-				[_, () => null]
-			);
-			return bounceBall(ball.id, destroyEntity(state, block.id), bounceDir);
-		}, state);
-	}, state);
-}
-
-function ballPaddleCollisionDetectionReducer(state: GameState, action: { readonly type: "@@TICK", readonly deltaTime: Seconds }): GameState {
-	const balls = state.componentEntityLinks.at("Ball").map(id => state.entities.at(id)!);
-	const paddles = state.componentEntityLinks.at("Paddle").map(id => state.entities.at(id)!);
-
-	return balls.reduce((state, ball) => {
-		const ballCollision = Shape2.add((ball.components.at(ShapeComponent)! as ShapeComponent).shape, (ball.components.at(PositionComponent)! as PositionComponent).position);
-		return paddles.reduce((state, block) => {
-			const blockCollision = Shape2.add((block.components.at(ShapeComponent)! as ShapeComponent).shape, (block.components.at(PositionComponent)! as PositionComponent).position);
-			if (!Shape2.collision(ballCollision, blockCollision)) {
-				return state;
+		case "REVEAL_CELL":
+			const chosenCell = getCell(state.mineboard, action.x, action.y);
+			if (chosenCell.contents === "mine") {
+				return {
+					...state,
+					mineboard: revealBoard(state.mineboard)
+				};
 			}
-
-			const shapeLines = Rectangle.lines(blockCollision as Rectangle);
-			const bounceDir = patternMatch(_,
-				[() => Shape2.collision(ballCollision, shapeLines.bottom), () => CardinalDirection.Down],
-				[() => Shape2.collision(ballCollision, shapeLines.top), () => CardinalDirection.Up],
-				[() => Shape2.collision(ballCollision, shapeLines.right), () => CardinalDirection.Left],
-				[() => Shape2.collision(ballCollision, shapeLines.left), () => CardinalDirection.Right],
-				[_, () => null]
-			);
-			return bounceBall(ball.id, state, bounceDir);
-		}, state);
-	}, state);
+			return {
+				...state,
+				mineboard: floodFillCells(state.mineboard, action.x, action.y)
+			};
+		default:
+			return state;
+	}
 }
-
-function ballWallCollisionDetectionReducer(state: GameState, action: { readonly type: "@@TICK", readonly deltaTime: Seconds }): GameState {
-	return state.componentEntityLinks.at("Ball")
-		.map(id => state.entities.at(id)!)
-		.reduce((state, ball) => {
-			const ballCollision = Shape2.add((ball.components.at(ShapeComponent)! as ShapeComponent).shape, (ball.components.at(PositionComponent)! as PositionComponent).position);
-			const bounce = patternMatch(ballCollision,
-				[b => Shape2.collision(b, Line2(Point2(-320, -240), Point2(-320, 240))), () => CardinalDirection.Right],
-				[b => Shape2.collision(b, Line2(Point2(320, -240), Point2(320, 240))), () => CardinalDirection.Left],
-				[b => Shape2.collision(b, Line2(Point2(-320, 240), Point2(320, 240))), () => CardinalDirection.Up],
-				[b => Shape2.collision(b, Line2(Point2(-320, -240), Point2(320, -240))), () => CardinalDirection.Down],
-				[_, () => null]
-			);
-			return bounceBall(ball.id, state, bounce);
-		}, state);
-}
-
-const breakoutGameReducer = createReducer(
-	["@@TICK", velocityPositionTickReducer],
-	["@@TICK", ballBlockCollisionDetectionReducer],
-	["@@TICK", ballWallCollisionDetectionReducer],
-	["@@TICK", ballPaddleCollisionDetectionReducer],
-	["RequestGameRestart", () => initialState],
-	["Player_StartMovingLeft", startPlayerMove(CardinalDirection.Left)],
-	["Player_StartMovingRight", startPlayerMove(CardinalDirection.Right)],
-	["Player_StopMovingLeft", stopPlayerMove(CardinalDirection.Left)],
-	["Player_StopMovingRight", stopPlayerMove(CardinalDirection.Right)],
-	[
-		"GameReady",
-		(state: GameState, action) => state.currentState === GameStateFlag.Initialising ? { ...state, currentState: GameStateFlag.Ready } : state
-	],
-	[
-		"RequestStartGame",
-		(state: GameState, action) =>
-			state.currentState === GameStateFlag.Ready
-				? {
-					...requestStartGameEntityReducer(state, action),
-					currentState: GameStateFlag.Playing
-				}
-				: state
-	]
-);
-
-export const reducer = (state: GameState, action: GameAction) => state
-	.fpipe(entityComponentReducer, action)
-	.fpipe(breakoutGameReducer, action);
-
-const renderShapes = createEntitiesStateMap(
-	[PositionComponent, ShapeComponent, RenderComponent],
-	(_: EntityId, position: PositionComponent, shape: ShapeComponent, render: RenderComponent) =>
-		Fill(Shape2.add(shape.shape, position.position), render.colour)
-);
 
 export const render = (state: GameState) => [
-	Clear(),
-	Origin(Point2(320, 240), [
-		...renderShapes(state)
-	])
+	Clear("white"),
+	mapCells(state.mineboard, (cell, position) => ({ ...position, ...cell }))
+		.map(renderCell)
 ];
 
-function onKeyDown(k: Key, action: () => GameAction): Observable<GameAction> {
-	return fromEvent(document, "keydown")
-		.pipe(
-			map((key: KeyboardEvent) => key.keyCode),
-			filter(key => key === k),
-			map(action)
-		);
+const renderCell = (cell: Cell & { readonly x: number; readonly y: number }) => {
+	const inner = patternMatch(cell.state,
+		["unrevealed", () => []],
+		["flagged", () => [
+			Origin(Point2(cell.x * 32 + 16, cell.y * 32 + 16), [
+				Stroke(Circle(0, 0, 10), "green")
+			])
+		]],
+		["revealed", () => [
+			Origin(Point2(cell.x * 32 + 16, cell.y * 32 + 16), [
+				cell.contents === "empty"
+					? Fill(Text2(`${cell.neighbouringMines}`, -8, 5, undefined, "24px", "sans-serif"), "green")
+					: Fill(Circle(0, 0, 10), "black")
+			])
+		]]
+	);
+	return [
+		Stroke(Rectangle(cell.x * 32, cell.y * 32, 32, 32), "black"),
+		...inner
+	];
 }
 
-function onKeyUp(k: Key, action: () => GameAction): Observable<GameAction> {
-	return fromEvent(document, "keyup")
-		.pipe(
-			filter((key: KeyboardEvent) => key.keyCode === k),
-			map(action)
-		);
-}
+const canvasDom = document.getElementById("render-target")!;
 
-const requestStartGame = onKeyDown(Key.Space, () => ({ type: "RequestStartGame" }));
-const requestGameRestart = onKeyDown(Key.Escape, () => ({ type: "RequestGameRestart" }));
-const playerMoveLeftStart = onKeyDown(Key.LeftArrow, () => ({ type: "Player_StartMovingLeft" }));
-const playerMoveRightStart = onKeyDown(Key.RightArrow, () => ({ type: "Player_StartMovingRight" }));
-const playerMoveLeftStop = onKeyUp(Key.LeftArrow, () => ({ type: "Player_StopMovingLeft" }));
-const playerMoveRightStop = onKeyUp(Key.RightArrow, () => ({ type: "Player_StopMovingRight" }));
-
-const boing = assetLoader.getAudio("boing", "./assets/boing.wav");
-
-export const epic = (action$: Observable<GameAction>) => merge(
-	interval(1000 / 60).pipe( map(() => ({ type: "@@TICK", deltaTime: 1 / 60 })) ),
-	requestStartGame,
-	requestGameRestart.pipe(
-		mergeMap(action => concat(of(action), bootstrap)),
+export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge(
+	drivers.mouse!.mouseUp(MouseButton.Left).pipe(
+		map(position => Point2((position.x / 32) | 0, (position.y / 32) | 0)),
+		map(grid => ({ type: "REVEAL_CELL", ...grid }))
 	),
-	playerMoveLeftStart,
-	playerMoveLeftStop,
-	playerMoveRightStart,
-	playerMoveRightStop,
-	action$.pipe(
-		filter(action => action.type === "PlaySoundEffect"),
-		tap((action: { readonly type: "PlaySoundEffect"; readonly soundId: string; }) => audioPlayer.play(assetLoader.getAudio(action.soundId))),
-		ignoreElements()
+	drivers.mouse!.mouseUp(MouseButton.Right).pipe(
+		map(position => Point2((position.x / 32) | 0, (position.y / 32) | 0)),
+		map(grid => ({ type: "PLANT_FLAG", ...grid }))
 	)
 );
 

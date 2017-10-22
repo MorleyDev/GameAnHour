@@ -1,27 +1,26 @@
+import { Point2 } from "../pauper/core/models/point/point.model";
 import { Seconds } from "../pauper/core/models/time.model";
-import { EntitiesState } from "../pauper/entity-component";
 import { SystemState } from "../pauper/functional";
 
-export enum GameStateFlag {
-	Initialising,
-	Ready,
-	Playing,
-	GameOver
+export type Cell = {
+	readonly state: "unrevealed" | "flagged" | "revealed";
+	readonly contents: "empty" | "mine";
+	readonly neighbouringMines: number;
+};
+
+export type CellGrid = {
+	readonly cells: ReadonlyArray<Cell>;
+	readonly width: number;
+	readonly height: number;
 }
 
 export type GameState
-	= EntitiesState
-	& SystemState
-	& { readonly currentState: GameStateFlag }
-	& { readonly effects: ReadonlyArray<GameAction>; };
+	= SystemState
+	& { readonly effects: ReadonlyArray<GameAction>; }
+	& { readonly mineboard: CellGrid; };
 
 export type GameAction
 	= { readonly type: "@@TICK"; readonly deltaTime: Seconds }
-	| { readonly type: "RequestGameRestart" }
-	| { readonly type: "GameReady" }
-	| { readonly type: "RequestStartGame" }
-	| { readonly type: "Player_StartMovingLeft" }
-	| { readonly type: "Player_StopMovingLeft" }
-	| { readonly type: "Player_StartMovingRight" }
-	| { readonly type: "Player_StopMovingRight" }
-	| { readonly type: "PlaySoundEffect"; readonly soundId: string; };
+	| { readonly type: "PLANT_FLAG"; readonly x: number; readonly y: number }
+	| { readonly type: "REVEAL_CELL"; readonly x: number; readonly y: number };
+	

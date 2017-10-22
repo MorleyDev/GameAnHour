@@ -1,4 +1,4 @@
-import { BlittableAsset } from "../assets/asset.model";
+import { BlittableAsset, ImageAsset } from "../assets/asset.model";
 import { Radian } from "../maths/angles.maths";
 import { Point2, Rectangle, Shape2 } from "../models/shapes.model";
 
@@ -13,4 +13,7 @@ export abstract class Renderer {
 	public abstract fill(pos: Shape2, colour: string): Renderer;
 	public abstract stroke(pos: Shape2, colour: string): Renderer;
 	public abstract blit(image: BlittableAsset, dst: Point2 | Rectangle, str?: Rectangle): Renderer;
+
+	public abstract child(width: number, height: number): Renderer;
+	public abstract toImage(): ImageAsset;
 }

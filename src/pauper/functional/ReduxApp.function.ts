@@ -2,12 +2,15 @@ import { applyMiddleware, compose as productionCompose, createStore } from "redu
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
+import { ignoreElements } from "rxjs/operators/ignoreElements";
 import { map } from "rxjs/operators/map";
 import { scan } from "rxjs/operators/scan";
+import { share } from "rxjs/operators/share";
 import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
 
 import { profile } from "../core/profiler";
+import { AppDrivers } from "./app-drivers";
 import { GenericAction } from "./generic.action";
 import { ReduxApp } from "./ReduxApp.type";
 import { SystemState } from "./system.state";
@@ -15,7 +18,7 @@ import { SystemState } from "./system.state";
 export function createReduxApp<
 	TState extends Partial<SystemState>,
 	TAction extends GenericAction = GenericAction
-	>(app: ReduxApp<TState, TAction>): Observable<TState> {
+	>(drivers: AppDrivers, app: ReduxApp<TState, TAction>): Observable<TState> {
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
@@ -34,14 +37,21 @@ export function createReduxApp<
 
 	const subject = new Subject<TAction>();
 
-	return merge(app.bootstrap || empty(), app.epic(subject)).pipe(
+	const state$ = merge(app.bootstrap || empty(), app.epic(subject, drivers)).pipe(
 		tap(action => subject.next(action)),
 		reduxScan((state: TState, action: TAction) => sideEffect(
-			app.postprocess(
-				app.reducer(state, action)
-			),
+			app.postprocess(app.reducer(state, action)),
 			post => post.actions.forEach(action => subject.next(action))
 		).state, app.initialState),
+		share()
+	);
+	return merge(
+		state$.pipe(
+			map(state => app.render(state)),
+			drivers.renderer,
+			ignoreElements()
+		) as Observable<TState>,
+		state$
 	);
 }
 
