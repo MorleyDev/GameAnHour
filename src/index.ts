@@ -1,8 +1,9 @@
 import "./pauper/core/extensions";
 
 import { Observable } from "rxjs/Observable";
+import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
-import { auditTime, reduce, switchMap, tap } from "rxjs/operators";
+import { auditTime, catchError, reduce, switchMap, tap } from "rxjs/operators";
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
 
@@ -44,7 +45,7 @@ const debugHooks = { currentState: initialState, actions$: new Subject<any>() };
 (window as any).debugHooks = debugHooks;
 
 let latestBootstrap = (module as any).hot
-	? merge(bootstrap, debugHooks.actions$)
+	? merge(bootstrap(drivers), debugHooks.actions$)
 	: bootstrap(drivers);
 
 const devRememberState = (module as any).hot
@@ -61,7 +62,11 @@ const app$ = game$.pipe(
 		initialState: debugHooks.currentState,
 		bootstrap: latestBootstrap
 	})),
-	devRememberState
+	devRememberState,
+	catchError(err => {
+		console.error(err);
+		return empty();
+	})
 );
 
 app$.subscribe();

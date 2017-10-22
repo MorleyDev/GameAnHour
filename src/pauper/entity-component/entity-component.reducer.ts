@@ -32,7 +32,7 @@ export function createEntity<TState extends EntitiesState>(state: TState, id: En
 export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
 	return {
 		...(state as any),
-		entities: state.entities.remove(id),
+		entities: state.entities.update(id, c => sideEffect(c, disconnectEntity)).remove(id),
 		componentEntityLinks: state.componentEntityLinks.filter(([_, entityId]) => entityId !== id)
 	};
 }
@@ -42,7 +42,7 @@ export function attachComponent<TState extends EntitiesState>(state: TState, id:
 		...(state as any),
 		entities: state.entities.update(id, entity => ({
 			...entity,
-			components: entity.components.append(component.name, component)
+			components: entity.components.append(component.name, sideEffect(component, connectComponent))
 		})),
 		componentEntityLinks: state.componentEntityLinks.append(component.name, id)
 	};
@@ -53,10 +53,32 @@ export function detachComponent<TState extends EntitiesState>(state: TState, id:
 		...(state as any),
 		entities: state.entities.update(id, entity => ({
 			...entity,
-			components: entity.components.remove(componentName)
+			components: entity.components
+				.update(componentName, c => sideEffect(c, disconnectComponent))
+				.remove(componentName)
 		})),
 		componentEntityLinks: state.componentEntityLinks.removeWhere(componentName, entityId => entityId === id)
 	};
 }
 
+function connectComponent(component: BaseComponent): void {
+	return component.events && component.events.disconnect && component.events.connect(component);
+}
 
+function disconnectEntity(entity: BaseEntity): void {
+	return entity.components.forEach(([_, component]) => disconnectComponent(component));
+}
+
+function disconnectComponent(component: BaseComponent): void {
+	return component.events && component.events.disconnect && component.events.disconnect(component);
+}
+
+// Cheating the immutability by exploiting the lack of laziness!
+//----------------------------------------------------------------
+
+// Given value T, perform some sideEffect using that value and then return T
+const sideEffect = <T>(seed: T, sideEffect: (value: T) => void): T => {
+	return effectVar(seed, sideEffect(seed));
+}
+/* Allows for the value passed in to be retrieved and whatever side-effect causing values have been passed in to be evaluated and discarded */
+const effectVar = <T, U>(value: T, ..._u: U[]): T => value;
