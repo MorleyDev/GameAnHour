@@ -1,5 +1,5 @@
-import { AudioService } from "./audio.service";
 import { AudioAsset } from "../assets/asset.model";
+import { AudioService } from "./audio.service";
 
 export class WebAudioService implements AudioService {
 	public play(audio: AudioAsset): this {

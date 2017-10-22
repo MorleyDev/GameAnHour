@@ -1,4 +1,3 @@
-import { Point2 } from "../pauper/core/models/point/point.model";
 import { Seconds } from "../pauper/core/models/time.model";
 import { SystemState } from "../pauper/functional";
 

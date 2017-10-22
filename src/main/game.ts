@@ -1,21 +1,14 @@
-import { MouseButton } from "../pauper/core/models/mouseButton";
-import { AppDrivers } from "../pauper/functional/app-drivers";
-import { fromEvent } from "rxjs/observable/fromEvent";
-import { Text2 } from "../pauper/core/models/text/text.model";
-import { patternMatch } from "../pauper/functional/utility-pattern-match.function";
-import { Circle, Point2, Rectangle } from "../pauper/core/models/shapes.model";
-import { Observable } from "rxjs/Observable";
-import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { ignoreElements, map, tap } from "rxjs/operators";
+import { map } from "rxjs/operators/map";
+import { Observable } from "rxjs/Observable";
 
-import { WebAssetLoader } from "../pauper/core/assets/web-asset-loader.service";
-import { WebAudioService } from "../pauper/core/audio/web-audio.service";
-import { Clear, Stroke, Origin, Fill } from "../pauper/functional/render-frame.model";
+import { Point2, Circle, Text2, Rectangle } from "../pauper/core/models/shapes.model";
 import { Cell, CellGrid, GameAction, GameState } from "./game.model";
 
-const audioPlayer = new WebAudioService();
-const assetLoader = new WebAssetLoader();
+import { Clear, Origin, Stroke, Fill } from "../pauper/functional/render-frame.model";
+import { patternMatch } from "../pauper/functional/utility-pattern-match.function";
+import { AppDrivers } from "../pauper/functional/app-drivers";
+import { MouseButton } from "../pauper/core/models/mouseButton";
 
 const getCell = (grid: CellGrid, x: number, y: number) => grid.cells[x + y * grid.width];
 const updateCell = (grid: CellGrid, x: number, y: number, map: (cell: Cell) => Cell) => ({
@@ -114,8 +107,6 @@ const renderCell = (cell: Cell & { readonly x: number; readonly y: number }) => 
 		...inner
 	];
 }
-
-const canvasDom = document.getElementById("render-target")!;
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge(
 	drivers.mouse!.mouseUp(MouseButton.Left).pipe(

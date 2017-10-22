@@ -14,6 +14,5 @@ export abstract class Renderer {
 	public abstract stroke(pos: Shape2, colour: string): Renderer;
 	public abstract blit(image: BlittableAsset, dst: Point2 | Rectangle, str?: Rectangle): Renderer;
 
-	public abstract child(width: number, height: number): Renderer;
 	public abstract toImage(): ImageAsset;
 }

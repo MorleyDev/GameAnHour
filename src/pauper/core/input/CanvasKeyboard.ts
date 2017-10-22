@@ -1,11 +1,10 @@
-import { mergeMap } from "rxjs/operators/mergeMap";
-import { mergeAll } from "rxjs/operators/mergeAll";
-import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
-import { groupBy } from "rxjs/operators/groupBy";
 import { Observable } from "rxjs/Observable";
 import { fromEvent } from "rxjs/observable/fromEvent";
+import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
+import { groupBy } from "rxjs/operators/groupBy";
 import { map } from "rxjs/operators/map";
 import { merge } from "rxjs/operators/merge";
+import { mergeMap } from "rxjs/operators/mergeMap";
 
 import { Key } from "../models/keys.model";
 import { Keyboard } from "./Keyboard";

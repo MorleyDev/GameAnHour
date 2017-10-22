@@ -1,6 +1,5 @@
-import { SystemState } from "../pauper/functional";
-import { Point2 } from "../pauper/core/models/shapes.model";
 import { Cell, CellGrid, GameState } from "./game.model";
+import { SystemState } from "../pauper/functional";
 
 const Range = (start: number, count: number) => Array(count).fill(start).map((_, i) => i + start);
 

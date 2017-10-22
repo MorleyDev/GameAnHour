@@ -1,6 +1,7 @@
+import { Howl } from "howler";
+
 import { AssetLoader } from "./asset-loader.service";
 import { AudioAsset, ImageAsset } from "./asset.model";
-import { Howl } from "howler";
 
 export class WebAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};

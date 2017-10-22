@@ -1,4 +1,3 @@
-import { CanvasMouse } from "./pauper/core/input/CanvasMouse";
 import "./pauper/core/extensions";
 
 import { Observable } from "rxjs/Observable";
@@ -9,9 +8,12 @@ import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "./main/game-bootstrap";
 import { initialState } from "./main/game-initial-state";
+import { WebAssetLoader } from "./pauper/core/assets/web-asset-loader.service";
+import { WebAudioService } from "./pauper/core/audio/web-audio.service";
 import { CanvasRenderer } from "./pauper/core/graphics/canvas-renderer.service";
 import { Renderer } from "./pauper/core/graphics/renderer.service";
 import { CanvasKeyboard } from "./pauper/core/input/CanvasKeyboard";
+import { CanvasMouse } from "./pauper/core/input/CanvasMouse";
 import { AppDrivers } from "./pauper/functional/app-drivers";
 import { createReduxApp } from "./pauper/functional/ReduxApp.function";
 import { ReduxApp } from "./pauper/functional/ReduxApp.type";
@@ -27,13 +29,23 @@ const game$ = new Subject<ReduxApp<any, any>>();
 
 const canvas = document.getElementById("render-target")! as HTMLCanvasElement;
 const canvasRenderer = new CanvasRenderer(canvas);
+const drivers: AppDrivers = {
+	keyboard: new CanvasKeyboard(canvas),
+	mouse: new CanvasMouse(canvas),
+	audio: new WebAudioService(),
+	loader: new WebAssetLoader(),
+	renderer: frames => frames.pipe(
+		auditTime(15, animationFrame),
+		reduce((canvas: Renderer, frames: FrameCollection) => Render(canvas, frames), canvasRenderer)
+	)
+};
 
 const debugHooks = { currentState: initialState, actions$: new Subject<any>() };
 (window as any).debugHooks = debugHooks;
 
 let latestBootstrap = (module as any).hot
 	? merge(bootstrap, debugHooks.actions$)
-	: bootstrap;
+	: bootstrap(drivers);
 
 const devRememberState = (module as any).hot
 	? tap((state: any) => {
@@ -42,14 +54,6 @@ const devRememberState = (module as any).hot
 	})
 	: (state$: Observable<any>): Observable<any> => state$;
 
-const drivers: AppDrivers = {
-	keyboard: new CanvasKeyboard(canvas),
-	mouse: new CanvasMouse(canvas),
-	renderer: frames => frames.pipe(
-		auditTime(15, animationFrame),
-		reduce((canvas: Renderer, frames: FrameCollection) => Render(canvas, frames), canvasRenderer)
-	)
-};
 
 const app$ = game$.pipe(
 	switchMap(game => createReduxApp(drivers, {

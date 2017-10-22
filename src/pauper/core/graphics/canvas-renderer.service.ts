@@ -1,6 +1,6 @@
 import { BlittableAsset, ImageAsset } from "../assets/asset.model";
 import { Radian } from "../maths/angles.maths";
-import { Circle, Line2, Point2, Rectangle, Shape2, Text2 } from "../models/shapes.model";
+import { Circle, Point2, Rectangle, Shape2, Text2 } from "../models/shapes.model";
 import { Renderer } from "./renderer.service";
 
 export class CanvasRenderer implements Renderer {
@@ -34,13 +34,6 @@ export class CanvasRenderer implements Renderer {
 	public rotate(radians: Radian): Renderer {
 		this.context.rotate(radians);
 		return this;
-	}
-
-	public child(width: number, height: number): Renderer {
-		const canvas = document.createElement("canvas");
-		canvas.width = width;
-		canvas.height = height;
-		return new CanvasRenderer(canvas);
 	}
 
 	public toImage(): ImageAsset {
