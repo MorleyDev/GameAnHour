@@ -1,125 +1,79 @@
-import { merge } from "rxjs/observable/merge";
-import { map } from "rxjs/operators/map";
-import { Observable } from "rxjs/Observable";
-
-import { Point2, Circle, Text2, Rectangle } from "../pauper/core/models/shapes.model";
-import { Cell, CellGrid, GameAction, GameState } from "./game.model";
-
-import { Clear, Origin, Stroke, Fill } from "../pauper/functional/render-frame.model";
-import { patternMatch } from "../pauper/functional/utility-pattern-match.function";
-import { AppDrivers } from "../pauper/functional/app-drivers";
 import { MouseButton } from "../pauper/core/models/mouseButton";
+import { interval } from "rxjs/observable/interval";
+import { Rectangle } from "../pauper/core/models/shapes.model";
+import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
+import { EntityId } from "../pauper/entity-component/entity-base.type";
+import { AttachComponentAction, CreateEntityAction } from "../pauper/entity-component/entity-component.actions";
+import { map, mergeMap } from "rxjs/operators";
+import { PhysicsComponent } from "./components/PhysicsComponent";
+import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
 
-const getCell = (grid: CellGrid, x: number, y: number) => grid.cells[x + y * grid.width];
-const updateCell = (grid: CellGrid, x: number, y: number, map: (cell: Cell) => Cell) => ({
-	...grid,
-	cells: updateAt(grid.cells, x + y * grid.width, map)
-})
-const mapCells = <T>(grid: CellGrid, mapper: (cell: Cell, position: Point2) => T) => grid.cells.map((cell, index) => mapper(cell, Point2(index % grid.width, (index / grid.height | 0))))
+import { Engine } from "matter-js";
+import { Observable } from "rxjs/Observable";
+import { merge } from "rxjs/observable/merge";
 
-const Range = (start: number, count: number) => Array(count).fill(start).map((_, i) => i + start);
+import { AppDrivers } from "../pauper/functional/app-drivers";
+import { Clear, Origin, Rotate, Stroke } from "../pauper/functional/render-frame.model";
+import { GameAction, GameState } from "./game.model";
+import { engine } from "./physics-engine";
 
-const revealBoard = (board: CellGrid) => Range(0, board.width)
-	.mergeMap(x => Range(0, board.height).map(y => ({ x, y })))
-	.reduce((board, { x, y }) => updateCell(board, x, y, cell => ({
-		...cell,
-		state: "revealed"
-	})), board);
-
-const updateAt = <T>(array: ReadonlyArray<T>, index: number, updator: (value: T) => T): ReadonlyArray<T> =>
-	array.map((item, i) => i === index ? updator(item) : item);
-
-const getNeighbouringCells = (board: CellGrid, currentX: number, currentY: number): ReadonlyArray<Point2> => {
-	return Range(currentY - 1, 3).mergeMap(y => Range(currentX - 1, 3).map(x => ({ x, y })))
-		.filter(({ x, y }) => x !== currentY || y !== currentY)
-		.filter(({ x, y }) => x >= 0 && x < board.width && y >= 0 && y < board.height);
-}
-
-const floodFillCells = (board: CellGrid, x: number, y: number): CellGrid => {
-	const currentCell = getCell(board, x, y);
-	if (currentCell.state === "revealed") {
-		return board;
-	}
-
-	const revealCurrent = updateCell(board, x, y, c => ({
-		...c,
-		state: "revealed"
-	}));
-	if (currentCell.neighbouringMines > 0) {
-		return revealCurrent;
-	}
-
-	return getNeighbouringCells(board, x, y)
-		.reduce((board, neighbour) => floodFillCells(board, neighbour.x, neighbour.y), revealCurrent);
-}
+const physicsReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
+	return [{
+		...physics,
+		position: { x: physics._body!.position.x + 20, y: physics._body!.position.y + 20 },
+		rotation: physics._body!.angle
+	}];
+});
 
 export const reducer = (state: GameState, action: GameAction): GameState => {
 	switch (action.type) {
-		case "PLANT_FLAG":
-			return {
-				...state,
-				mineboard: updateCell(state.mineboard, action.x, action.y, cell => cell.state === "unrevealed" ? ({
-					...cell,
-					state: "flagged"
-				}) : cell)
-			}
-		case "REVEAL_CELL":
-			const chosenCell = getCell(state.mineboard, action.x, action.y);
-			if (chosenCell.contents === "mine") {
-				return {
-					...state,
-					mineboard: revealBoard(state.mineboard)
-				};
-			}
-			return {
-				...state,
-				mineboard: floodFillCells(state.mineboard, action.x, action.y)
-			};
+		case "@@TICK":
+			Engine.update(engine, action.deltaTime * 1000);
+			return physicsReducer(state, action);
 		default:
-			return state;
+			return entityComponentReducer(state, action);
 	}
-}
+};
+
+const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string, physics: PhysicsComponent) => {
+	return Origin(physics.position, [
+		Rotate(-physics.rotation, [
+			Stroke(Rectangle(physics.position.x, physics.position.y, 40, 40), "white")
+		])
+	]);
+});
 
 export const render = (state: GameState) => [
-	Clear("white"),
-	mapCells(state.mineboard, (cell, position) => ({ ...position, ...cell }))
-		.map(renderCell)
+	Clear("black"),
+	Array.from( entityRenderer(state) )
 ];
 
-const renderCell = (cell: Cell & { readonly x: number; readonly y: number }) => {
-	const inner = patternMatch(cell.state,
-		["unrevealed", () => []],
-		["flagged", () => [
-			Origin(Point2(cell.x * 32 + 16, cell.y * 32 + 16), [
-				Stroke(Circle(0, 0, 10), "green")
-			])
-		]],
-		["revealed", () => [
-			Origin(Point2(cell.x * 32 + 16, cell.y * 32 + 16), [
-				cell.contents === "empty"
-					? Fill(Text2(`${cell.neighbouringMines}`, -8, 5, undefined, "24px", "sans-serif"), "green")
-					: Fill(Circle(0, 0, 10), "black")
-			])
-		]]
-	);
-	return [
-		Stroke(Rectangle(cell.x * 32, cell.y * 32, 32, 32), "black"),
-		...inner
-	];
-}
-
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge(
+	interval(10).pipe( map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
 	drivers.mouse!.mouseUp(MouseButton.Left).pipe(
-		map(position => Point2((position.x / 32) | 0, (position.y / 32) | 0)),
-		map(grid => ({ type: "REVEAL_CELL", ...grid }))
+		mergeMap(pos => {
+			const id = EntityId();
+			return [
+				CreateEntityAction(id),
+				AttachComponentAction(id, PhysicsComponent(pos, false))
+			];
+		})
 	),
 	drivers.mouse!.mouseUp(MouseButton.Right).pipe(
-		map(position => Point2((position.x / 32) | 0, (position.y / 32) | 0)),
-		map(grid => ({ type: "PLANT_FLAG", ...grid }))
+		mergeMap(pos => {
+			const id = EntityId();
+			return [
+				CreateEntityAction(id),
+				AttachComponentAction(id, PhysicsComponent(pos, true))
+			];
+		})
 	)
 );
 
-export const postprocess = (state: GameState): { readonly state: GameState; readonly actions: ReadonlyArray<GameAction> } => ({
+export const postprocess = (state: GameState): {
+	readonly state: GameState;
+	readonly actions: ReadonlyArray<GameAction>;
+} => ({
 	state: {
 		...state,
 		effects: []

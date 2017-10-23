@@ -32,7 +32,9 @@ export function createEntity<TState extends EntitiesState>(state: TState, id: En
 export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
 	return {
 		...(state as any),
-		entities: state.entities.update(id, c => sideEffect(c, disconnectEntity)).remove(id),
+		entities: state.entities
+			.update(id, c => sideEffect(c, disconnectEntity))
+			.remove(id),
 		componentEntityLinks: state.componentEntityLinks.filter(([_, entityId]) => entityId !== id)
 	};
 }

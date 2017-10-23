@@ -8,12 +8,10 @@ type EntitiesStateMap<TResult, TComponent extends BaseComponent>
 	| ((entityId: EntityId, ..._extra: any[]) => TResult);
 
 export function createEntitiesStateMap<
-	TState extends EntitiesState,
 	TResult,
-	TEntity extends BaseEntity = BaseEntity,
 	TComponent extends BaseComponent = BaseComponent
-	>(withComponents: ReadonlyArray<string>, mapper: EntitiesStateMap<TResult, TComponent>): (state: TState, ..._extra: any[]) => Iterable<TResult> {
-	return (state: TState, ..._extra: any[]): Iterable<TResult> => {
+	>(withComponents: ReadonlyArray<string>, mapper: EntitiesStateMap<TResult, TComponent>): (state: EntitiesState, ..._extra: any[]) => Iterable<TResult> {
+	return (state: EntitiesState, ..._extra: any[]): Iterable<TResult> => {
 		const entityIdSubset = Set.intersect<EntityId>( withComponents.map(componentName => state.componentEntityLinks.at(componentName)) );
 		return state.entities
 			.subset(entityIdSubset)
