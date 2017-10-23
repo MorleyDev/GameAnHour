@@ -1,3 +1,4 @@
+import { BaseComponent } from "../pauper/entity-component/component-base.type";
 import { Engine } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";

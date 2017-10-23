@@ -3,7 +3,7 @@ import { List } from "immutable";
 import { GenericAction } from "./generic.action";
 import { SpecificReducer } from "./reducer.type";
 
-export type ReducerPair<TState, TAction> = [string, (state: TState, action: TAction) => TState];
+export type ReducerPair<TState, TAction> = [string, (state: TState, action: any & TAction) => TState];
 
 export function createReducer<TState, TAction extends GenericAction = GenericAction>(..._reducers: (ReducerPair<TState, TAction>)[]): SpecificReducer<TState, TAction> {
 	const reducerMap = List(_reducers)

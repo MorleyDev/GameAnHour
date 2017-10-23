@@ -27,7 +27,7 @@ tape("core/extensions/Array.groupBy", test => {
 
 tape("core/extensions/Array.prototype.groupBy", test => {
 	test.deepEqual(
-		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: string[]) => v.charAt(0)),
+		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: ReadonlyArray<string>) => v.charAt(0)),
 		{
 			"a": ["abc", "acb"],
 			"b": ["bcd"],
@@ -35,7 +35,7 @@ tape("core/extensions/Array.prototype.groupBy", test => {
 		}
 	);
 	test.deepEqual(
-		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: string[]) => v.charAt(0) === "a" ? 0 : 1),
+		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: ReadonlyArray<string>) => v.charAt(0) === "a" ? 0 : 1),
 		{
 			[0]: ["abc", "acb"],
 			[1]: ["cde", "bcd"]
@@ -44,7 +44,7 @@ tape("core/extensions/Array.prototype.groupBy", test => {
 
 	enum TestEnum { One, Two }
 	test.deepEqual(
-		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: string[]) => v.charAt(0) === "a" ? TestEnum.One : TestEnum.Two),
+		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: ReadonlyArray<string>) => v.charAt(0) === "a" ? TestEnum.One : TestEnum.Two),
 		{
 			[TestEnum.One]: ["abc", "acb"],
 			[TestEnum.Two]: ["cde", "bcd"]

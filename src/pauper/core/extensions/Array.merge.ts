@@ -5,6 +5,7 @@ declare global {
 		merge<U>(this: ReadonlyArray<ReadonlyArray<U>>): U[];
 	}
 	interface Array<T> {
+		merge<U>(this: U[][]): U[];
 		merge<U>(this: ReadonlyArray<ReadonlyArray<U>>): U[];
 	}
 }

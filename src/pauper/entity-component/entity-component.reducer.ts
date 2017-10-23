@@ -15,7 +15,7 @@ import {
 } from "./entity-component.actions";
 import { createReducer } from "../functional/create-reducer.func";
 
-export const entityComponentReducer: GenericReducer = createReducer<EntitiesState, GenericAction>(
+export const entityComponentReducer: GenericReducer = createReducer<EntitiesState>(
 	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => createEntity(state, action.id)],
 	["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => destroyEntity(state, action.id)],
 	["EC_AttachComponentAction", (state: EntitiesState, action: AttachComponentAction) => attachComponent(state, action.id, action.component)],

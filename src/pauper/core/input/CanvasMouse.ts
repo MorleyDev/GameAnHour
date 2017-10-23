@@ -28,17 +28,17 @@ export class CanvasMouse implements Mouse {
 
 	public mouseMove(): Observable<Point2Type> {
 		return fromEvent(this.canvas, "mousemove").pipe(
-			map((event: MouseEvent) => ({ x: event.offsetX, y: event.offsetY }))
+			map((event: {}) => ({ x: (event as MouseEvent).offsetX, y: (event as MouseEvent).offsetY }))
 		);
 	}
 }
 
-function filterByMouseButton(button?: MouseButton): (e: Observable<MouseEvent>) => Observable<MouseEvent> {
+function filterByMouseButton(button?: MouseButton): (e: Observable<{}>) => Observable<MouseEvent> {
 	if (button == null) {
-		return event => event;
+		return event => event as Observable<MouseEvent>;
 	}
 	const buttonCode = getMouseKeyCode(button);
-	return filter((event: MouseEvent) => event.button === buttonCode);
+	return filter((event: {}) => (event as MouseEvent).button === buttonCode) as (e: Observable<{}>) => Observable<MouseEvent>;
 }
 
 function getMouseKeyCode(button: MouseButton): number {

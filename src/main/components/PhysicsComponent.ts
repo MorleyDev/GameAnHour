@@ -5,18 +5,19 @@ import { Point2, Rectangle } from "../../pauper/core/models/shapes.model";
 import { BaseComponent } from "../../pauper/entity-component/component-base.type";
 import { engine } from "../physics-engine";
 
-
-export type PhysicsComponent = BaseComponent & {
+export type PhysicsComponent = BaseComponent<{
 	readonly name: "PhysicsComponent";
+	readonly position: Point2;
+	readonly rotation: Radian;
+
 	readonly events: {
 		connect(component: PhysicsComponent): void;
 		disconnect(component: PhysicsComponent): void;
 	};
-	readonly position: Point2;
-	readonly rotation: Radian;
 
 	_body: Body | null;
-};
+}>;
+
 export const PhysicsComponent = (position: Point2, isStatic: boolean): PhysicsComponent => ({
 	name: "PhysicsComponent",
 	events: {
