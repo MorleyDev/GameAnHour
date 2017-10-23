@@ -71,11 +71,11 @@ export function normal(lhs: Vector2Type): Vector2Type {
 	};
 }
 
-export function constraint(lhs: Vector2Type, topLeft: Vector2Type, bottomRight: Vector2Type): Vector2Type {
-	return {
+export function constraint(topLeft: Vector2Type, bottomRight: Vector2Type): (lhs: Vector2Type) => Vector2Type {
+	return lhs => ({
 		x: Math.min(Math.max(topLeft.x, lhs.x), bottomRight.x),
 		y: Math.min(Math.max(topLeft.y, lhs.y), bottomRight.y)
-	};
+	});
 }
 
 export function crossProduct(lhs: Vector2Type, rhs: Vector2Type): number {

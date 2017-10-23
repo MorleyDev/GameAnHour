@@ -1,9 +1,11 @@
+import { Vector2 } from "./vector.maths";
+import { rotate2d } from "./angles.maths";
 import * as angles from "./angles.maths";
 import { test } from "tap";
 
 /* tslint:disable */
 test("core/maths/angles.maths", test => {
-	test.test("degrees to radians", test => {
+	test.test("toRadians :: Degree -> Radian", test => {
 		const within = (low: number, high: number) =>
 			(value: number) => test.is(
 				value >= low && value <= high, true,
@@ -17,7 +19,8 @@ test("core/maths/angles.maths", test => {
 		within(3.14159, 3.14160)(angles.toRadians(180));
 		test.end();
 	});
-	test.test("radians to degrees", test => {
+
+	test.test("toDegrees :: Radian -> Degree", test => {
 		const within = (low: number, high: number) =>
 			(value: number) => test.is(
 				value >= low && value <= high, true,
@@ -31,5 +34,29 @@ test("core/maths/angles.maths", test => {
 		within(179.99, 180.01)(angles.toDegrees(3.14159));
 		test.end();
 	});
+
+	test.test("rotate2d :: (Vector2d, Radians) -> Vector2d", test => {
+		const within = (type: string, low: number, high: number): (value: number) => void =>
+			low <= high
+				? (value: number) => test.true(value >= low && value <= high, `Rotated ${type} co-ordinate ${value} should be between ${low} and ${high}`)
+				: within(type, high, low);
+
+		test.test("((10, 15), 1.0472) -> (18, 16.1)", test => {
+			const { x, y } = rotate2d(Vector2(10, 15), 1.0472);
+			within("x", 17.95, 18.1)(x);
+			within("y", -1.155, -1.165)(y);
+			test.end();
+		});
+
+		test.test("((1, 1), 1.5708) -> (1, -1)", test => {
+			const { x, y } = rotate2d(Vector2(1, 1), 1.5708);
+			within("x", 0.99, 1.01)(x);
+			within("y", -0.99, -1.01)(y);
+			test.end();
+		})
+
+		test.end();
+	});
+
 	test.end();
 });

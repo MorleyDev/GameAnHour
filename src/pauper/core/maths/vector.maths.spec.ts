@@ -1,28 +1,15 @@
-import { Vector2 } from "./vector.maths";
 import { test } from "tap";
 
-import {
-	abs,
-	add,
-	constraint,
-	divide,
-	dotProduct,
-	invert,
-	magnitude,
-	magnitudeSquared,
-	multiply,
-	normal,
-	normalise,
-	subtract,
-} from "./vector.maths.func";
+import { Vector2 } from "./vector.maths";
+import { abs, add, constraint, crossProduct, divide, dot, dotProduct, invert, magnitude, magnitudeSquared, multiply, normal, normalise, subtract } from "./vector.maths.func";
 import { Vector2Type } from "./vector.maths.type";
 import { Unit } from "./vector.maths.values";
 
 /* tslint:disable */
 
 test("core/maths/vector.maths", test => {
-	const make = (x: number, y: number) => ({ x, y });
-
+	const make = (x: number, y: number) => Vector2(x, y);
+	
 	const within = (tap: typeof test, low: number, high: number) =>
 		(value: number) =>
 			tap.true(
@@ -37,75 +24,85 @@ test("core/maths/vector.maths", test => {
 				`(${value.x}, ${value.y}) should be between (${low.x}, ${low.y}) and (${high.x}, ${high.y})`
 			);
 
-	test.test("basic creation", test => {
+	test.test("Vector2 :: (Number, Number) -> Vector2", test => {
 		const expected = { x: Math.random(), y: Math.random() };
 		test.deepEqual(make(expected.x, expected.y), expected);
 		test.end();
 	});
 
-	test.test("unit vector", test => {
+	test.test("Unit :: Vector2", test => {
 		within(test, 1, 1.0001)(magnitudeSquared(Unit));
 		test.deepEqual(magnitude(Unit), 1, "unit vector has magnitude of 1");
 		test.end();
 	});
 
-	test.test("absolute", test => {
+	test.test("abs :: Vector2 -> Vector2", test => {
 		test.deepEqual(abs(make(-5, -2)), make(5, 2));
 		test.deepEqual(abs(make(5, -2)), make(5, 2));
 		test.deepEqual(abs(make(-5, 2)), make(5, 2));
 		test.end();
 	});
 
-	test.test("invert", test => {
+	test.test("invert :: Vector2 -> Vector2", test => {
 		test.deepEqual(invert(make(-5, -2)), make(5, 2));
 		test.deepEqual(invert(make(5, -2)), make(-5, 2));
 		test.deepEqual(invert(make(-5, 2)), make(5, -2));
 		test.end();
 	});
 
-	test.test("magnitude", test => {
+	test.test("magnitude :: Vector2 -> Number", test => {
 		within(test, 1.414213, 1.414214)(magnitude({ x: 1, y: 1 }));
 		within(test, 5.385164, 5.385165)(magnitude({ x: -5, y: 2 }));
 		test.end();
 	});
 
-	test.test("magnitude^2", test => {
+	test.test("magnitude^2 :: Vector2 -> Number", test => {
 		test.equal(magnitudeSquared({ x: -5, y: 2 }), 29);
 		test.equal(magnitudeSquared({ x: 1, y: 1 }), 2);
 		test.end();
 	});
 
-	test.test("add", test => {
+	test.test("add :: (Vector2, Vector2) -> Vector2", test => {
 		test.deepEqual(add(make(3, 5), make(5, 9)), make(8, 14));
 		test.end();
 	});
-	test.test("subtract", test => {
+	test.test("subtract :: (Vector2, Vector2) -> Vector2", test => {
 		test.deepEqual(subtract(make(3, 9), make(5, 4)), make(-2, 5));
 		test.end();
 	});
-	test.test("multiply", test => {
+	test.test("multiply :: (Vector2, Number) -> Vector2", test => {
 		test.deepEqual(multiply(make(3, 9), 2), make(6, 18));
 		test.end();
 	});
-	test.test("divide", test => {
+	test.test("divide :: (Vector2, Number) -> Vector2", test => {
 		test.deepEqual(divide(make(3, 9), 2), make(1.5, 4.5));
 		test.end();
 	});
 
-	test.test("normalise", test => {
+	test.test("normalise :: Vector2 -> Vector2", test => {
 		between(test, make(0.4472, 0.8944), make(0.4473, 0.8945))(normalise(make(10, 20)));
 		within(test, 0.999, 1.001)(magnitude(normalise(make(10, 20))));
 		test.end();
 	});
 
-	test.test("dot product", test => {
+	test.test("dot :: (Vector2, Vector2) -> Vector2", test => {
+		test.deepEqual(dot(make(0.25, 0.5), make(1.5, -0.25)), make(0.375, -0.125));
+		test.end();
+	});
+
+	test.test("dotProduct :: (Vector2, Vector2) -> Number", test => {
 		test.equal(dotProduct(make(9, 4), make(3, 5)), 47);
 		test.equal(dotProduct(make(9, -4), make(3, 5)), 7);
 		test.equal(dotProduct(make(9, 4), make(-3, 5)), -7);
 		test.end();
 	});
 
-	test.test("normal", test => {
+	test.test("crossProduct :: (Vector2, Vector2) -> Number", test => {
+		test.equal(crossProduct(make(2, 5), make(-6, 4)), 38);
+		test.end();
+	});
+
+	test.test("normal :: (Vector2) -> Vector2", test => {
 		test.deepEqual(normal(make(9, 4)), make(-4, 9));
 		test.deepEqual(normal(make(-9, 4)), make(-4, -9));
 		test.deepEqual(normal(make(9, -4)), make(4, 9));
@@ -114,14 +111,15 @@ test("core/maths/vector.maths", test => {
 		test.end();
 	});
 
-	test.test("constraint", test => {
-		test.deepEqual(constraint(make(0, 0), make(-10, -10), make(10, 10)), make(0, 0));
-		test.deepEqual(constraint(make(-20, 0), make(-10, -10), make(10, 10)), make(-10, 0));
-		test.deepEqual(constraint(make(20, 0), make(-10, -10), make(10, 10)), make(10, 0));
-		test.deepEqual(constraint(make(0, -20), make(-10, -10), make(10, 10)), make(0, -10));
-		test.deepEqual(constraint(make(0, 20), make(-10, -10), make(10, 10)), make(0, 10));
-		test.deepEqual(constraint(make(20, 20), make(-10, -10), make(10, 10)), make(10, 10));
-		test.deepEqual(constraint(make(-20, -20), make(-10, -10), make(10, 10)), make(-10, -10));
+	test.test("constraint :: (Vector2, Vector2) -> Vector2 -> Vector2", test => {
+		const constraintTo = constraint(make(-10, -10), make(10, 10));
+		test.deepEqual(constraintTo(make(0, 0)), make(0, 0));
+		test.deepEqual(constraintTo(make(-20, 0)), make(-10, 0));
+		test.deepEqual(constraintTo(make(20, 0)), make(10, 0));
+		test.deepEqual(constraintTo(make(0, -20)), make(0, -10));
+		test.deepEqual(constraintTo(make(0, 20)), make(0, 10));
+		test.deepEqual(constraintTo(make(20, 20)), make(10, 10));
+		test.deepEqual(constraintTo(make(-20, -20)), make(-10, -10));
 		test.end();
 	});
 
