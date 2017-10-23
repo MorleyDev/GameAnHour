@@ -24,7 +24,9 @@ export const PhysicsComponent = (position: Point2, isStatic: boolean): PhysicsCo
 			component._body = Bodies.rectangle(component.position.x - 20, component.position.y - 20, 40, 40, { isStatic });
 			World.add(engine.world, component._body);
 		},
-		disconnect: (component: PhysicsComponent) => { }
+		disconnect: (component: PhysicsComponent) => {
+			World.remove(engine.world, component._body!);
+		}
 	},
 	_body: null,
 	position,

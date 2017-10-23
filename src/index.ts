@@ -36,7 +36,6 @@ const drivers: AppDrivers = {
 	audio: new WebAudioService(),
 	loader: new WebAssetLoader(),
 	renderer: frames => frames.pipe(
-		tap(console.log),
 		auditTime(15, animationFrame),
 		reduce((canvas: Renderer, frames: FrameCollection) => Render(canvas, frames), canvasRenderer)
 	)

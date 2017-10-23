@@ -1,19 +1,20 @@
-import { MouseButton } from "../pauper/core/models/mouseButton";
-import { interval } from "rxjs/observable/interval";
-import { Rectangle } from "../pauper/core/models/shapes.model";
-import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
-import { EntityId } from "../pauper/entity-component/entity-base.type";
-import { AttachComponentAction, CreateEntityAction } from "../pauper/entity-component/entity-component.actions";
-import { map, mergeMap } from "rxjs/operators";
-import { PhysicsComponent } from "./components/PhysicsComponent";
-import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
-
 import { Engine } from "matter-js";
 import { Observable } from "rxjs/Observable";
+import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
+import { map, mergeMap } from "rxjs/operators";
+import { tap } from "rxjs/operators/tap";
 
+import { MouseButton } from "../pauper/core/models/mouseButton";
+import { Rectangle } from "../pauper/core/models/shapes.model";
+import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
+import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";
+import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
+import { EntityId } from "../pauper/entity-component/entity-base.type";
+import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/entity-component/entity-component.actions";
 import { AppDrivers } from "../pauper/functional/app-drivers";
 import { Clear, Origin, Rotate, Stroke } from "../pauper/functional/render-frame.model";
+import { PhysicsComponent } from "./components/PhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { engine } from "./physics-engine";
 
@@ -37,8 +38,8 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 
 const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string, physics: PhysicsComponent) => {
 	return Origin(physics.position, [
-		Rotate(-physics.rotation, [
-			Stroke(Rectangle(physics.position.x, physics.position.y, 40, 40), "white")
+		Rotate(physics.rotation, [
+			Stroke(Rectangle(-20, -20, 40, 40), "white")
 		])
 	]);
 });
@@ -60,6 +61,7 @@ export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => me
 		})
 	),
 	drivers.mouse!.mouseUp(MouseButton.Right).pipe(
+		tap(console.log),
 		mergeMap(pos => {
 			const id = EntityId();
 			return [
@@ -70,6 +72,8 @@ export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => me
 	)
 );
 
+const deadPhysicsEntities = createEntitiesStateFilter(["PhysicsComponent"], (component: PhysicsComponent) => component.position.y > 1000);
+
 export const postprocess = (state: GameState): {
 	readonly state: GameState;
 	readonly actions: ReadonlyArray<GameAction>;
@@ -78,5 +82,5 @@ export const postprocess = (state: GameState): {
 		...state,
 		effects: []
 	},
-	actions: state.effects
+	actions: state.effects.concat( Array.from(deadPhysicsEntities(state)).map(entity => DestroyEntityAction(entity)) )
 });
