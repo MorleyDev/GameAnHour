@@ -8,16 +8,12 @@
             "dom"
         ],
         "target": "es2017",
-        "noImplicitAny": true,
-        "noImplicitThis": true,
-        "strictNullChecks": true,
-        "alwaysStrict": true,
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
         "outDir": "dist",
         "sourceMap": true,
         "allowJs": true,
-        "strictFunctionTypes": true
+        "strict": true
     },
     "exclude": [
         "webpack.config.js",
