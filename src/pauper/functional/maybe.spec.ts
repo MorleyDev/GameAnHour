@@ -19,10 +19,9 @@ test("functional/maybe", test => {
 	});
 	test.test("hasValue :: Just X -> true", test => {
 		const justX: Maybe<number> = Just(25) as Maybe<number>;
+		const hasValueResult = hasValue(justX);
 		test.equal(hasValue(justX), true);
-		if (hasValue(justX)) {
-			test.equal(justX.value, 25);
-		}
+		test.equal((justX as Just<number>).value, 25);
 		test.end();
 	});
 	test.test("hasValue :: None -> false", test => {
