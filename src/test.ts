@@ -3,14 +3,9 @@ import "./pauper/core/extensions";
 
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
-import * as tape from "tape";
+import { test } from "tap";
 
-tape(
-	"Unit tests",
-	tape => importTestsIn(__dirname)
-		.catch(err => tape.error(err))
-		.then(() => tape.end())
-);
+importTestsIn(__dirname);
 
 function importTestsIn(path: string): Promise<any[]> {
 	const testFiles = findTestsIn(path);

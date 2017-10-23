@@ -1,8 +1,8 @@
 import * as angles from "./angles.maths";
-import * as tape from "tape";
+import { test } from "tap";
 
 /* tslint:disable */
-tape("core/maths/angles.maths", test => {
+test("core/maths/angles.maths", test => {
 	test.test("degrees to radians", test => {
 		const within = (low: number, high: number) =>
 			(value: number) => test.is(

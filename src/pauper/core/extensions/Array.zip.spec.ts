@@ -1,11 +1,11 @@
 import "./Array.zip";
 
-import * as tape from "tape";
+import { test } from "tap";
 
 import { zip } from "./Array.zip.func";
 
 /* tslint:disable */
-tape("core/extensions/Array.zip", test => {
+test("core/extensions/Array.zip", test => {
 	test.deepEqual(zip.call(([10, 20, 30]), [20, 30, 40]), [[10, 20], [20, 30], [30, 40]]);
 	test.deepEqual(zip.call(([10, 20]), [20, 30, 40]), [[10, 20], [20, 30]]);
 	test.deepEqual(zip.call(([10, 20, 30]), [20, 30]), [[10, 20], [20, 30]]);
@@ -16,7 +16,7 @@ tape("core/extensions/Array.zip", test => {
 	test.end();
 });
 
-tape("core/extensions/Array.prototype.zip", test => {
+test("core/extensions/Array.prototype.zip", test => {
 	test.deepEqual([10, 20, 30].zip([20, 30, 40]), [[10, 20], [20, 30], [30, 40]]);
 	test.deepEqual([10, 20].zip([20, 30, 40]), [[10, 20], [20, 30]]);
 	test.deepEqual([10, 20, 30].zip([20, 30]), [[10, 20], [20, 30]]);

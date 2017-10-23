@@ -1,5 +1,5 @@
 import { Vector2 } from "./vector.maths";
-import * as tape from "tape";
+import { test } from "tap";
 
 import {
 	abs,
@@ -20,19 +20,19 @@ import { Unit } from "./vector.maths.values";
 
 /* tslint:disable */
 
-tape("core/maths/vector.maths", test => {
+test("core/maths/vector.maths", test => {
 	const make = (x: number, y: number) => ({ x, y });
 
-	const within = (test: tape.Test, low: number, high: number) =>
+	const within = (tap: typeof test, low: number, high: number) =>
 		(value: number) =>
-			test.true(
+			tap.true(
 				value >= low && value <= high,
 				`${value} should be between ${low} and ${high}`
 			);
 
-	const between = (test: tape.Test, low: Vector2Type, high: Vector2Type) =>
+	const between = (tap: typeof test, low: Vector2Type, high: Vector2Type) =>
 		(value: Vector2Type) =>
-			test.true(
+			tap.true(
 				value.x >= low.x && value.y >= low.y && value.x <= high.x && value.y <= high.y,
 				`(${value.x}, ${value.y}) should be between (${low.x}, ${low.y}) and (${high.x}, ${high.y})`
 			);

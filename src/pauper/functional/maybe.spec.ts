@@ -1,10 +1,10 @@
-import * as tape from "tape";
+import { test } from "tap";
 
 import { hasValue, Just, match, Maybe, None, withDefault } from "./maybe";
 
 /* tslint:disable */
 
-tape("functional/maybe", test => {
+test("functional/maybe", test => {
 	test.test("withDefault :: Just X -> X", test => {
 		const justX: Maybe<number> = Just(10) as Maybe<number>;
 		const value = withDefault(justX, () => 20);

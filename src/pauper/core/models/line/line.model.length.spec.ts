@@ -1,16 +1,16 @@
 import { lengthOf } from "./line.model.length";
 import { Line2Type } from "./line.model.type";
 import { intersects } from "./line.model.intersect";
-import * as tape from "tape";
+import { test } from "tap";
 
 /* tslint:disable */
 
-tape("core/models/line/line.model.length.spec", test => {
+test("core/models/line/line.model.length.spec", test => {
 	const make = (x1: number, y1: number, x2: number, y2: number): Line2Type => [{ x: x1, y: y1 }, { x: x2, y: y2 }];
 
-	const within = (test: tape.Test, low: number, high: number) =>
+	const within = (tap: typeof test, low: number, high: number) =>
 	(value: number) =>
-		test.true(
+	tap.true(
 			value >= low && value <= high,
 			`${value} should be between ${low} and ${high}`
 		);

@@ -2,11 +2,11 @@ import { CircleType } from "../circle/circle.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { RectangleType } from "./rectangle.model.type";
 import { overlaps } from "./rectangle.model.overlap";
-import * as tape from "tape";
+import { test } from "tap";
 
 /* tslint:disable */
 
-tape("core/models/rectangle/rectangle.model.overlap.spec", test => {
+test("core/models/rectangle/rectangle.model.overlap.spec", test => {
 	test.test("rectangle overlaps rectangle", test => {
 		const should = (a: RectangleType, b: RectangleType) => test.true(
 			overlaps(a, b),

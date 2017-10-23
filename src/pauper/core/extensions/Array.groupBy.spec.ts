@@ -1,11 +1,11 @@
 import "./Array.groupBy";
 
-import * as tape from "tape";
+import { test } from "tap";
 
 import { groupBy } from "./Array.groupBy.func";
 
 /* tslint:disable */
-tape("core/extensions/Array.groupBy", test => {
+test("core/extensions/Array.groupBy", test => {
 	test.deepEqual(
 		groupBy.call((["abc", "cde", "acb", "bcd"]), (v: string, i: number, h: string[]) => v.charAt(0)),
 		{
@@ -25,7 +25,7 @@ tape("core/extensions/Array.groupBy", test => {
 	test.end();
 });
 
-tape("core/extensions/Array.prototype.groupBy", test => {
+test("core/extensions/Array.prototype.groupBy", test => {
 	test.deepEqual(
 		["abc", "cde", "acb", "bcd"].groupBy((v: string, i: number, h: ReadonlyArray<string>) => v.charAt(0)),
 		{

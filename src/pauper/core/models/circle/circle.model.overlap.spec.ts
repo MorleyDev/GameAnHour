@@ -1,4 +1,4 @@
-import * as tape from "tape";
+import { test } from "tap";
 
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
@@ -8,7 +8,7 @@ import { CircleType } from "./circle.model.type";
 
 /* tslint:disable */
 
-tape("core/models/circle/circle.model.overlap.spec", test => {
+test("core/models/circle/circle.model.overlap.spec", test => {
 	test.test("circle overlaps circle", test => {
 		const should = (a: CircleType, b: CircleType) => test.true(overlaps(a, b), `(${a.x},${a.y})r${a.radius}) should overlap (${b.x},${b.y})r${b.radius})`);
 		const shouldNot = (a: CircleType, b: CircleType) => test.false(overlaps(a, b), `(${a.x},${a.y})r${a.radius}) should not overlap (${b.x},${b.y})r${b.radius})`);
