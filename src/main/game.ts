@@ -46,11 +46,11 @@ const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string,
 
 export const render = (state: GameState) => [
 	Clear("black"),
-	Array.from( entityRenderer(state) )
+	Array.from(entityRenderer(state))
 ];
 
-export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge(
-	interval(10).pipe( map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
+export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
+	interval(10).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
 	drivers.mouse!.mouseUp(MouseButton.Left).pipe(
 		mergeMap(pos => {
 			const id = EntityId();
@@ -82,5 +82,5 @@ export const postprocess = (state: GameState): {
 		...state,
 		effects: []
 	},
-	actions: state.effects.concat( Array.from(deadPhysicsEntities(state)).map(entity => DestroyEntityAction(entity)) )
+	actions: state.effects.concat(Array.from(deadPhysicsEntities(state)).map(entity => DestroyEntityAction(entity)))
 });

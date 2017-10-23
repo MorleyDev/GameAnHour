@@ -9,5 +9,6 @@ export type GameState
 	& { readonly effects: ReadonlyArray<GameAction> };
 
 export type GameAction
-	= { readonly type: "@@TICK"; readonly deltaTime: Seconds }
+	= { readonly type: "@@INIT" }
+	| { readonly type: "@@TICK"; readonly deltaTime: Seconds }
 	| EntityComponentAction;
