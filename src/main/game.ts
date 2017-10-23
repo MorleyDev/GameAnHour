@@ -3,8 +3,7 @@ import { Engine } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { map, mergeMap } from "rxjs/operators";
-import { tap } from "rxjs/operators/tap";
+import { map, mergeMap, tap } from "rxjs/operators";
 
 import { MouseButton } from "../pauper/core/models/mouseButton";
 import { Rectangle } from "../pauper/core/models/shapes.model";
