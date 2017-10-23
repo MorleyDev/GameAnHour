@@ -5,7 +5,7 @@ import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
 import { map, mergeMap, tap } from "rxjs/operators";
 
-import { MouseButton } from "../pauper/core/models/mouseButton";
+import { MouseButton } from "../pauper/core/models/mouse-button.model";
 import { Rectangle } from "../pauper/core/models/shapes.model";
 import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
 import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";

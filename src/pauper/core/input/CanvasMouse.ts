@@ -3,7 +3,7 @@ import { fromEvent } from "rxjs/observable/fromEvent";
 import { filter } from "rxjs/operators/filter";
 import { map } from "rxjs/operators/map";
 
-import { MouseButton } from "../models/mouseButton";
+import { MouseButton } from "../models/mouse-button.model";
 import { Point2Type } from "../models/point/point.model.type";
 import { Mouse } from "./Mouse";
 
