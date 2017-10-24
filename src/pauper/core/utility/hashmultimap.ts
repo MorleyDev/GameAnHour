@@ -48,7 +48,7 @@ class HashMultiMapInner<TKey extends string, TValue> implements IHashMultiMap<TK
 
 	append(key: TKey, value: TValue): HashMultiMap<TKey, TValue> {
 		return new HashMultiMapInner(
-			this._inner.update(key, List<TValue>([value]), list => list.push(value))
+			this._inner.update(key, List<TValue>([]), list => list.push(value))
 		);
 	}
 

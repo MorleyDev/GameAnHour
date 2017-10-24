@@ -64,7 +64,7 @@ export function detachComponent<TState extends EntitiesState>(state: TState, id:
 }
 
 function connectComponent(component: BaseComponent): void {
-	return component.events && component.events.disconnect && component.events.connect(component);
+	return component && component.events && component.events.disconnect && component.events.connect(component);
 }
 
 function disconnectEntity(entity: BaseEntity): void {

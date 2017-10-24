@@ -1,3 +1,4 @@
+import { getCentre } from "./rectangle/rectangle.model.tlbr";
 import { Vector2 } from "../maths/vector.maths";
 import { Circle } from "./circle/circle.model";
 import { Line2 } from "./line/line.model";
@@ -38,6 +39,19 @@ export const Shape2 = {
 				...lhs,
 				...Vector2.add(lhs, rhs)
 			};
+		}
+	},
+
+	getCentre(shape: Shape2): Point2 {
+		if (Array.isArray(shape)) {
+			return {
+				x: shape.map(a => a.x).reduce((sum, curr) => sum + curr) / shape.length,
+				y: shape.map(a => a.y).reduce((sum, curr) => sum + curr) / shape.length
+			};
+		} else if (Rectangle.is(shape)) {
+			return getCentre(shape);
+		} else {
+			return { x: shape.x, y: shape.y };
 		}
 	},
 

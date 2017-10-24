@@ -37,12 +37,21 @@ export function createReduxApp<
 
 	const subject = new Subject<TAction>();
 
-	const state$ = merge(app.bootstrap || empty(), app.epic(subject, drivers)).pipe(
+	const actions$ = merge(app.bootstrap || empty(), app.epic(subject, drivers)).pipe(
 		tap(action => subject.next(action)),
+		ignoreElements()
+	);
+
+	let _thunk: TAction[] = [];
+	const state$ = merge(actions$, subject).pipe(
 		reduxScan((state: TState, action: TAction) => sideEffect(
 			app.postprocess(app.reducer(state, action)),
-			post => post.actions.forEach(action => subject.next(action))
+			post => _thunk.push(...post.actions)
 		).state, app.initialState),
+		tap(() =>  {
+			_thunk.forEach(action => subject.next(action));
+			_thunk = [];
+		}),
 		share()
 	);
 	return merge(

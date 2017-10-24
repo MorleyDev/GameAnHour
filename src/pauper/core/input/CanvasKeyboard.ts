@@ -14,16 +14,13 @@ export class CanvasKeyboard implements Keyboard {
 	private keyup: Observable<KeyboardEvent>;
 
 	constructor(private canvas: HTMLCanvasElement) {
-		this.keydown = fromEvent(this.canvas, "keydown");
-		this.keyup = fromEvent(this.canvas, "keyup");
+		this.keydown = fromEvent(document, "keydown");
+		this.keyup = fromEvent(document, "keyup");
 	}
 
 	public keyDown(): Observable<Key> {
 		return this.keydown.pipe(
-			merge(this.keyup),
-			groupBy(event => event.type),
-			mergeMap(key => key.pipe( distinctUntilChanged((l, r) => l === r, k => k.type) )),
-			map(key => key.keyCode as Key)
+			map((event: KeyboardEvent) => event.keyCode)
 		);
 	}
 
