@@ -1,7 +1,8 @@
-import { Vector2 } from "./vector.maths";
+import { test } from "tap";
+
 import { rotate2d } from "./angles.maths";
 import * as angles from "./angles.maths";
-import { test } from "tap";
+import { Vector2 } from "./vector.maths";
 
 /* tslint:disable */
 test("core/maths/angles.maths", test => {

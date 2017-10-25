@@ -1,5 +1,5 @@
 import { lengthOf } from "../line/line.model.length";
-import { lines } from "./triangle.model.lines";
+import { lines as linesOfTriangle } from "./triangle.model.lines";
 import { lineRectangleToTriangle } from "../rectangle/rectangle.model.lineTo";
 import { lineCircleToTriangle2 } from "../circle/circle.model.lineTo";
 import { lineLine2ToLine2, lineLine2ToPoint2, lineLine2ToTriangle2 } from "../line/line.model.lineTo";
@@ -30,8 +30,8 @@ export function lineTo(lhs: Triangle2Type, rhs: Shape2Type): Line2Type {
 const flip = <T>([a, b]: [T, T]): [T, T] => [b, a];
 
 export function lineTriangle2ToTriangle2(lhs: Triangle2Type, rhs: Triangle2Type): Line2Type {
-	const leftLines = lines(lhs);
-	const rightLines = lines(rhs);
+	const leftLines = linesOfTriangle(lhs);
+	const rightLines = linesOfTriangle(rhs);
 	return leftLines.reduce((smallest, l) =>
 		rightLines
 			.map(r => lineLine2ToLine2(l, r))
@@ -40,7 +40,7 @@ export function lineTriangle2ToTriangle2(lhs: Triangle2Type, rhs: Triangle2Type)
 }
 
 export function lineTriangleToPoint2(lhs: Triangle2Type, rhs: Point2Type): Line2Type {
-	return lines(lhs)
+	return linesOfTriangle(lhs)
 		.map(line => lineLine2ToPoint2(lhs, rhs))
 		.reduce((smallest, line) => {
 			return lengthOf(line) > lengthOf(smallest) ? smallest : line;

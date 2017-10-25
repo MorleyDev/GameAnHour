@@ -1,5 +1,3 @@
-import { Triangle2Type } from "../triangle/triangle.model.type";
-import { magnitude, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { boundingTLBR } from "../point/point.model.bounding";
@@ -8,8 +6,9 @@ import { is as isRect } from "../rectangle/rectangle.model.is";
 import { lines } from "../rectangle/rectangle.model.lines";
 import { RectangleType } from "../rectangle/rectangle.model.type";
 import { Shape2Type } from "../shapes.model.type";
-import { is as isLine } from "./line.model.is";
 import { is as isTri2 } from "../triangle/triangle.model.is";
+import { Triangle2Type } from "../triangle/triangle.model.type";
+import { is as isLine } from "./line.model.is";
 import { Line2Type } from "./line.model.type";
 
 export function intersects(lhs: Line2Type, rhs: Shape2Type, tolerance: number = 0.001): boolean {

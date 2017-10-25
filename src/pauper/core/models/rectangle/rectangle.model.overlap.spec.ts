@@ -1,8 +1,9 @@
+import { test } from "tap";
+
 import { CircleType } from "../circle/circle.model.type";
 import { Point2Type } from "../point/point.model.type";
-import { RectangleType } from "./rectangle.model.type";
 import { overlaps } from "./rectangle.model.overlap";
-import { test } from "tap";
+import { RectangleType } from "./rectangle.model.type";
 
 /* tslint:disable */
 

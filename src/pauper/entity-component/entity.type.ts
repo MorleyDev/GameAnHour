@@ -1,6 +1,7 @@
+import { Map } from "immutable";
+
 import { BaseComponent } from "./component-base.type";
 import { BaseEntity, EntityId } from "./entity-base.type";
-import { Map } from "immutable";
 
 export type Entity = BaseEntity & {
 	readonly id: EntityId;

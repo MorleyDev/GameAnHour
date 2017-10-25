@@ -1,6 +1,6 @@
-import { EntityComponentAction } from "../pauper/entity-component/entity-component.actions";
 import { Seconds } from "../pauper/core/models/time.model";
 import { EntitiesState } from "../pauper/entity-component";
+import { EntityComponentAction } from "../pauper/entity-component/entity-component.actions";
 import { SystemState } from "../pauper/functional";
 
 export type GameState

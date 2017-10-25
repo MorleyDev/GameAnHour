@@ -1,7 +1,5 @@
-import { Line2Type } from "../line/line.model.type";
-import { Point2Type } from "../point/point.model.type";
-import { CircleType } from "./circle.model.type";
 import { RectangleType } from "../rectangle/rectangle.model.type";
+import { CircleType } from "./circle.model.type";
 
 export function boundingBox(circle: CircleType): RectangleType {
 	return {

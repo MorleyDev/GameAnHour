@@ -1,17 +1,17 @@
-import { Triangle2Type } from "../triangle/triangle.model.type";
-import { Line2Type } from "../line/line.model.type";
 import { magnitudeSquared, subtract } from "../../maths/vector.maths.func";
 import { line2IntersectsCircle as lineIntersectsCircle } from "../line/line.model.intersect";
 import { is as isLine } from "../line/line.model.is";
 import { lengthOf } from "../line/line.model.length";
+import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { is as isRectangle } from "../rectangle/rectangle.model.is";
+import { lineTo } from "../rectangle/rectangle.model.lineTo";
 import { RectangleType } from "../rectangle/rectangle.model.type";
 import { Shape2Type } from "../shapes.model.type";
 import { is as isTri2 } from "../triangle/triangle.model.is";
 import { triangle2OverlapsCircle as triangleOverlapsCircle } from "../triangle/triangle.model.overlap";
+import { Triangle2Type } from "../triangle/triangle.model.type";
 import { is as isCircle } from "./circle.model.is";
-import { lineTo } from "../rectangle/rectangle.model.lineTo";
 import { CircleType } from "./circle.model.type";
 
 export function overlaps(lhs: CircleType, rhs: Shape2Type): boolean {

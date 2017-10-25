@@ -1,7 +1,7 @@
-import { SpecificReducer } from "../functional/reducer.type";
 import { List, Map, Set } from "immutable";
 
 import { GenericAction } from "../functional/generic.action";
+import { SpecificReducer } from "../functional/reducer.type";
 import { BaseComponent } from "./component-base.type";
 import { EntitiesState } from "./entities.state";
 import { BaseEntity, EntityId } from "./entity-base.type";

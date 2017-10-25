@@ -1,17 +1,11 @@
-import { SpecificReducer, GenericReducer } from "../functional/reducer.type";
+import { List, Map } from "immutable";
+
+import { createReducer } from "../functional/create-reducer.func";
+import { GenericReducer } from "../functional/reducer.type";
 import { BaseComponent } from "./component-base.type";
-import { GenericAction } from "../functional/generic.action";
 import { EntitiesState } from "./entities.state";
 import { BaseEntity, EntityId } from "./entity-base.type";
-import {
-	AttachComponentAction,
-	CreateEntityAction,
-	DestroyEntityAction,
-	DetachComponentAction,
-	EntityComponentAction,
-} from "./entity-component.actions";
-import { createReducer } from "../functional/create-reducer.func";
-import { Map, List } from "immutable";
+import { AttachComponentAction, CreateEntityAction, DestroyEntityAction, DetachComponentAction } from "./entity-component.actions";
 
 export const entityComponentReducer: GenericReducer = createReducer<EntitiesState>(
 	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => createEntity(state, action.id)],

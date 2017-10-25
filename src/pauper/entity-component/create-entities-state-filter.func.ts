@@ -1,7 +1,8 @@
+import { List, Map, Set } from "immutable";
+
 import { BaseComponent } from "./component-base.type";
 import { EntitiesState } from "./entities.state";
-import { BaseEntity, EntityId } from "./entity-base.type";
-import { Set, Map, List } from "immutable";
+import { EntityId } from "./entity-base.type";
 
 type EntitiesStateFilter
 	= ((component: BaseComponent, ..._extra: any[]) => boolean)

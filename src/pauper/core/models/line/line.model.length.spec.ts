@@ -1,7 +1,7 @@
+import { test } from "tap";
+
 import { lengthOf } from "./line.model.length";
 import { Line2Type } from "./line.model.type";
-import { intersects } from "./line.model.intersect";
-import { test } from "tap";
 
 /* tslint:disable */
 

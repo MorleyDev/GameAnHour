@@ -1,4 +1,5 @@
-import { Map, List } from "immutable";
+import { List, Map } from "immutable";
+
 import { BaseEntity, EntityId } from "./entity-base.type";
 
 export type EntitiesState = {

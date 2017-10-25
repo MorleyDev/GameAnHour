@@ -1,4 +1,5 @@
 import { Map } from "immutable";
+
 import { BaseComponent } from "./component-base.type";
 
 export type EntityId = string;

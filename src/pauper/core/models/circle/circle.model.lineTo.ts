@@ -1,15 +1,14 @@
-import { Triangle2Type } from "../triangle/triangle.model.type";
-import { lineLine2ToCircle, lineLine2ToLine2, lineLine2ToPoint2 } from "../line/line.model.lineTo";
-import { Shape2Type } from "../shapes.model.type";
-import { RectangleType } from "../rectangle/rectangle.model.type";
-import { add, multiply, normalise, subtract, magnitudeSquared } from "../../maths/vector.maths.func";
+import { add, magnitudeSquared, multiply, normalise, subtract } from "../../maths/vector.maths.func";
+import { is as isLine2 } from "../line/line.model.is";
+import { lineLine2ToCircle } from "../line/line.model.lineTo";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
-import { is as isCircle } from "./circle.model.is";
-import { is as isLine2 } from "../line/line.model.is";
-import { is as isTri2 } from "../triangle/triangle.model.is";
 import { is as isRectangle } from "../rectangle/rectangle.model.is";
 import { lineRectangleToCircle as rectangleLineToCircle } from "../rectangle/rectangle.model.lineTo";
+import { Shape2Type } from "../shapes.model.type";
+import { is as isTri2 } from "../triangle/triangle.model.is";
+import { Triangle2Type } from "../triangle/triangle.model.type";
+import { is as isCircle } from "./circle.model.is";
 import { CircleType } from "./circle.model.type";
 
 export function lineTo(lhs: CircleType, rhs: Shape2Type): Line2Type {

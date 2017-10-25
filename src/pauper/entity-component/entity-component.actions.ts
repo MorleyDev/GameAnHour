@@ -1,6 +1,6 @@
 import { GenericAction } from "../functional/generic.action";
 import { BaseComponent } from "./component-base.type";
-import { BaseEntity, EntityId } from "./entity-base.type";
+import { EntityId } from "./entity-base.type";
 
 export type CreateEntityAction = {
 	readonly type: "EC_CreateEntityAction";

@@ -1,4 +1,3 @@
-import { Triangle2Type } from "../triangle/triangle.model.type";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { line2IntersectsRectangle as lineIntersectsRectangle } from "../line/line.model.intersect";
@@ -9,6 +8,7 @@ import { Point2Type } from "../point/point.model.type";
 import { Shape2Type } from "../shapes.model.type";
 import { is as isTri2 } from "../triangle/triangle.model.is";
 import { triangle2OverlapsRectangle as triangleOverlapsRectangle } from "../triangle/triangle.model.overlap";
+import { Triangle2Type } from "../triangle/triangle.model.type";
 import { is as isRect } from "./rectangle.model.is";
 import { lineTo } from "./rectangle.model.lineTo";
 import { RectangleType } from "./rectangle.model.type";

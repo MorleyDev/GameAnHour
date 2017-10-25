@@ -1,4 +1,3 @@
-import { Triangle2Type } from "../triangle/triangle.model.type";
 import { add, magnitudeSquared, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
@@ -8,6 +7,7 @@ import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { Shape2Type } from "../shapes.model.type";
 import { is as isTri2 } from "../triangle/triangle.model.is";
+import { Triangle2Type } from "../triangle/triangle.model.type";
 import { is as isRectangle } from "./rectangle.model.is";
 import { lines } from "./rectangle.model.lines";
 import { getBottomLeft, getBottomRight, getCentre, getTopRight } from "./rectangle.model.tlbr";

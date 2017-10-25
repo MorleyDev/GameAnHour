@@ -1,9 +1,9 @@
-import { getCentre } from "./rectangle/rectangle.model.tlbr";
 import { Vector2 } from "../maths/vector.maths";
 import { Circle } from "./circle/circle.model";
 import { Line2 } from "./line/line.model";
 import { Point2 } from "./point/point.model";
 import { Rectangle } from "./rectangle/rectangle.model";
+import { getCentre } from "./rectangle/rectangle.model.tlbr";
 import { Text2 } from "./text/text.model";
 import { Triangle2 } from "./triangle/triangle.model";
 

@@ -1,7 +1,8 @@
+import { Observable } from "rxjs/Observable";
 import { using } from "rxjs/observable/using";
+
 import { isBrowser } from "./utility/is-browser";
 import { isProduction } from "./utility/is-production";
-import { Observable } from "rxjs/Observable";
 
 const stats: { [key: string]: { count: number; max: number; min: number; total: number } } = {};
 if (isBrowser) {

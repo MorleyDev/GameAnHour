@@ -1,6 +1,7 @@
-import { Events, Engine } from "matter-js";
-import { EntityId } from "../pauper/entity-component/entity-base.type";
+import { Engine, Events } from "matter-js";
 import { Subject } from "rxjs/Subject";
+
+import { EntityId } from "../pauper/entity-component/entity-base.type";
 
 function makeEngine(): Engine {
 	const createEngine = () => Engine.create();
