@@ -1,5 +1,3 @@
-import "./pauper/core/extensions";
-
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";

@@ -9,24 +9,25 @@
     "serve": "webpack-dev-server",
     "lint": "tslint --project .",
     "test": "ts-node ./src/test.ts",
-    "test-dot": "ts-node ./src/test.ts | tap-dot"
+    "test-dot": "ts-node ./src/test.ts | tap-dot",
+    "coverage": "tsc -p . && tap dist/**/*.spec.js --coverage html"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "8.0.45",
+    "@types/node": "8.0.47",
     "@types/tape": "4.2.30",
     "tap": "10.7.2",
     "tap-dot": "1.0.5",
     "tape": "4.8.0",
-    "ts-loader": "3.0.3",
+    "ts-loader": "3.0.5",
     "ts-node": "3.3.0",
-    "tslint": "5.7.0",
+    "tslint": "5.8.0",
     "tslint-immutable": "4.4.0",
     "typescript": "rc",
     "webpack": "3.8.1",
     "webpack-closure-compiler": "2.1.5",
-    "webpack-dev-server": "2.9.2"
+    "webpack-dev-server": "2.9.3"
   },
   "dependencies": {
     "@types/core-js": "0.9.43",
@@ -39,6 +40,6 @@
     "redux": "3.7.2",
     "redux-observable": "0.16.0",
     "rxfiddle": "1.0.4",
-    "rxjs": "5.5.0"
+    "rxjs": "5.5.1"
   }
 }

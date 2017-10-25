@@ -1,6 +1,4 @@
 import { SpecificReducer, GenericReducer } from "../functional/reducer.type";
-import { fzip } from "../core/extensions/Array.zip.func";
-import { intersect } from "../core/extensions/Array.intersect.func";
 import { BaseComponent } from "./component-base.type";
 import { GenericAction } from "../functional/generic.action";
 import { EntitiesState } from "./entities.state";
