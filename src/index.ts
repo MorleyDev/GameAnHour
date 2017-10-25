@@ -42,14 +42,12 @@ const drivers: AppDrivers = {
 const debugHooks = { currentState: initialState, actions$: new Subject<any>() };
 (window as any).debugHooks = debugHooks;
 
-let latestBootstrap = (module as any).hot
-	? merge(bootstrap(drivers), debugHooks.actions$)
-	: bootstrap(drivers);
+let latestBootstrap = bootstrap(drivers);
 
 const devRememberState = (module as any).hot
 	? tap((state: any) => {
 		debugHooks.currentState = state;
-		latestBootstrap = debugHooks.actions$;
+		latestBootstrap = empty();
 	})
 	: (state$: Observable<any>): Observable<any> => state$;
 
@@ -57,6 +55,7 @@ const devRememberState = (module as any).hot
 const app$ = game$.pipe(
 	switchMap(game => createReduxApp(drivers, {
 		...game,
+		epic: actions$ => merge(game.epic(actions$, drivers), debugHooks.actions$),
 		initialState: debugHooks.currentState,
 		bootstrap: latestBootstrap
 	})),

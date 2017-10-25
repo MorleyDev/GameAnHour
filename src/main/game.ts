@@ -21,6 +21,7 @@ import { Clear, Fill, Origin, Rotate } from "../pauper/functional/render-frame.m
 import { PhysicsComponent } from "./components/PhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { engine } from "./physics-engine";
+import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 
 const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
 	physics._body!.position.x = physics.position.x;
@@ -46,10 +47,6 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 			const newState = physicsPreReducer(state, action);
 			Engine.update(engine, action.deltaTime * 1000);
 			return physicsPostReducer(newState, action);
-		case "DELETE_STATIC_BODIES":
-			return state.componentEntityLinks.get("PhysicsComponent", List<EntityId>())
-				.filter(entityId => state.entities.get(entityId)!.components.get("PhysicsComponent")._body!.isStatic)
-				.reduce((state, entityId) => destroyEntity(state, entityId), state);
 		default:
 			return entityComponentReducer(state, action);
 	}
@@ -63,35 +60,27 @@ const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string,
 	]);
 });
 
+const staticEntityRenderer = createEntitiesStateMap(["StaticPhysicsComponent"], (id: string, physics: StaticPhysicsComponent) => {
+	return Origin(physics.position, [
+		Fill(physics.shape, "lightblue")
+	]);
+});
+
 export const render = (state: GameState) => [
 	Clear("black"),
-	Array.from(entityRenderer(state)),
+	...(entityRenderer(state)),
+	...(staticEntityRenderer(state)),
 	Fill(Text2(`Active entities ${state.entities.size}`, 20, 20, undefined, "12px", "sans-serif"), "white")
 ];
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	interval(10).pipe(
-		map(() => ({ type: "@@TICK", deltaTime: 0.01 }))
-	),
-	drivers.keyboard!.keyUp().pipe(
-		filter(key => key === Key.Escape),
-		map(() => ({ type: "DELETE_STATIC_BODIES" }))
-	),
+	interval(15).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.015 }))),
 	drivers.mouse!.mouseUp(MouseButton.Left).pipe(
 		mergeMap(pos => {
 			const id = EntityId();
 			return [
 				CreateEntityAction(id),
-				AttachComponentAction(id, PhysicsComponent(pos, Circle(0, 0, 10), false))
-			];
-		})
-	),
-	drivers.mouse!.mouseUp(MouseButton.Right).pipe(
-		mergeMap(pos => {
-			const id = EntityId();
-			return [
-				CreateEntityAction(id),
-				AttachComponentAction(id, PhysicsComponent(pos, Triangle2(Point2(0, -100), Point2(100, 100), Point2(-100, 100)), true))
+				AttachComponentAction(id, PhysicsComponent(pos, Circle(0, 0, 15)))
 			];
 		})
 	)

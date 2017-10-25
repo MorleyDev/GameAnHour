@@ -1,11 +1,13 @@
 import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
-import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
+import { of } from "rxjs/observable/of";
 import { ignoreElements } from "rxjs/operators/ignoreElements";
 import { map } from "rxjs/operators/map";
+import { reduce } from "rxjs/operators/reduce";
 import { scan } from "rxjs/operators/scan";
 import { share } from "rxjs/operators/share";
+import { switchMap } from "rxjs/operators/switchMap";
 import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
 
@@ -36,23 +38,25 @@ export function createReduxApp<
 		: storeBackedScan;
 
 	const subject = new Subject<TAction>();
-
-	const actions$ = merge(app.bootstrap || empty(), app.epic(subject, drivers)).pipe(
+	const epicActions$ = app.epic(subject, drivers).pipe(
 		tap(action => subject.next(action)),
 		ignoreElements()
 	);
 
 	const _thunk: TAction[] = [];
-	const state$ = merge(actions$, subject).pipe(
-		reduxScan((state: TState, action: TAction) => sideEffect(
-			app.postprocess(app.reducer(state, action)),
-			post => _thunk.push(...post.actions)
-		).state, app.initialState),
-		tap(() =>  {
-			while(_thunk.length > 0) {
-				const head = sideEffect(_thunk.pop(), action => subject.next(action));
-			}
-		}),
+
+	const state$ = app.bootstrap.pipe(
+		reduce((state: TState, action: TAction) => app.reducer(state, action), app.initialState),
+		switchMap(state =>
+			merge(epicActions$, subject, of({ type: "@@INIT" } as TAction)).pipe(
+				reduxScan((state: TState, action: TAction) => sideEffect(app.postprocess(app.reducer(state, action)), post => _thunk.push(...post.actions)).state, state),
+				tap(() => {
+					while (_thunk.length > 0) {
+						const head = sideEffect(_thunk.pop(), action => subject.next(action));
+					}
+				})
+			)
+		),
 		share()
 	);
 	return merge(
