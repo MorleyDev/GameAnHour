@@ -68,8 +68,8 @@ const staticEntityRenderer = createEntitiesStateMap(["StaticPhysicsComponent"], 
 
 export const render = (state: GameState) => [
 	Clear("black"),
-	...(entityRenderer(state)),
-	...(staticEntityRenderer(state)),
+	...entityRenderer(state),
+	...staticEntityRenderer(state),
 	Fill(Text2(`Active entities ${state.entities.size}`, 20, 20, undefined, "12px", "sans-serif"), "white")
 ];
 

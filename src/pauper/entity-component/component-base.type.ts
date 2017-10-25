@@ -1,7 +1,7 @@
 import { EntityId } from "./entity-base.type";
 
-export type BaseComponent<TComponent = any> = {
-	readonly name: string;
+export type BaseComponent<TName extends string = string, TComponent = {}> = {
+	readonly name: TName;
 
 	// For nasty impure side-effects that may be required for interop with 3rd party libraries.
 	// For example, connecting to a physics system since they tend to be inherently stateful and mutating.

@@ -9,8 +9,7 @@ import { BaseComponent } from "../../pauper/entity-component/component-base.type
 import { EntityId } from "../../pauper/entity-component/entity-base.type";
 import { engine } from "../physics-engine";
 
-export type PhysicsComponent = BaseComponent<{
-	readonly name: "PhysicsComponent";
+export type PhysicsComponent = BaseComponent<"PhysicsComponent", {
 	readonly position: Point2;
 	readonly rotation: Radian;
 	readonly shape: Shape2;

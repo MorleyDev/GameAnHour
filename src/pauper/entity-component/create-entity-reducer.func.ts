@@ -8,10 +8,10 @@ import { BaseEntity, EntityId } from "./entity-base.type";
 
 export function createEntityReducer<TState extends EntitiesState, TAction extends GenericAction = GenericAction, TEntity extends BaseEntity = BaseEntity>(
 	components: ReadonlyArray<string>,
-	reducer: (state: TState, action: TAction, ..._components: BaseComponent[]) => Iterable<BaseComponent>
+	reducer: (state: TState, action: TAction, ..._components: BaseComponent<string, any>[]) => Iterable<BaseComponent>
 ): SpecificReducer<TState, TAction> {
 	return bindEntitiesToReducer<TState, TAction>(components, (state, entity, action) => {
-		const newComponents = reducer(state, action as TAction, ...components.map(name => entity.components.get(name)));
+		const newComponents = reducer(state, action as TAction, ...components.map(name => entity.components.get(name)!));
 		const newComponentPairs = List(newComponents).map(component => [component.name, component] as [string, BaseComponent]);
 		const newComponentHash = Map<EntityId, BaseComponent>(newComponentPairs);
 

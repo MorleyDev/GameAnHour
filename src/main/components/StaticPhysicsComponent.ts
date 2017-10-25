@@ -8,8 +8,7 @@ import { BaseComponent } from "../../pauper/entity-component/component-base.type
 import { EntityId } from "../../pauper/entity-component/entity-base.type";
 import { engine } from "../physics-engine";
 
-export type StaticPhysicsComponent = BaseComponent<{
-	readonly name: "StaticPhysicsComponent";
+export type StaticPhysicsComponent = BaseComponent<"StaticPhysicsComponent", {
 	readonly position: Point2;
 	readonly shape: Shape2;
 

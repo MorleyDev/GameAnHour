@@ -5,9 +5,9 @@ import { EntitiesState } from "./entities.state";
 import { EntityId } from "./entity-base.type";
 
 type EntitiesStateFilter
-	= ((component: BaseComponent, ..._extra: any[]) => boolean)
-	| ((component1: BaseComponent, component2: BaseComponent, ..._extra: any[]) => boolean)
-	| ((component1: BaseComponent, component2: BaseComponent, component3: BaseComponent, ..._extra: any[]) => boolean);
+	= ((component: BaseComponent<string, any>, ..._extra: any[]) => boolean)
+	| ((component1: BaseComponent<string, any>, component2: BaseComponent<string, any>, ..._extra: any[]) => boolean)
+	| ((component1: BaseComponent<string, any>, component2: BaseComponent<string, any>, component3: BaseComponent<string, any>, ..._extra: any[]) => boolean);
 
 export function createEntitiesStateFilter(withComponents: ReadonlyArray<string>, filter: EntitiesStateFilter): (state: EntitiesState, ..._extra: any[]) => Iterable<EntityId> {
 	return (state: EntitiesState, ..._extra: any[]): Iterable<EntityId> => {

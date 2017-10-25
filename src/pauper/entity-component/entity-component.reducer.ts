@@ -59,7 +59,7 @@ export function detachComponent<TState extends EntitiesState>(state: TState, id:
 	};
 }
 
-function connectComponent(component: BaseComponent<{}>, entityId: EntityId): void {
+function connectComponent(component: BaseComponent, entityId: EntityId): void {
 	return component && component.events && component.events.connect && component.events.connect(component, entityId);
 }
 
@@ -67,7 +67,7 @@ function disconnectEntity(entity: BaseEntity): number {
 	return entity.components.forEach(component => disconnectComponent(component, entity.id));
 }
 
-function disconnectComponent(component: BaseComponent<{}>, entityId: EntityId): void {
+function disconnectComponent(component: BaseComponent, entityId: EntityId): void {
 	return component.events && component.events.disconnect && component.events.disconnect(component, entityId);
 }
 
