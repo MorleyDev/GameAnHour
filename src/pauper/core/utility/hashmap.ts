@@ -63,7 +63,7 @@ class HashMapInner<TKey extends string, TValue> implements IHashMap<TKey, TValue
 	}
 
 	update(key: TKey, map: (value: TValue) => TValue): HashMap<TKey, TValue> {
-		return new HashMapInner(this._inner.update(key, map));
+		return new HashMapInner(this._inner.update(key, value => value != null ? map(value) : value));
 	}
 
 	union(rhs: HashMap<TKey, TValue>): HashMap<TKey, TValue> {

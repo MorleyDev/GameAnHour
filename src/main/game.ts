@@ -1,10 +1,12 @@
+import { destroyEntity } from "../pauper/entity-component/entity-component.reducer";
+import { Text2 } from "../pauper/core/models/text/text.model";
 import { Triangle2 } from "../pauper/core/models/triangle/triangle.model";
 import { Line2 } from "../pauper/core/models/line/line.model";
 import { Engine } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { map, mergeMap } from "rxjs/operators";
+import { map, mergeMap, filter } from "rxjs/operators";
 
 import { MouseButton } from "../pauper/core/models/mouse-button.model";
 import { Circle, Rectangle, Point2 } from "../pauper/core/models/shapes.model";
@@ -23,6 +25,7 @@ import { PhysicsComponent } from "./components/PhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { engine } from "./physics-engine";
 import { Vector2 } from "../pauper/core/maths/vector.maths";
+import { Key } from "../pauper/core/models/keys.model";
 
 const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
 	physics._body!.position.x = physics.position.x;
@@ -48,6 +51,10 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 			const newState = physicsPreReducer(state, action);
 			Engine.update(engine, action.deltaTime * 1000);
 			return physicsPostReducer(newState, action);
+		case "DELETE_STATIC_BODIES":
+			return state.componentEntityLinks.at("PhysicsComponent")
+				.filter(c => (state.entities.at(c)!.components.at("PhysicsComponent")! as PhysicsComponent)._body!.isStatic)
+				.reduce((state, entityId) => destroyEntity(state, entityId), state);
 		default:
 			return entityComponentReducer(state, action);
 	}
@@ -63,19 +70,24 @@ const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string,
 
 export const render = (state: GameState) => [
 	Clear("black"),
-	Array.from(entityRenderer(state))
+	Array.from(entityRenderer(state)),
+	Fill(Text2(`Active entities ${state.entities._inner.size}`, 20, 20, undefined, "12px", "sans-serif"), "white")
 ];
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
 	interval(10).pipe(
 		map(() => ({ type: "@@TICK", deltaTime: 0.01 }))
 	),
+	drivers.keyboard!.keyUp().pipe(
+		filter(key => key === Key.Escape),
+		map(() => ({ type: "DELETE_STATIC_BODIES" }))
+	),
 	drivers.mouse!.mouseUp(MouseButton.Left).pipe(
 		mergeMap(pos => {
 			const id = EntityId();
 			return [
 				CreateEntityAction(id),
-				AttachComponentAction(id, PhysicsComponent(pos, Rectangle(0, 0, 30, 20), false))
+				AttachComponentAction(id, PhysicsComponent(pos, Circle(0, 0, 10), false))
 			];
 		})
 	),
@@ -84,7 +96,7 @@ export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => me
 			const id = EntityId();
 			return [
 				CreateEntityAction(id),
-				AttachComponentAction(id, PhysicsComponent(pos, Triangle2(Point2(-10, -10), Point2(10, 10), Point2(-10, 10)), true))
+				AttachComponentAction(id, PhysicsComponent(pos, Triangle2(Point2(0, -100), Point2(100, 100), Point2(-100, 100)), true))
 			];
 		})
 	)

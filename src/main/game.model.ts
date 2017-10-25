@@ -11,4 +11,5 @@ export type GameState
 export type GameAction
 	= { readonly type: "@@INIT" }
 	| { readonly type: "@@TICK"; readonly deltaTime: Seconds }
+	| {  readonly type: "DELETE_STATIC_BODIES" }
 	| EntityComponentAction;

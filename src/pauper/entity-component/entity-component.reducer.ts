@@ -44,7 +44,7 @@ export function attachComponent<TState extends EntitiesState>(state: TState, id:
 		...(state as any),
 		entities: state.entities.update(id, entity => ({
 			...entity,
-			components: entity.components.append(component.name, sideEffect(component, connectComponent))
+			components: entity.components.append(component.name, sideEffect(component, c => connectComponent(c, id)))
 		})),
 		componentEntityLinks: state.componentEntityLinks.append(component.name, id)
 	};
@@ -56,23 +56,23 @@ export function detachComponent<TState extends EntitiesState>(state: TState, id:
 		entities: state.entities.update(id, entity => ({
 			...entity,
 			components: entity.components
-				.update(componentName, c => sideEffect(c, disconnectComponent))
+				.update(componentName, c => sideEffect(c, c => disconnectComponent(c, id)))
 				.remove(componentName)
 		})),
 		componentEntityLinks: state.componentEntityLinks.removeWhere(componentName, entityId => entityId === id)
 	};
 }
 
-function connectComponent(component: BaseComponent): void {
-	return component && component.events && component.events.disconnect && component.events.connect(component);
+function connectComponent(component: BaseComponent<{}>, entityId: EntityId): void {
+	return component && component.events && component.events.connect && component.events.connect(component, entityId);
 }
 
 function disconnectEntity(entity: BaseEntity): void {
-	return entity.components.forEach(([_, component]) => disconnectComponent(component));
+	return entity.components.forEach(([_, component]) => disconnectComponent(component, entity.id));
 }
 
-function disconnectComponent(component: BaseComponent): void {
-	return component.events && component.events.disconnect && component.events.disconnect(component);
+function disconnectComponent(component: BaseComponent<{}>, entityId: EntityId): void {
+	return component.events && component.events.disconnect && component.events.disconnect(component, entityId);
 }
 
 // Cheating the immutability by exploiting the lack of laziness!

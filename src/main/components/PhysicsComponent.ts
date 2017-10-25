@@ -1,13 +1,12 @@
-import { Vector2 } from "../../pauper/core/maths/vector.maths";
-import { getCentre } from "../../pauper/core/models/rectangle/rectangle.model.tlbr";
-import { Circle } from "../../pauper/core/models/circle/circle.model";
-import { Shape2Type } from "../../pauper/core/models/shapes.model.type";
-import { patternMatch } from "../../pauper/functional/utility-pattern-match.function";
-import { World, Bodies, Body, Vector } from "matter-js";
+import { Bodies, Body, Vector, World } from "matter-js";
 
 import { Radian } from "../../pauper/core/maths/angles.maths";
+import { Vector2 } from "../../pauper/core/maths/vector.maths";
+import { Circle } from "../../pauper/core/models/circle/circle.model";
 import { Point2, Rectangle, Shape2 } from "../../pauper/core/models/shapes.model";
+import { Shape2Type } from "../../pauper/core/models/shapes.model.type";
 import { BaseComponent } from "../../pauper/entity-component/component-base.type";
+import { EntityId } from "../../pauper/entity-component/entity-base.type";
 import { engine } from "../physics-engine";
 
 export type PhysicsComponent = BaseComponent<{
@@ -17,8 +16,8 @@ export type PhysicsComponent = BaseComponent<{
 	readonly shape: Shape2;
 
 	readonly events: {
-		connect(component: PhysicsComponent): void;
-		disconnect(component: PhysicsComponent): void;
+		connect(component: PhysicsComponent, entityId: EntityId): void;
+		disconnect(component: PhysicsComponent, entityId: EntityId): void;
 	};
 
 	_body: Body | null;
@@ -35,11 +34,12 @@ export const PhysicsComponent = (positionT: Point2, shapeT: Shape2, isStatic: bo
 	return ({
 		name: "PhysicsComponent",
 		events: {
-			connect: (component: PhysicsComponent) => {
+			connect: (component: PhysicsComponent, entityId: EntityId) => {
 				component._body = shapeToBody(Shape2.add(component.shape, component.position), isStatic);
+				(component._body as any).name = entityId;
 				return sideEffect(component, component => World.add(engine.world, component._body!));
 			},
-			disconnect: (component: PhysicsComponent) => {
+			disconnect: (component: PhysicsComponent, entityId: EntityId) => {
 				return sideEffect(component, component => World.remove(engine.world, component._body!));
 			}
 		},
