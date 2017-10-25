@@ -1,5 +1,4 @@
 import { SpecificReducer, GenericReducer } from "../functional/reducer.type";
-import { HashMap } from "../core/utility/hashmap";
 import { fzip } from "../core/extensions/Array.zip.func";
 import { intersect } from "../core/extensions/Array.intersect.func";
 import { BaseComponent } from "./component-base.type";
@@ -14,6 +13,7 @@ import {
 	EntityComponentAction,
 } from "./entity-component.actions";
 import { createReducer } from "../functional/create-reducer.func";
+import { Map, List } from "immutable";
 
 export const entityComponentReducer: GenericReducer = createReducer<EntitiesState>(
 	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => createEntity(state, action.id)],
@@ -25,17 +25,21 @@ export const entityComponentReducer: GenericReducer = createReducer<EntitiesStat
 export function createEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
 	return {
 		...(state as any),
-		entities: state.entities.append(id, { id, components: HashMap<EntityId, BaseComponent>() }),
+		entities: state.entities.concat({ [id]: { id, components: Map<EntityId, BaseComponent>() } })
 	};
 }
 
 export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
+	const entity = state.entities.get(id);
+	if (entity == null) {
+		return state;
+	}
 	return {
 		...(state as any),
 		entities: state.entities
 			.update(id, c => sideEffect(c, disconnectEntity))
 			.remove(id),
-		componentEntityLinks: state.componentEntityLinks.filter(([_, entityId]) => entityId !== id)
+		componentEntityLinks: entity.components.reduce((ecLinks, _, key: string) => ecLinks.update(key, values => values.filter(value => value !== entity.id)), state.componentEntityLinks)
 	};
 }
 
@@ -44,9 +48,9 @@ export function attachComponent<TState extends EntitiesState>(state: TState, id:
 		...(state as any),
 		entities: state.entities.update(id, entity => ({
 			...entity,
-			components: entity.components.append(component.name, sideEffect(component, c => connectComponent(c, id)))
+			components: entity.components.concat({ [component.name]: sideEffect(component, c => connectComponent(c, id)) })
 		})),
-		componentEntityLinks: state.componentEntityLinks.append(component.name, id)
+		componentEntityLinks: state.componentEntityLinks.update(component.name, List(), entityIds => entityIds.push(id))
 	};
 }
 
@@ -59,7 +63,7 @@ export function detachComponent<TState extends EntitiesState>(state: TState, id:
 				.update(componentName, c => sideEffect(c, c => disconnectComponent(c, id)))
 				.remove(componentName)
 		})),
-		componentEntityLinks: state.componentEntityLinks.removeWhere(componentName, entityId => entityId === id)
+		componentEntityLinks: state.componentEntityLinks.update(componentName, List(), entityIds => entityIds.filter(entityId => entityId === id))
 	};
 }
 
@@ -67,8 +71,8 @@ function connectComponent(component: BaseComponent<{}>, entityId: EntityId): voi
 	return component && component.events && component.events.connect && component.events.connect(component, entityId);
 }
 
-function disconnectEntity(entity: BaseEntity): void {
-	return entity.components.forEach(([_, component]) => disconnectComponent(component, entity.id));
+function disconnectEntity(entity: BaseEntity): number {
+	return entity.components.forEach(component => disconnectComponent(component, entity.id));
 }
 
 function disconnectComponent(component: BaseComponent<{}>, entityId: EntityId): void {

@@ -1,31 +1,26 @@
-import { destroyEntity } from "../pauper/entity-component/entity-component.reducer";
-import { Text2 } from "../pauper/core/models/text/text.model";
-import { Triangle2 } from "../pauper/core/models/triangle/triangle.model";
-import { Line2 } from "../pauper/core/models/line/line.model";
+import { List } from "immutable";
 import { Engine } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { map, mergeMap, filter } from "rxjs/operators";
+import { filter, map, mergeMap } from "rxjs/operators";
 
+import { Key } from "../pauper/core/models/keys.model";
 import { MouseButton } from "../pauper/core/models/mouse-button.model";
-import { Circle, Rectangle, Point2 } from "../pauper/core/models/shapes.model";
+import { Circle, Point2 } from "../pauper/core/models/shapes.model";
+import { Text2 } from "../pauper/core/models/text/text.model";
+import { Triangle2 } from "../pauper/core/models/triangle/triangle.model";
 import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
 import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";
 import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
 import { EntityId } from "../pauper/entity-component/entity-base.type";
-import {
-	AttachComponentAction,
-	CreateEntityAction,
-	DestroyEntityAction,
-} from "../pauper/entity-component/entity-component.actions";
+import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/entity-component/entity-component.actions";
+import { destroyEntity } from "../pauper/entity-component/entity-component.reducer";
 import { AppDrivers } from "../pauper/functional/app-drivers";
 import { Clear, Fill, Origin, Rotate } from "../pauper/functional/render-frame.model";
 import { PhysicsComponent } from "./components/PhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { engine } from "./physics-engine";
-import { Vector2 } from "../pauper/core/maths/vector.maths";
-import { Key } from "../pauper/core/models/keys.model";
 
 const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
 	physics._body!.position.x = physics.position.x;
@@ -52,8 +47,8 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 			Engine.update(engine, action.deltaTime * 1000);
 			return physicsPostReducer(newState, action);
 		case "DELETE_STATIC_BODIES":
-			return state.componentEntityLinks.at("PhysicsComponent")
-				.filter(c => (state.entities.at(c)!.components.at("PhysicsComponent")! as PhysicsComponent)._body!.isStatic)
+			return state.componentEntityLinks.get("PhysicsComponent", List<EntityId>())
+				.filter(entityId => state.entities.get(entityId)!.components.get("PhysicsComponent")._body!.isStatic)
 				.reduce((state, entityId) => destroyEntity(state, entityId), state);
 		default:
 			return entityComponentReducer(state, action);
@@ -71,7 +66,7 @@ const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string,
 export const render = (state: GameState) => [
 	Clear("black"),
 	Array.from(entityRenderer(state)),
-	Fill(Text2(`Active entities ${state.entities._inner.size}`, 20, 20, undefined, "12px", "sans-serif"), "white")
+	Fill(Text2(`Active entities ${state.entities.size}`, 20, 20, undefined, "12px", "sans-serif"), "white")
 ];
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(

@@ -1,7 +1,6 @@
 import { SpecificReducer } from "../functional/reducer.type";
 import { List, Map, Set } from "immutable";
 
-import { HashMap } from "../core/utility/hashmap";
 import { GenericAction } from "../functional/generic.action";
 import { BaseComponent } from "./component-base.type";
 import { EntitiesState } from "./entities.state";
@@ -12,13 +11,13 @@ export function createEntityReducer<TState extends EntitiesState, TAction extend
 	reducer: (state: TState, action: TAction, ..._components: BaseComponent[]) => Iterable<BaseComponent>
 ): SpecificReducer<TState, TAction> {
 	return bindEntitiesToReducer<TState, TAction>(components, (state, entity, action) => {
-		const newComponents = reducer(state, action as TAction, ...components.map(name => entity.components.at(name)! as BaseComponent));
+		const newComponents = reducer(state, action as TAction, ...components.map(name => entity.components.get(name)));
 		const newComponentPairs = List(newComponents).map(component => [component.name, component] as [string, BaseComponent]);
-		const newComponentHash = HashMap.fromMap(Map(newComponentPairs));
+		const newComponentHash = Map<EntityId, BaseComponent>(newComponentPairs);
 
 		return {
 			...entity,
-			components: entity.components.union(newComponentHash)
+			components: entity.components.merge(newComponentHash)
 		};
 	});
 }
@@ -29,7 +28,7 @@ const bindEntitiesToReducer = <TState extends EntitiesState, TAction extends Gen
 	(state, action) => ({
 		...(state as EntitiesState),
 		entities: Set.intersect<EntityId>(List(withComponents)
-			.map(componentName => state.componentEntityLinks.at(componentName)))
+			.map(componentName => state.componentEntityLinks.get(componentName, List())))
 			.reduce((entities, target) => entities.update(target, entity => entityStateReducer(state, entity, action)), state.entities)
 	} as TState);
 

@@ -1,4 +1,4 @@
-import { HashMap } from "../core/utility/hashmap";
+import { Map } from "immutable";
 import { BaseComponent } from "./component-base.type";
 
 export type EntityId = string;
@@ -8,5 +8,5 @@ export const EntityId = () => (_nextId++).toString();
 
 export type BaseEntity = {
 	readonly id: EntityId;
-	readonly components: HashMap<string, BaseComponent>;
+	readonly components: Map<string, BaseComponent>;
 };

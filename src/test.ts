@@ -5,13 +5,14 @@ import { readdirSync, statSync } from "fs";
 import { join } from "path";
 import { test } from "tap";
 
-importTestsIn(__dirname);
 
-function importTestsIn(path: string): Promise<any[]> {
+importTestsIn(__dirname).catch(err => console.error(err));
+
+async function importTestsIn(path: string): Promise<any[]> {
 	const testFiles = findTestsIn(path);
 	const importTests = testFiles.map(testPath => import(testPath));
 
-	return Promise.all(importTests);
+	return await Promise.all(importTests);
 }
 
 function findTestsIn(path: string): string[] {

@@ -1,7 +1,7 @@
 import { BaseComponent } from "./component-base.type";
 import { EntitiesState } from "./entities.state";
 import { BaseEntity, EntityId } from "./entity-base.type";
-import { Set } from "immutable";
+import { Set, Map, List } from "immutable";
 
 type EntitiesStateFilter
 	= ((component: BaseComponent, ..._extra: any[]) => boolean)
@@ -10,11 +10,16 @@ type EntitiesStateFilter
 
 export function createEntitiesStateFilter(withComponents: ReadonlyArray<string>, filter: EntitiesStateFilter): (state: EntitiesState, ..._extra: any[]) => Iterable<EntityId> {
 	return (state: EntitiesState, ..._extra: any[]): Iterable<EntityId> => {
-		const entityIdSubset = Set.intersect<EntityId>(withComponents.map(componentName => state.componentEntityLinks.at(componentName)));
-		return state.entities
-			.subset(entityIdSubset)
-			.map(([entityId, entity]) => ({ entityId, map: entity.components.subset(withComponents) }))
-			.filter(({ entityId, map }) => (filter as any)(...withComponents.map(component => map.at(component)!), ..._extra))
-			.map(({ entityId }) => entityId);
+		const entityIdSubset = Set.intersect<EntityId>(withComponents.map(componentName => state.componentEntityLinks.get(componentName, List())));
+		return subset(state.entities, entityIdSubset)
+			.map((entity, entityId) => ({ entityId, map: subset(entity.components, withComponents) }))
+			.filter(({ entityId, map }) => (filter as any)(...withComponents.map(component => map.get(component)), ..._extra))
+			.map(({ entityId }) => entityId)
+			.values();
 	};
+}
+
+function subset<TKey, TValue>(map: Map<TKey, TValue>, keys: Iterable<TKey>): Map<TKey, TValue> {
+	const keySet = Set(keys);
+	return map.filter((v: TValue, k: TKey) => keySet.has(k));
 }

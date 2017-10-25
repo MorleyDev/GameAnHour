@@ -50,7 +50,7 @@ export function createReduxApp<
 		).state, app.initialState),
 		tap(() =>  {
 			while(_thunk.length > 0) {
-				const empty = sideEffect(_thunk.pop(), action => subject.next(action));
+				const head = sideEffect(_thunk.pop(), action => subject.next(action));
 			}
 		}),
 		share()
