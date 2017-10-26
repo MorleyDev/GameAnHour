@@ -5,6 +5,7 @@ import { merge } from "rxjs/observable/merge";
 import { filter, map, mergeMap } from "rxjs/operators";
 
 import { Circle, Point2 } from "../pauper/core/models/shapes.model";
+import { Seconds } from "../pauper/core/models/time.model";
 import { isBrowser } from "../pauper/core/utility/is-browser";
 import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
 import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";
@@ -18,6 +19,7 @@ import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { engine, updateEngine } from "./physics-engine";
+import { List } from "immutable";
 
 const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
 	if (physics.pendingForces.length === 0) {
@@ -60,6 +62,31 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 					.concat(result.collisionStart.map(collision => ({ type: "@@COLLISION_START", collision } as GameAction)))
 					.concat(result.collisionEnd.map(collision => ({ type: "@@COLLISION_END", collision } as GameAction)))
 			};
+
+		case "@@COLLISION_START":
+			const isASensor = state.componentEntityLinks.get("SensorPhysicsComponent", List<EntityId>()).some(e => e === action.collision.a);
+			if (isASensor) {
+				const isBBall = state.componentEntityLinks.get("PhysicsComponent", List<EntityId>()).some(e => e === action.collision.b);
+				if (!isBBall) {
+					return state;
+				}
+				return {
+					...state
+				};
+			}
+
+			const isBSensor = state.componentEntityLinks.get("SensorPhysicsComponent", List<EntityId>()).some(e => e === action.collision.b);
+			if (isBSensor) {
+				const isABall = state.componentEntityLinks.get("PhysicsComponent", List<EntityId>()).some(e => e === action.collision.a);
+				if (!isABall) {
+					return state;
+				}
+				return {
+					...state
+				};
+			}
+
+			return state;
 		default:
 			return entityComponentReducer(state, action);
 	}
@@ -92,16 +119,16 @@ export const render = (state: GameState) => [
 ];
 
 // TODO: Focus-awareness should be moved into some kind of 'System Driver'
-const tabAwareInterval = (period: number) => {
+const tabAwareInterval = (period: Seconds) => {
 	if (!isBrowser) {
-		return interval(period);
+		return interval(period * 1000);
 	}
-	return interval(period).pipe(filter(() => !document.hidden));
+	return interval(period * 1000).pipe(filter(() => !document.hidden));
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	tabAwareInterval(10).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.010 }))),
-	tabAwareInterval(500).pipe(
+	tabAwareInterval(0.01).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
+	tabAwareInterval(1).pipe(
 		mergeMap(() => {
 			const id = EntityId();
 			return [
