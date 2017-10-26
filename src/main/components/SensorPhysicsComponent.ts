@@ -8,13 +8,13 @@ import { BaseComponent } from "../../pauper/entity-component/component-base.type
 import { EntityId } from "../../pauper/entity-component/entity-base.type";
 import { engine } from "../physics-engine";
 
-export type StaticPhysicsComponent = BaseComponent<"StaticPhysicsComponent", {
+export type SensorPhysicsComponent = BaseComponent<"SensorPhysicsComponent", {
 	readonly position: Point2;
 	readonly shape: Shape2;
 
 	readonly events: {
-		connect(component: StaticPhysicsComponent, entityId: EntityId): void;
-		disconnect(component: StaticPhysicsComponent, entityId: EntityId): void;
+		connect(component: SensorPhysicsComponent, entityId: EntityId): void;
+		disconnect(component: SensorPhysicsComponent, entityId: EntityId): void;
 	};
 
 	_body: Body | null;
@@ -26,17 +26,17 @@ const Recentre = (position: Point2, shape: Shape2) => {
 	return { position: centre, shape: Shape2.add(shape, offset) };
 };
 
-export const StaticPhysicsComponent = (positionT: Point2, shapeT: Shape2): StaticPhysicsComponent => {
+export const SensorPhysicsComponent = (positionT: Point2, shapeT: Shape2): SensorPhysicsComponent => {
 	const { position, shape } = Recentre(positionT, shapeT);
 	return ({
-		name: "StaticPhysicsComponent",
+		name: "SensorPhysicsComponent",
 		events: {
-			connect: (component: StaticPhysicsComponent, entityId: EntityId) => {
+			connect: (component: SensorPhysicsComponent, entityId: EntityId) => {
 				component._body = shapeToBody(Shape2.add(component.shape, component.position));
 				(component._body as any).name = entityId;
 				return sideEffect(component, component => World.add(engine.world, component._body!));
 			},
-			disconnect: (component: StaticPhysicsComponent, entityId: EntityId) => {
+			disconnect: (component: SensorPhysicsComponent, entityId: EntityId) => {
 				return sideEffect(component, component => World.remove(engine.world, component._body!));
 			}
 		},
@@ -49,9 +49,9 @@ export const StaticPhysicsComponent = (positionT: Point2, shapeT: Shape2): Stati
 const shapeToBody = (shape: Shape2Type): Body => {
 	if (Array.isArray(shape)) {
 		const centre = Shape2.getCentre(shape);
-		return Bodies.fromVertices(centre.x, centre.y, [shape.map(({ x, y }) => Vector.create(x, y))], { isStatic: true });
+		return Bodies.fromVertices(centre.x, centre.y, [shape.map(({ x, y }) => Vector.create(x, y))], { isStatic: true, isSensor: true });
 	} else if (Rectangle.is(shape)) {
-		return Bodies.rectangle(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height, { isStatic: true });
+		return Bodies.rectangle(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height, { isStatic: true, isSensor: true });
 	} else if (Circle.is(shape)) {
 		return Bodies.circle(shape.x, shape.y, shape.radius, { isStatic: true });
 	} else {

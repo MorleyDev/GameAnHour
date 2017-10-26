@@ -1,29 +1,26 @@
-import { Triangle2 } from "../pauper/core/models/triangle/triangle.model";
+import { Range } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
 
 import { Point2 } from "../pauper/core/models/point/point.model";
 import { Circle, Rectangle } from "../pauper/core/models/shapes.model";
+import { Triangle2 } from "../pauper/core/models/triangle/triangle.model";
 import { EntityId } from "../pauper/entity-component/entity-base.type";
 import { AttachComponentAction, CreateEntityAction } from "../pauper/entity-component/entity-component.actions";
 import { AppDrivers } from "../pauper/functional/app-drivers";
 import { GenericAction } from "../pauper/functional/generic.action";
-import { PhysicsComponent } from "./components/PhysicsComponent";
-import { Range } from "immutable";
 import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 
 export const bootstrap: (drivers: AppDrivers) => Observable<GenericAction> = drivers => from<GenericAction>([
 	...Range(0, 9).flatMap(i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))).flatMap(createPeg).toArray(),
 	...Range(0, 9).flatMap(i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))).flatMap(createPeg).toArray(),
-	...createBucket(Point2(462, 510)),
-	...createBucket(Point2(412, 510)),
-	...createBucket(Point2(362, 510)),
-	...createBucket(Point2(312, 510)),
-	...createBucket(Point2(262, 510)),
-	...createBucket(Point2(212, 510)),
-	...createBucket(Point2(162, 510)),
-	...createBucket(Point2(112, 510)),
-	...createBucket(Point2(62, 510)),
+	...createBucketPoint(Point2(412, 510)),
+	...createBucketPoint(Point2(362, 510)),
+	...createBucketPoint(Point2(312, 510)),
+	...createBucketPoint(Point2(262, 510)),
+	...createBucketPoint(Point2(212, 510)),
+	...createBucketPoint(Point2(162, 510)),
+	...createBucketPoint(Point2(112, 510)),
 	...createRightTriangle(),
 	...createLeftTriangle(),
 	...createRightWall(),
@@ -35,7 +32,7 @@ const createPeg = (position: Point2): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(position, Circle(0, 0, 2)))
+		AttachComponentAction(entityId, StaticPhysicsComponent(position, Circle(0, 0, 3)))
 	];
 };
 
@@ -55,11 +52,11 @@ const createRightTriangle = (): GenericAction[] => {
 	];
 };
 
-const createBucket = (position: Point2): GenericAction[] => {
+const createBucketPoint = (position: Point2): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(position, Triangle2(Point2(-25, 0), Point2(-20, -15), Point2(-15, 0))))
+		AttachComponentAction(entityId, StaticPhysicsComponent(position, Triangle2(Point2(-5, 0), Point2(5, 0), Point2(0, -30))))
 	];
 };
 

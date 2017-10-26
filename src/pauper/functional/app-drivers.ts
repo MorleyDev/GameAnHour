@@ -12,4 +12,9 @@ export type AppDrivers = {
 	readonly audio?: AudioService;
 	readonly loader?: AssetLoader;
 	readonly renderer: (frame: Observable<FrameCollection>) => Observable<{}>;
+
+	readonly framerates?: {
+		readonly logicalRender?: number;
+		readonly logicalTick?: number;
+	}
 };

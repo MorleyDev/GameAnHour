@@ -1,27 +1,27 @@
-import { List } from "immutable";
 import { Engine } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { filter, map, mergeMap } from "rxjs/operators";
+import { map, mergeMap } from "rxjs/operators";
 
-import { Key } from "../pauper/core/models/keys.model";
 import { MouseButton } from "../pauper/core/models/mouse-button.model";
-import { Circle, Point2 } from "../pauper/core/models/shapes.model";
+import { Circle } from "../pauper/core/models/shapes.model";
 import { Text2 } from "../pauper/core/models/text/text.model";
-import { Triangle2 } from "../pauper/core/models/triangle/triangle.model";
 import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
 import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";
 import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
 import { EntityId } from "../pauper/entity-component/entity-base.type";
-import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/entity-component/entity-component.actions";
-import { destroyEntity } from "../pauper/entity-component/entity-component.reducer";
+import {
+	AttachComponentAction,
+	CreateEntityAction,
+	DestroyEntityAction,
+} from "../pauper/entity-component/entity-component.actions";
 import { AppDrivers } from "../pauper/functional/app-drivers";
 import { Clear, Fill, Origin, Rotate } from "../pauper/functional/render-frame.model";
 import { PhysicsComponent } from "./components/PhysicsComponent";
+import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { engine } from "./physics-engine";
-import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 
 const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
 	physics._body!.position.x = physics.position.x;
@@ -31,8 +31,12 @@ const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (
 });
 
 const physicsPostReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
+	const motion = physics._body!.speed * physics._body!.speed + physics._body!.angularSpeed * physics._body!.angularSpeed;
+	const isResting = motion < 0.1;
+
 	return [{
 		...physics,
+		restingTime: isResting ? physics.restingTime + action.deltaTime : 0,
 		position: {
 			x: physics._body!.position.x,
 			y: physics._body!.position.y
@@ -69,8 +73,7 @@ const staticEntityRenderer = createEntitiesStateMap(["StaticPhysicsComponent"], 
 export const render = (state: GameState) => [
 	Clear("black"),
 	...entityRenderer(state),
-	...staticEntityRenderer(state),
-	Fill(Text2(`Active entities ${state.entities.size}`, 20, 20, undefined, "12px", "sans-serif"), "white")
+	...staticEntityRenderer(state)
 ];
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
@@ -88,6 +91,8 @@ export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => me
 
 const deadPhysicsEntities = createEntitiesStateFilter(["PhysicsComponent"], (component: PhysicsComponent) => component.position.y > 1000);
 
+const restingPhysicsEntities = createEntitiesStateFilter(["PhysicsComponent"], (component: PhysicsComponent) => component.restingTime > 1);
+
 export const postprocess = (state: GameState): {
 	readonly state: GameState;
 	readonly actions: ReadonlyArray<GameAction>;
@@ -96,5 +101,5 @@ export const postprocess = (state: GameState): {
 		...state,
 		effects: []
 	},
-	actions: state.effects.concat(Array.from(deadPhysicsEntities(state)).map(entity => DestroyEntityAction(entity)))
+	actions: state.effects.concat(Array.from(deadPhysicsEntities(state)).concat(Array.from(restingPhysicsEntities(state))).map(entity =>  DestroyEntityAction(entity)))
 });

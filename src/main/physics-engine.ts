@@ -4,7 +4,11 @@ import { Subject } from "rxjs/Subject";
 import { EntityId } from "../pauper/entity-component/entity-base.type";
 
 function makeEngine(): Engine {
-	const createEngine = () => Engine.create();
+	const createEngine = () => {
+		const engine = Engine.create();
+		engine.enableSleeping = true;
+		return engine;
+	};
 	if (typeof window === "undefined") {
 		return createEngine();
 	} else {

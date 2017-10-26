@@ -2,6 +2,8 @@ import { applyMiddleware, compose as productionCompose, createStore } from "redu
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
+import { auditTime } from "rxjs/operators/auditTime";
+import { bufferTime } from "rxjs/operators/bufferTime";
 import { ignoreElements } from "rxjs/operators/ignoreElements";
 import { map } from "rxjs/operators/map";
 import { reduce } from "rxjs/operators/reduce";
@@ -24,14 +26,31 @@ export function createReduxApp<
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
 	const compose = devCompose || productionCompose;
 
-	const storeBackedScan = (scanner: (state: TState, action: TAction) => TState, initial: TState): (input: Observable<TAction>) => Observable<TState> => {
-		const store = createStore(scanner as any, initial, compose(applyMiddleware()));
+	const logicalTickLimit = drivers.framerates != null && drivers.framerates.logicalTick != null ? drivers.framerates.logicalTick : 10;
+	const logicalRenderLimit = drivers.framerates != null && drivers.framerates.logicalRender != null ? drivers.framerates.logicalRender : 10;
+	
+	const storeBackedScan: (reducer: (state: TState, action: TAction) => TState, initialState: TState) => (input: Observable<TAction>) => Observable<TState> =
+		(reducer, initialState) => {
+			const applyAction = (state: TState, action: TAction): TState => profile(action.type, () => effect(() => store.getState(), store.dispatch(action as any)));
+			const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 
-		return self => self.pipe(
-			scan((state: TState, action: TAction): TState => profile(action.type, () => effect(() => store.getState(), store.dispatch(action as any))), initial)
-		);
-	};
-	const fastScan = scan;
+			const store = createStore(reducer, initialState, compose(applyMiddleware()));
+			return self => self.pipe(
+//				bufferTime(logicalTickLimit),
+				scan(applyAction, initialState)
+			);
+		};
+
+	const fastScan: (reducer: (state: TState, action: TAction) => TState, initialState: TState) => (input: Observable<TAction>) => Observable<TState> =
+		(reducer, initialState) => {
+			const applyAction = (state: TState, action: TAction): TState => reducer(state, action);
+			const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
+
+			return input => input.pipe(
+//				bufferTime(logicalTickLimit),
+				scan(applyAction, initialState)
+			);
+		};
 
 	const reduxScan = process && process.env && process.env["NODE_ENV"] === "Production"
 		? fastScan
@@ -44,12 +63,14 @@ export function createReduxApp<
 	);
 
 	const _thunk: TAction[] = [];
+	const applyAction = (state: TState, action: TAction) => sideEffect(app.postprocess(app.reducer(state, action)), post => _thunk.push(...post.actions)).state;
+	const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 
 	const state$ = app.bootstrap.pipe(
 		reduce((state: TState, action: TAction) => app.reducer(state, action), app.initialState),
 		switchMap(state =>
 			merge(epicActions$, subject, of({ type: "@@INIT" } as TAction)).pipe(
-				reduxScan((state: TState, action: TAction) => sideEffect(app.postprocess(app.reducer(state, action)), post => _thunk.push(...post.actions)).state, state),
+				reduxScan(applyAction, state),
 				tap(() => {
 					while (_thunk.length > 0) {
 						const head = sideEffect(_thunk.pop(), action => subject.next(action));
@@ -61,14 +82,15 @@ export function createReduxApp<
 	);
 	return merge(
 		state$.pipe(
+			auditTime(logicalRenderLimit),
 			map(state => app.render(state)),
 			drivers.renderer,
+
 			ignoreElements()
 		) as Observable<TState>,
 		state$
 	);
 }
-
 
 // Cheating the immutability by exploiting the lack of laziness!
 //----------------------------------------------------------------

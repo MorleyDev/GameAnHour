@@ -1,3 +1,4 @@
+import { Seconds } from "../../pauper/core/models/time.model";
 import { Bodies, Body, Vector, World } from "matter-js";
 
 import { Radian } from "../../pauper/core/maths/angles.maths";
@@ -13,6 +14,7 @@ export type PhysicsComponent = BaseComponent<"PhysicsComponent", {
 	readonly position: Point2;
 	readonly rotation: Radian;
 	readonly shape: Shape2;
+	readonly restingTime: Seconds;
 
 	readonly events: {
 		connect(component: PhysicsComponent, entityId: EntityId): void;
@@ -46,6 +48,7 @@ export const PhysicsComponent = (positionT: Point2, shapeT: Shape2): PhysicsComp
 		_body: null,
 		shape,
 		position,
+		restingTime: 0,
 		rotation: 0
 	});
 };
