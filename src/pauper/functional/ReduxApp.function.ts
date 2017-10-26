@@ -37,7 +37,6 @@ export function createReduxApp<
 			const store = createStore(reducer as any, initialState, compose(applyMiddleware()));
 			return self => self.pipe(
 				bufferTime(logicalTickLimit),
-				tap(actions => sideEffect(actions.map(action => action.type).filter(type => type !== "@@TICK"), actions => actions.length > 0 && console.log("BUFFERED", actions))),
 				scan(applyActions, initialState)
 			);
 		};
