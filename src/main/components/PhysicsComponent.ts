@@ -1,5 +1,5 @@
 import { Seconds } from "../../pauper/core/models/time.model";
-import { Bodies, Body, Vector, World } from "matter-js";
+import { Bodies, Body, Vector, World, IChamferableBodyDefinition } from "matter-js";
 
 import { Radian } from "../../pauper/core/maths/angles.maths";
 import { Vector2 } from "../../pauper/core/maths/vector.maths";
@@ -15,6 +15,7 @@ type PhysicsProperties = {
 	readonly velocity: Vector2;
 	readonly angularVelocity: number;
 	readonly elasticity: number;
+	readonly density: number;
 };
 
 export type PhysicsComponent = BaseComponent<"PhysicsComponent", PhysicsProperties & {
@@ -44,8 +45,15 @@ export const PhysicsComponent = (positionT: Point2, shapeT: Shape2, overloads?: 
 		name: "PhysicsComponent",
 		events: {
 			connect: (component: PhysicsComponent, entityId: EntityId) => {
-				component._body = shapeToBody(Shape2.add(component.shape, component.position));
-				(component._body as any).name = entityId;
+				component._body = shapeToBody(Shape2.add(component.shape, component.position), {
+					restitution: component.elasticity,
+					angularVelocity: component.angularVelocity,
+					angle: component.rotation,
+					velocity: component.velocity,
+					position: component.position,
+					density: component.density,
+					name: entityId
+				});
 				return sideEffect(component, component => World.add(engine.world, component._body!));
 			},
 			disconnect: (component: PhysicsComponent, entityId: EntityId) => {
@@ -61,18 +69,19 @@ export const PhysicsComponent = (positionT: Point2, shapeT: Shape2, overloads?: 
 		restingTime: 0,
 		rotation: 0,
 		pendingForces: [],
+		density: 1,
 		...overloads
 	});
 };
 
-const shapeToBody = (shape: Shape2Type): Body => {
+const shapeToBody = (shape: Shape2Type, props: IChamferableBodyDefinition & { readonly name: string }): Body => {
 	if (Array.isArray(shape)) {
 		const centre = Shape2.getCentre(shape);
-		return Bodies.fromVertices(centre.x, centre.y, [shape.map(({ x, y }) => Vector.create(x, y))]);
+		return Bodies.fromVertices(centre.x, centre.y, [shape.map(({ x, y }) => Vector.create(x, y))], props);
 	} else if (Rectangle.is(shape)) {
-		return Bodies.rectangle(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height);
+		return Bodies.rectangle(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height, props);
 	} else if (Circle.is(shape)) {
-		return Bodies.circle(shape.x, shape.y, shape.radius);
+		return Bodies.circle(shape.x, shape.y, shape.radius, props);
 	} else {
 		throw new Error();
 	}

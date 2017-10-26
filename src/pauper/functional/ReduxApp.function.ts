@@ -47,14 +47,12 @@ export function createReduxApp<
 			const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 
 			return input => input.pipe(
-//				bufferTime(logicalTickLimit),
-				scan(applyAction, initialState)
+				bufferTime(logicalTickLimit),
+				scan(applyActions, initialState)
 			);
 		};
 
-	const reduxScan = process && process.env && process.env["NODE_ENV"] === "Production"
-		? fastScan
-		: storeBackedScan;
+	const reduxScan = process && process.env && process.env["NODE_ENV"] === "Production" ? fastScan : storeBackedScan;
 
 	const subject = new Subject<TAction>();
 	const epicActions$ = app.epic(subject, drivers).pipe(

@@ -1,14 +1,14 @@
-import { Seconds } from "../pauper/core/models/time.model";
 import "poly-decomp";
-import { Engine, Events, World } from "matter-js";
-import { Subject } from "rxjs/Subject";
 
+import { Engine, Events } from "matter-js";
+
+import { Seconds } from "../pauper/core/models/time.model";
 import { EntityId } from "../pauper/entity-component/entity-base.type";
 
 function makeEngine(): Engine {
 	const createEngine = () => {
 		const engine = Engine.create();
-		engine.enableSleeping = true;
+		// engine.enableSleeping = true;
 		return engine;
 	};
 	if (typeof window === "undefined") {

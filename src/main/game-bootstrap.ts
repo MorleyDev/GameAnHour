@@ -81,7 +81,7 @@ const createFloor = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 510), Rectangle(0, 0, 512, 2)))
+		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 510), Rectangle(0, 0, 512, 20)))
 	];
 };
 

@@ -1,11 +1,11 @@
-import { Body, Engine } from "matter-js";
+import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { bufferTime, map, mergeMap } from "rxjs/operators";
+import { filter, map, mergeMap } from "rxjs/operators";
 
-import { MouseButton } from "../pauper/core/models/mouse-button.model";
-import { Circle } from "../pauper/core/models/shapes.model";
+import { Circle, Point2 } from "../pauper/core/models/shapes.model";
+import { isBrowser } from "../pauper/core/utility/is-browser";
 import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
 import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";
 import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
@@ -20,12 +20,6 @@ import { GameAction, GameState } from "./game.model";
 import { engine, updateEngine } from "./physics-engine";
 
 const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
-	Body.setAngle(physics._body!, physics.rotation);
-	Body.setPosition(physics._body!, physics.position);
-	Body.setVelocity(physics._body!, physics.velocity);
-	Body.setAngularVelocity(physics._body!, physics.angularVelocity);
-	physics._body!.restitution = physics.elasticity;
-
 	if (physics.pendingForces.length === 0) {
 		return [physics];
 	}
@@ -55,12 +49,11 @@ const physicsPostReducer = createEntityReducer<GameState>(["PhysicsComponent"], 
 });
 
 export const reducer = (state: GameState, action: GameAction): GameState => {
-	action.type !== "@@TICK" && console.log(action);
 	switch (action.type) {
 		case "@@TICK":
 			const newState = physicsPreReducer(state, action);
 			const result = updateEngine(engine, action.deltaTime);
-			const postState = physicsPostReducer(newState, action);
+			const postState = physicsPostReducer(state, action);
 			return {
 				...postState,
 				effects: postState.effects
@@ -75,7 +68,7 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string, physics: PhysicsComponent) => {
 	return Origin(physics.position, [
 		Rotate(physics.rotation, [
-			Fill(physics.shape, "white")
+			Fill(physics.shape, `rgba(${((255 * physics.elasticity)) | 0}, ${(255 - physics.density) | 0}, ${(255) | 0}, ${Math.min(1, 2 - (physics.restingTime * 2))})`)
 		])
 	]);
 });
@@ -95,18 +88,25 @@ const sensorEntityRenderer = createEntitiesStateMap(["SensorPhysicsComponent"], 
 export const render = (state: GameState) => [
 	Clear("black"),
 	...entityRenderer(state),
-	...staticEntityRenderer(state),
-	...sensorEntityRenderer(state)
+	...staticEntityRenderer(state)
 ];
 
+// TODO: Focus-awareness should be moved into some kind of 'System Driver'
+const tabAwareInterval = (period: number) => {
+	if (!isBrowser) {
+		return interval(period);
+	}
+	return interval(period).pipe(filter(() => !document.hidden));
+};
+
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	interval(15).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.015 }))),
-	drivers.mouse!.mouseUp(MouseButton.Left).pipe(
-		mergeMap(pos => {
+	tabAwareInterval(10).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.010 }))),
+	tabAwareInterval(500).pipe(
+		mergeMap(() => {
 			const id = EntityId();
 			return [
 				CreateEntityAction(id),
-				AttachComponentAction(id, PhysicsComponent(pos, Circle(0, 0, 15), { elasticity: 0.75 }))
+				AttachComponentAction(id, PhysicsComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 }))
 			];
 		})
 	)
