@@ -10,6 +10,7 @@ import { AttachComponentAction, CreateEntityAction } from "../pauper/entity-comp
 import { AppDrivers } from "../pauper/functional/app-drivers";
 import { GenericAction } from "../pauper/functional/generic.action";
 import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
+import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 
 export const bootstrap: (drivers: AppDrivers) => Observable<GenericAction> = drivers => from<GenericAction>([
 	...Range(0, 9).flatMap(i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))).flatMap(createPeg).toArray(),
@@ -21,6 +22,14 @@ export const bootstrap: (drivers: AppDrivers) => Observable<GenericAction> = dri
 	...createBucketPoint(Point2(212, 510)),
 	...createBucketPoint(Point2(162, 510)),
 	...createBucketPoint(Point2(112, 510)),
+	...createScoreSensor(Point2(80, 510), 0),
+	...createScoreSensor(Point2(138, 510), 0),
+	...createScoreSensor(Point2(187, 510), 0),
+	...createScoreSensor(Point2(237, 510), 0),
+	...createScoreSensor(Point2(287, 510), 0),
+	...createScoreSensor(Point2(338, 510), 0),
+	...createScoreSensor(Point2(385, 510), 0),
+	...createScoreSensor(Point2(446, 510), 0),
 	...createRightTriangle(),
 	...createLeftTriangle(),
 	...createRightWall(),
@@ -81,5 +90,13 @@ const createLeftWall = (): GenericAction[] => {
 	return [
 		CreateEntityAction(entityId),
 		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 0), Rectangle(512, 0, 5, 512)))
+	];
+};
+
+const createScoreSensor = (position: Point2, score: number): GenericAction[] => {
+	const entityId = EntityId();
+	return [
+		CreateEntityAction(entityId),
+		AttachComponentAction(entityId, SensorPhysicsComponent(position, Rectangle(-25, -30, 50, 30)))
 	];
 };

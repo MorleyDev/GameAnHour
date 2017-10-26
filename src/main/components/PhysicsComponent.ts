@@ -10,11 +10,19 @@ import { BaseComponent } from "../../pauper/entity-component/component-base.type
 import { EntityId } from "../../pauper/entity-component/entity-base.type";
 import { engine } from "../physics-engine";
 
-export type PhysicsComponent = BaseComponent<"PhysicsComponent", {
-	readonly position: Point2;
+type PhysicsProperties = {
 	readonly rotation: Radian;
+	readonly velocity: Vector2;
+	readonly angularVelocity: number;
+	readonly elasticity: number;
+};
+
+export type PhysicsComponent = BaseComponent<"PhysicsComponent", PhysicsProperties & {
 	readonly shape: Shape2;
+	readonly position: Point2;
+
 	readonly restingTime: Seconds;
+	readonly pendingForces: { location: Point2; force: Vector2 }[];
 
 	readonly events: {
 		connect(component: PhysicsComponent, entityId: EntityId): void;
@@ -30,14 +38,13 @@ const Recentre = (position: Point2, shape: Shape2) => {
 	return { position: centre, shape: Shape2.add(shape, offset) };
 };
 
-export const PhysicsComponent = (positionT: Point2, shapeT: Shape2): PhysicsComponent => {
+export const PhysicsComponent = (positionT: Point2, shapeT: Shape2, overloads?: Partial<PhysicsProperties>): PhysicsComponent => {
 	const { position, shape } = Recentre(positionT, shapeT);
 	return ({
 		name: "PhysicsComponent",
 		events: {
 			connect: (component: PhysicsComponent, entityId: EntityId) => {
 				component._body = shapeToBody(Shape2.add(component.shape, component.position));
-				component._body.restitution = 0.75;
 				(component._body as any).name = entityId;
 				return sideEffect(component, component => World.add(engine.world, component._body!));
 			},
@@ -48,8 +55,13 @@ export const PhysicsComponent = (positionT: Point2, shapeT: Shape2): PhysicsComp
 		_body: null,
 		shape,
 		position,
+		velocity: Vector2(0, 0),
+		elasticity: 0,
+		angularVelocity: 0,
 		restingTime: 0,
-		rotation: 0
+		rotation: 0,
+		pendingForces: [],
+		...overloads
 	});
 };
 

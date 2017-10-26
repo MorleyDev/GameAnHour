@@ -31,13 +31,14 @@ export function createReduxApp<
 	
 	const storeBackedScan: (reducer: (state: TState, action: TAction) => TState, initialState: TState) => (input: Observable<TAction>) => Observable<TState> =
 		(reducer, initialState) => {
-			const applyAction = (state: TState, action: TAction): TState => profile(action.type, () => effect(() => store.getState(), store.dispatch(action as any)));
+			const applyAction = (state: TState, action: TAction): TState => profile(action.type, () => sideEffect(store, store => store.dispatch(action as any)).getState());
 			const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 
-			const store = createStore(reducer, initialState, compose(applyMiddleware()));
+			const store = createStore(reducer as any, initialState, compose(applyMiddleware()));
 			return self => self.pipe(
-//				bufferTime(logicalTickLimit),
-				scan(applyAction, initialState)
+				bufferTime(logicalTickLimit),
+				tap(actions => sideEffect(actions.map(action => action.type).filter(type => type !== "@@TICK"), actions => actions.length > 0 && console.log("BUFFERED", actions))),
+				scan(applyActions, initialState)
 			);
 		};
 
@@ -62,20 +63,18 @@ export function createReduxApp<
 		ignoreElements()
 	);
 
-	const _thunk: TAction[] = [];
-	const applyAction = (state: TState, action: TAction) => sideEffect(app.postprocess(app.reducer(state, action)), post => _thunk.push(...post.actions)).state;
+	const applyAction = (state: TState, action: TAction): TState => {
+		const { state: newState, actions: followup } = app.postprocess(app.reducer(state, action));
+
+		return followup.reduce(applyAction, newState);
+	};
 	const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 
 	const state$ = app.bootstrap.pipe(
 		reduce((state: TState, action: TAction) => app.reducer(state, action), app.initialState),
 		switchMap(state =>
 			merge(epicActions$, subject, of({ type: "@@INIT" } as TAction)).pipe(
-				reduxScan(applyAction, state),
-				tap(() => {
-					while (_thunk.length > 0) {
-						const head = sideEffect(_thunk.pop(), action => subject.next(action));
-					}
-				})
+				reduxScan(applyAction, state)
 			)
 		),
 		share()
