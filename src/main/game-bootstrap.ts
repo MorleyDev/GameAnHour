@@ -9,8 +9,9 @@ import { EntityId } from "../pauper/entity-component/entity-base.type";
 import { AttachComponentAction, CreateEntityAction } from "../pauper/entity-component/entity-component.actions";
 import { AppDrivers } from "../pauper/functional/app-drivers";
 import { GenericAction } from "../pauper/functional/generic.action";
-import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
+import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
+import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 
 export const bootstrap: (drivers: AppDrivers) => Observable<GenericAction> = drivers => from<GenericAction>([
 	...Range(0, 9).flatMap(i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))).flatMap(createPeg).toArray(),
@@ -23,12 +24,12 @@ export const bootstrap: (drivers: AppDrivers) => Observable<GenericAction> = dri
 	...createBucketPoint(Point2(162, 512)),
 	...createBucketPoint(Point2(112, 512)),
 	...createScoreSensor(Point2(80, 510), 0),
-	...createScoreSensor(Point2(138, 510), 0),
-	...createScoreSensor(Point2(187, 510), 0),
-	...createScoreSensor(Point2(237, 510), 0),
-	...createScoreSensor(Point2(287, 510), 0),
-	...createScoreSensor(Point2(338, 510), 0),
-	...createScoreSensor(Point2(385, 510), 0),
+	...createScoreSensor(Point2(138, 510), 10),
+	...createScoreSensor(Point2(187, 510), 6),
+	...createScoreSensor(Point2(237, 510), 3),
+	...createScoreSensor(Point2(287, 510), 3),
+	...createScoreSensor(Point2(338, 510), 6),
+	...createScoreSensor(Point2(385, 510), 10),
 	...createScoreSensor(Point2(446, 510), 0),
 	...createRightTriangle(),
 	...createLeftTriangle(),
@@ -97,6 +98,7 @@ const createScoreSensor = (position: Point2, score: number): GenericAction[] => 
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, SensorPhysicsComponent(position, Rectangle(-25, -30, 50, 30)))
+		AttachComponentAction(entityId, SensorPhysicsComponent(position, Rectangle(-25, -30, 50, 50))),
+		AttachComponentAction(entityId, ScoreBucketComponent(score))
 	];
 };

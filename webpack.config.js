@@ -17,7 +17,12 @@ module.exports = {
     ]
   },
   devServer: {
-    hot: true
+    hot: true,
+    noInfo: true,
+    host: "0.0.0.0",
+    disableHostCheck: true,
+    port: 8080,
+    inline: true
   },
   plugins: (isProd
     ? [new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })]

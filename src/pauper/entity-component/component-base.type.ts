@@ -10,3 +10,8 @@ export type BaseComponent<TName extends string = string, TComponent = {}> = {
 		readonly disconnect: (self: any, entityId: EntityId) => void;
 	}
 } & TComponent;
+
+export const BaseComponent = <TName extends string, TComponent>(name: TName, data: TComponent): BaseComponent<TName, TComponent> => ({
+	name,
+	...(data as any)
+});

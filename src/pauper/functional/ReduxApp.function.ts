@@ -1,3 +1,4 @@
+import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
 import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
@@ -14,6 +15,7 @@ import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
 
 import { profile } from "../core/profiler";
+import { isProduction } from "../core/utility/is-production";
 import { AppDrivers } from "./app-drivers";
 import { GenericAction } from "./generic.action";
 import { ReduxApp } from "./ReduxApp.type";
@@ -37,7 +39,8 @@ export function createReduxApp<
 			const store = createStore(reducer as any, initialState, compose(applyMiddleware()));
 			return self => self.pipe(
 				bufferTime(logicalTickLimit),
-				scan(applyActions, initialState)
+				scan(applyActions, initialState),
+				distinctUntilChanged()
 			);
 		};
 
@@ -52,7 +55,7 @@ export function createReduxApp<
 			);
 		};
 
-	const reduxScan = process && process.env && process.env["NODE_ENV"] === "Production" ? fastScan : storeBackedScan;
+	const reduxScan = isProduction ? fastScan : storeBackedScan;
 
 	const subject = new Subject<TAction>();
 	const epicActions$ = app.epic(subject, drivers).pipe(
@@ -61,7 +64,8 @@ export function createReduxApp<
 	);
 
 	const applyAction = (state: TState, action: TAction): TState => {
-		const { state: newState, actions: followup } = app.postprocess(app.reducer(state, action));
+		const nextState = app.reducer(state, action);
+		const { state: newState, actions: followup } = app.postprocess(nextState);
 
 		return followup.reduce(applyAction, newState);
 	};

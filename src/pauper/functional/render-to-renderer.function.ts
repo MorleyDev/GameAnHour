@@ -2,14 +2,14 @@ import { Renderer } from "../core/graphics/renderer.service";
 import { Rectangle } from "../core/models/shapes.model";
 import { Blit, Clear, Fill, Frame, FrameCollection, Origin, Rotate, Scale, Stroke } from "./render-frame.model";
 
-export function Render(canvas: Renderer, frame: FrameCollection): Renderer {
+export function RenderToRenderer(canvas: Renderer, frame: FrameCollection): Renderer {
 	return frame.reduce((canvas, command) => RenderCommand(canvas, command), canvas);
 }
 
 function RenderCommand(canvas: Renderer, command: Frame): Renderer {
 	const commandType = command[0];
 	if (Array.isArray(commandType)) {
-		return Render(canvas, command as FrameCollection);
+		return RenderToRenderer(canvas, command as FrameCollection);
 	} else {
 		switch (commandType) {
 			case "clear":
@@ -40,15 +40,15 @@ function RenderCommand(canvas: Renderer, command: Frame): Renderer {
 }
 
 function RenderOrigin(canvas: Renderer, command: Origin): Renderer {
-	return Render(canvas.translate(command[1]), command[2]).translate({ x: -command[1].x, y: -command[1].y });
+	return RenderToRenderer(canvas.translate(command[1]), command[2]).translate({ x: -command[1].x, y: -command[1].y });
 }
 
 function RenderRotate(canvas: Renderer, command: Rotate): Renderer {
-	return Render(canvas.rotate(command[1]), command[2]).rotate(-command[1]);
+	return RenderToRenderer(canvas.rotate(command[1]), command[2]).rotate(-command[1]);
 }
 
 function RenderScale(canvas: Renderer, command: Scale): Renderer {
-	return Render(canvas.scale(command[1]), command[2]).scale({ x: -command[1].x, y: -command[1].y });
+	return RenderToRenderer(canvas.scale(command[1]), command[2]).scale({ x: -command[1].x, y: -command[1].y });
 }
 
 function RenderBlit(canvas: Renderer, command: Blit): Renderer {

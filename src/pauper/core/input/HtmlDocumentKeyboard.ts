@@ -5,23 +5,18 @@ import { map } from "rxjs/operators/map";
 import { Key } from "../models/keys.model";
 import { Keyboard } from "./Keyboard";
 
-export class CanvasKeyboard implements Keyboard {
-	private keydown: Observable<KeyboardEvent>;
-	private keyup: Observable<KeyboardEvent>;
-
-	constructor(private canvas: HTMLCanvasElement) {
-		this.keydown = fromEvent(document, "keydown");
-		this.keyup = fromEvent(document, "keyup");
+export class HtmlDocumentKeyboard implements Keyboard {
+	constructor(private document: Document) {
 	}
 
 	public keyDown(): Observable<Key> {
-		return this.keydown.pipe(
+		return (fromEvent(this.document, "keydown") as Observable<KeyboardEvent>).pipe(
 			map((event: KeyboardEvent) => event.keyCode)
 		);
 	}
 
 	public keyUp(): Observable<Key> {
-		return this.keyup.pipe(
+		return (fromEvent(this.document, "keyup") as Observable<KeyboardEvent>).pipe(
 			map((event: KeyboardEvent) => event.keyCode)
 		);
 	}

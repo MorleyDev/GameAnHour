@@ -24,6 +24,7 @@ export function createEntity<TState extends EntitiesState>(state: TState, id: En
 export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
 	const entity = state.entities.get(id);
 	if (entity == null) {
+		console.warn("Tried to remove", entity, "which does not exist");
 		return state;
 	}
 	return {

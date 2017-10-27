@@ -7,27 +7,27 @@ import { MouseButton } from "../models/mouse-button.model";
 import { Point2Type } from "../models/point/point.model.type";
 import { Mouse } from "./Mouse";
 
-export class CanvasMouse implements Mouse {
-	constructor(private canvas: HTMLCanvasElement) {
-		canvas.oncontextmenu = () => false; // Uuuuuuuuuuuuugly!
+export class HtmlElementMouse implements Mouse {
+	constructor(private element: HTMLElement) {
+		element.oncontextmenu = () => false; // Uuuuuuuuuuuuugly!
 	}
 
 	public mouseDown(type?: MouseButton): Observable<Point2Type> {
-		return fromEvent(this.canvas, "mousedown").pipe(
+		return fromEvent(this.element, "mousedown").pipe(
 			filterByMouseButton(type),
 			map((event: MouseEvent) => ({ x: event.offsetX, y: event.offsetY }))
 		);
 	}
 
 	public mouseUp(type?: MouseButton): Observable<Point2Type> {
-		return fromEvent(this.canvas, "mouseup").pipe(
+		return fromEvent(this.element, "mouseup").pipe(
 			filterByMouseButton(type),
 			map((event: MouseEvent) => ({ x: event.offsetX, y: event.offsetY }))
 		);
 	}
 
 	public mouseMove(): Observable<Point2Type> {
-		return fromEvent(this.canvas, "mousemove").pipe(
+		return fromEvent(this.element, "mousemove").pipe(
 			map((event: {}) => ({ x: (event as MouseEvent).offsetX, y: (event as MouseEvent).offsetY }))
 		);
 	}

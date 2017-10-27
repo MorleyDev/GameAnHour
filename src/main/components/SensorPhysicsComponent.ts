@@ -1,23 +1,13 @@
-import { Bodies, Body, Vector, World } from "matter-js";
+import { Bodies, Body, Vector } from "matter-js";
 
 import { Vector2 } from "../../pauper/core/maths/vector.maths";
 import { Circle } from "../../pauper/core/models/circle/circle.model";
 import { Point2, Rectangle, Shape2 } from "../../pauper/core/models/shapes.model";
 import { Shape2Type } from "../../pauper/core/models/shapes.model.type";
 import { BaseComponent } from "../../pauper/entity-component/component-base.type";
-import { EntityId } from "../../pauper/entity-component/entity-base.type";
-import { engine } from "../physics-engine";
 
 export type SensorPhysicsComponent = BaseComponent<"SensorPhysicsComponent", {
-	readonly position: Point2;
 	readonly shape: Shape2;
-
-	readonly events: {
-		connect(component: SensorPhysicsComponent, entityId: EntityId): void;
-		disconnect(component: SensorPhysicsComponent, entityId: EntityId): void;
-	};
-
-	_body: Body | null;
 }>;
 
 const Recentre = (position: Point2, shape: Shape2) => {
@@ -30,19 +20,7 @@ export const SensorPhysicsComponent = (positionT: Point2, shapeT: Shape2): Senso
 	const { position, shape } = Recentre(positionT, shapeT);
 	return ({
 		name: "SensorPhysicsComponent",
-		events: {
-			connect: (component: SensorPhysicsComponent, entityId: EntityId) => {
-				component._body = shapeToBody(Shape2.add(component.shape, component.position));
-				(component._body as any).name = entityId;
-				return sideEffect(component, component => World.add(engine.world, component._body!));
-			},
-			disconnect: (component: SensorPhysicsComponent, entityId: EntityId) => {
-				return sideEffect(component, component => World.remove(engine.world, component._body!));
-			}
-		},
-		_body: null,
-		shape,
-		position
+		shape: Shape2.add(shape, position)
 	});
 };
 

@@ -1,4 +1,4 @@
-import "poly-decomp";
+// import "poly-decomp";
 
 import { Engine, Events } from "matter-js";
 

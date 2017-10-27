@@ -5,7 +5,7 @@ import { SystemState } from "../pauper/functional";
 import { GameState } from "./game.model";
 
 export const initialState: GameState = pipe(
-	() => ({ effects: [] }),
+	() => ({ effects: [], score: 0, runtime: 0 }),
 	SystemState,
 	EntitiesState
 )({});
