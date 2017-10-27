@@ -1,9 +1,8 @@
-// import "poly-decomp";
-
+import "poly-decomp";
 import { Engine, Events } from "matter-js";
 
-import { Seconds } from "../pauper/core/models/time.model";
-import { EntityId } from "../pauper/entity-component/entity-base.type";
+import { EntityId } from "../pauper/ecs/entity-base.type";
+import { Seconds } from "../pauper/models/time.model";
 
 function makeEngine(): Engine {
 	const createEngine = () => {

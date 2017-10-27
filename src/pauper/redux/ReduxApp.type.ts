@@ -1,7 +1,7 @@
 import { Observable } from "rxjs/Observable";
 
-import { AppDrivers } from "./app-drivers";
-import { FrameCollection } from "./render-frame.model";
+import { AppDrivers } from "../app-drivers";
+import { FrameCollection } from "../render/render-frame.model";
 
 export type ReduxApp<TState, TAction> = {
 	readonly initialState: TState;

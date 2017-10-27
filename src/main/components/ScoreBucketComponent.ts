@@ -1,4 +1,4 @@
-import { BaseComponent } from "../../pauper/entity-component/component-base.type";
+import { BaseComponent } from "../../pauper/ecs/component-base.type";
 
 export type ScoreBucketComponent = BaseComponent<"ScoreBucketComponent", { readonly value: number }>;
 

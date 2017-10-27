@@ -5,13 +5,13 @@ import { fromPromise } from "rxjs/observable/fromPromise";
 import { merge } from "rxjs/observable/merge";
 import { ignoreElements } from "rxjs/operators";
 
-import { Point2 } from "../pauper/core/models/point/point.model";
-import { Circle, Rectangle } from "../pauper/core/models/shapes.model";
-import { Triangle2 } from "../pauper/core/models/triangle/triangle.model";
-import { EntityId } from "../pauper/entity-component/entity-base.type";
-import { AttachComponentAction, CreateEntityAction } from "../pauper/entity-component/entity-component.actions";
-import { AppDrivers } from "../pauper/functional/app-drivers";
-import { GenericAction } from "../pauper/functional/generic.action";
+import { AppDrivers } from "../pauper/app-drivers";
+import { EntityId } from "../pauper/ecs/entity-base.type";
+import { AttachComponentAction, CreateEntityAction } from "../pauper/ecs/entity-component.actions";
+import { Point2 } from "../pauper/models/point/point.model";
+import { Circle, Rectangle } from "../pauper/models/shapes.model";
+import { Triangle2 } from "../pauper/models/triangle/triangle.model";
+import { GenericAction } from "../pauper/redux/generic.action";
 import { PegComponent } from "./components/PegComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
@@ -69,7 +69,7 @@ const createRightTriangle = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(512, 512), Triangle2(Point2(0, 0), Point2(-35, 0), Point2(0, -512)))),
+		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(513, 513), Triangle2(Point2(0, 0), Point2(-35, 0), Point2(0, -512)))),
 		AttachComponentAction(entityId, RenderedComponent(175, 205, 225))
 	];
 };
@@ -87,8 +87,7 @@ const createRightWall = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 0), Rectangle(0, 0, -5, 512))),
-		AttachComponentAction(entityId, RenderedComponent(0, 0, 0))
+		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 0), Rectangle(0, 0, -5, 512)))
 	];
 };
 
@@ -105,8 +104,7 @@ const createLeftWall = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 0), Rectangle(512, 0, 5, 512))),
-		AttachComponentAction(entityId, RenderedComponent(0, 0, 0))
+		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 0), Rectangle(512, 0, 5, 512)))
 	];
 };
 

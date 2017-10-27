@@ -1,4 +1,4 @@
-import { GenericAction } from "../functional/generic.action";
+import { GenericAction } from "../redux/generic.action";
 import { BaseComponent } from "./component-base.type";
 import { EntityId } from "./entity-base.type";
 

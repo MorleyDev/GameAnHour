@@ -3,21 +3,22 @@ import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { filter, map, mergeMap, tap } from "rxjs/operators";
+import { filter, map, mergeMap } from "rxjs/operators";
 import { ignoreElements } from "rxjs/operators/ignoreElements";
 import { pipe } from "rxjs/util/pipe";
 
-import { cosineInterpolation } from "../pauper/core/maths/interpolation.maths";
-import { Circle, Point2, Shape2, Text2 } from "../pauper/core/models/shapes.model";
-import { Seconds } from "../pauper/core/models/time.model";
-import { isBrowser } from "../pauper/core/utility/is-browser";
-import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
-import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";
-import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
-import { EntityId } from "../pauper/entity-component/entity-base.type";
-import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/entity-component/entity-component.actions";
-import { AppDrivers } from "../pauper/functional/app-drivers";
-import { Clear, Fill, Origin, Rotate } from "../pauper/functional/render-frame.model";
+import { AppDrivers } from "../pauper/app-drivers";
+import { createEntitiesStateFilter } from "../pauper/ecs/create-entities-state-filter.func";
+import { createEntitiesStateMap } from "../pauper/ecs/create-entities-state-map.func";
+import { createEntityReducer } from "../pauper/ecs/create-entity-reducer.func";
+import { EntityId } from "../pauper/ecs/entity-base.type";
+import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/ecs/entity-component.actions";
+import { entityComponentReducer } from "../pauper/ecs/entity-component.reducer";
+import { cosineInterpolation } from "../pauper/maths/interpolation.maths";
+import { Circle, Point2, Rectangle, Shape2, Text2 } from "../pauper/models/shapes.model";
+import { Seconds } from "../pauper/models/time.model";
+import { Clear, Fill, Origin, RenderTarget, Rotate } from "../pauper/render/render-frame.model";
+import { isBrowser } from "../pauper/utility/is-browser";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
 import { PhysicsComponent } from "./components/PhysicsComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
@@ -38,7 +39,7 @@ const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (
 
 const physicsPostReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
 	const motion = physics._body!.speed * physics._body!.speed + physics._body!.angularSpeed * physics._body!.angularSpeed;
-	const isResting = motion < 0.1;
+	const isResting = motion < 0.075;
 
 	return [{
 		...physics,
@@ -147,15 +148,20 @@ const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id
 	const position = physics.position(interpolateTo);
 
 	return [
-		Fill(Text2(`${physics.score}`, position.x, position.y), `rgba(255, 255, 255, ${1 - interpolateTo})`)
+		Fill(Text2(`${physics.score}`, position.x, position.y, "24px", "sans-serif"), `rgba(255, 255, 255, ${1 - interpolateTo})`)
 	];
 });
+
 export const render = (state: GameState) => [
 	Clear("black"),
-	...entityRenderer(state),
-	...staticEntityRenderer(state),
-	...scoreTextRenderer(state, state.runtime),
-	Fill(Text2(`Score: ${state.score}`, 30, 30), "red")
+	RenderTarget(Rectangle(0, 0, 512, 512), [
+		Clear("black"),
+		...staticEntityRenderer(state),
+
+		Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), "red"),
+		...entityRenderer(state),
+		...scoreTextRenderer(state, state.runtime)
+	])
 ];
 
 // TODO: Focus-awareness should be moved into some kind of 'System Driver'

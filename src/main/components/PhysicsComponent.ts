@@ -1,13 +1,13 @@
-import { Seconds } from "../../pauper/core/models/time.model";
+import { Seconds } from "../../pauper/models/time.model";
 import { Bodies, Body, Vector, World, IChamferableBodyDefinition } from "matter-js";
 
-import { Radian } from "../../pauper/core/maths/angles.maths";
-import { Vector2 } from "../../pauper/core/maths/vector.maths";
-import { Circle } from "../../pauper/core/models/circle/circle.model";
-import { Point2, Rectangle, Shape2 } from "../../pauper/core/models/shapes.model";
-import { Shape2Type } from "../../pauper/core/models/shapes.model.type";
-import { BaseComponent } from "../../pauper/entity-component/component-base.type";
-import { EntityId } from "../../pauper/entity-component/entity-base.type";
+import { Radian } from "../../pauper/maths/angles.maths";
+import { Vector2 } from "../../pauper/maths/vector.maths";
+import { Circle } from "../../pauper/models/circle/circle.model";
+import { Point2, Rectangle, Shape2 } from "../../pauper/models/shapes.model";
+import { Shape2Type } from "../../pauper/models/shapes.model.type";
+import { BaseComponent } from "../../pauper/ecs/component-base.type";
+import { EntityId } from "../../pauper/ecs/entity-base.type";
 import { engine } from "../physics-engine";
 
 type PhysicsProperties = {

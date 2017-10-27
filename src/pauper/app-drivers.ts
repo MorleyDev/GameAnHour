@@ -1,10 +1,10 @@
 import { Observable } from "rxjs/Observable";
 
-import { AssetLoader } from "../core/assets/asset-loader.service";
-import { AudioService } from "../core/audio/audio.service";
-import { Keyboard } from "../core/input/Keyboard";
-import { Mouse } from "../core/input/Mouse";
-import { FrameCollection } from "./render-frame.model";
+import { AssetLoader } from "./assets/asset-loader.service";
+import { AudioService } from "./audio/audio.service";
+import { Keyboard } from "./input/Keyboard";
+import { Mouse } from "./input/Mouse";
+import { FrameCollection } from "./render/render-frame.model";
 
 export type AppDrivers = {
 	readonly keyboard?: Keyboard;

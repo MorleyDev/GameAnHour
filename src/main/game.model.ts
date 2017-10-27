@@ -1,12 +1,10 @@
-import { Seconds } from "../pauper/core/models/time.model";
-import { EntitiesState } from "../pauper/entity-component";
-import { EntityId } from "../pauper/entity-component/entity-base.type";
-import { EntityComponentAction } from "../pauper/entity-component/entity-component.actions";
-import { SystemState } from "../pauper/functional";
+import { EntitiesState } from "../pauper/ecs/entities.state";
+import { EntityId } from "../pauper/ecs/entity-base.type";
+import { EntityComponentAction } from "../pauper/ecs/entity-component.actions";
+import { Seconds } from "../pauper/models/time.model";
 
 export type GameState
-	= SystemState
-	& EntitiesState
+	= EntitiesState
 	& { readonly score: number }
 	& { readonly effects: ReadonlyArray<GameAction>; readonly runtime: Seconds };
 

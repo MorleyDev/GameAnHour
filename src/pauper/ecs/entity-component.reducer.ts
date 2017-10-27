@@ -1,7 +1,7 @@
 import { List, Map } from "immutable";
 
-import { createReducer } from "../functional/create-reducer.func";
-import { GenericReducer } from "../functional/reducer.type";
+import { createReducer } from "../redux/create-reducer.func";
+import { GenericReducer } from "../redux/reducer.type";
 import { BaseComponent } from "./component-base.type";
 import { EntitiesState } from "./entities.state";
 import { BaseEntity, EntityId } from "./entity-base.type";

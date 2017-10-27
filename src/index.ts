@@ -1,23 +1,21 @@
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
-import { auditTime, catchError, reduce, switchMap, tap } from "rxjs/operators";
+import { auditTime, reduce, retryWhen, switchMap, tap, map } from "rxjs/operators";
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "./main/game-bootstrap";
 import { initialState } from "./main/game-initial-state";
-import { WebAssetLoader } from "./pauper/core/assets/web-asset-loader.service";
-import { WebAudioService } from "./pauper/core/audio/web-audio.service";
-import { CanvasRenderer } from "./pauper/core/graphics/canvas-renderer.service";
-import { Renderer } from "./pauper/core/graphics/renderer.service";
-import { HtmlDocumentKeyboard } from "./pauper/core/input/HtmlDocumentKeyboard";
-import { HtmlElementMouse } from "./pauper/core/input/HtmlElementMouse";
-import { AppDrivers } from "./pauper/functional/app-drivers";
-import { createReduxApp } from "./pauper/functional/ReduxApp.function";
-import { ReduxApp } from "./pauper/functional/ReduxApp.type";
-import { FrameCollection } from "./pauper/functional/render-frame.model";
-import { RenderToRenderer } from "./pauper/functional/render-to-renderer.function";
+import { WebAssetLoader } from "./pauper/assets/web-asset-loader.service";
+import { WebAudioService } from "./pauper/audio/web-audio.service";
+import { HtmlDocumentKeyboard } from "./pauper/input/HtmlDocumentKeyboard";
+import { HtmlElementMouse } from "./pauper/input/HtmlElementMouse";
+import { AppDrivers } from "./pauper/app-drivers";
+import { createReduxApp } from "./pauper/redux/ReduxApp.func";
+import { ReduxApp } from "./pauper/redux/ReduxApp.type";
+import { FrameCollection } from "./pauper/render/render-frame.model";
+import { renderToCanvas } from "./pauper/render/render-to-canvas.func";
 
 // import RxFiddle from "rxfiddle";
 // (window as any).fiddle = new RxFiddle(require("rxjs/Rx")).auto();
@@ -27,7 +25,8 @@ const gameFactory: () => ReduxApp<any, any> = () => require("./main/game");
 const game$ = new Subject<ReduxApp<any, any>>();
 
 const canvas = document.getElementById("render-target")! as HTMLCanvasElement;
-const canvasRenderer = new CanvasRenderer(canvas);
+const context = canvas.getContext("2d")!;
+
 const element = document.getElementById("canvas-container")!;
 const drivers: AppDrivers = {
 	keyboard: new HtmlDocumentKeyboard(document),
@@ -36,7 +35,10 @@ const drivers: AppDrivers = {
 	loader: new WebAssetLoader(),
 	renderer: frames => frames.pipe(
 		auditTime(15, animationFrame),
-		reduce((canvas: Renderer, frames: FrameCollection) => RenderToRenderer(canvas, frames), canvasRenderer)
+		reduce((
+			{ canvas, context }: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D }, frames: FrameCollection) => renderToCanvas({ canvas, context }, frames),
+			{ canvas, context }
+		)
 	)
 };
 
@@ -54,17 +56,19 @@ const devRememberState = (module as any).hot
 
 
 const app$ = game$.pipe(
-	switchMap(game => createReduxApp(drivers, {
+	map(game => ({
 		...game,
 		epic: actions$ => merge(game.epic(actions$, drivers), debugHooks.actions$),
 		initialState: debugHooks.currentState,
 		bootstrap: latestBootstrap
-	})),
-	devRememberState,
-	catchError(err => {
-		console.error(err);
-		return empty();
-	})
+	} as ReduxApp<any, any>)),
+
+	switchMap(game =>
+		createReduxApp(drivers, game).pipe(
+			retryWhen(errs => errs.pipe(tap(err => console.error(err))))
+		)
+	),
+	devRememberState
 );
 
 app$.subscribe();

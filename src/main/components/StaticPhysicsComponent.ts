@@ -1,11 +1,11 @@
 import { Bodies, Body, Vector, World } from "matter-js";
 
-import { Vector2 } from "../../pauper/core/maths/vector.maths";
-import { Circle } from "../../pauper/core/models/circle/circle.model";
-import { Point2, Rectangle, Shape2 } from "../../pauper/core/models/shapes.model";
-import { Shape2Type } from "../../pauper/core/models/shapes.model.type";
-import { BaseComponent } from "../../pauper/entity-component/component-base.type";
-import { EntityId } from "../../pauper/entity-component/entity-base.type";
+import { Vector2 } from "../../pauper/maths/vector.maths";
+import { Circle } from "../../pauper/models/circle/circle.model";
+import { Point2, Rectangle, Shape2 } from "../../pauper/models/shapes.model";
+import { Shape2Type } from "../../pauper/models/shapes.model.type";
+import { BaseComponent } from "../../pauper/ecs/component-base.type";
+import { EntityId } from "../../pauper/ecs/entity-base.type";
 import { engine } from "../physics-engine";
 
 export type StaticPhysicsComponent = BaseComponent<"StaticPhysicsComponent", {

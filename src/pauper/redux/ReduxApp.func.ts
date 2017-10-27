@@ -14,15 +14,14 @@ import { switchMap } from "rxjs/operators/switchMap";
 import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
 
-import { profile } from "../core/profiler";
-import { isProduction } from "../core/utility/is-production";
-import { AppDrivers } from "./app-drivers";
+import { profile } from "../profiler";
+import { isProduction } from "../utility/is-production";
+import { AppDrivers } from "../app-drivers";
 import { GenericAction } from "./generic.action";
 import { ReduxApp } from "./ReduxApp.type";
-import { SystemState } from "./system.state";
 
 export function createReduxApp<
-	TState extends Partial<SystemState>,
+	TState extends {},
 	TAction extends GenericAction = GenericAction
 	>(drivers: AppDrivers, app: ReduxApp<TState, TAction>): Observable<TState> {
 	const devCompose: typeof productionCompose | undefined = typeof window !== "undefined" && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
