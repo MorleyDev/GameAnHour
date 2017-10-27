@@ -1,3 +1,4 @@
+import { linearInterpolation as scalarLinearInterpolation, cosineInterpolation as scalarCosineInterpolation } from "./interpolation.maths";
 import { Vector2Type } from "./vector.maths.type";
 
 export function abs({ x, y }: Vector2Type): Vector2Type {
@@ -80,4 +81,18 @@ export function constraint(topLeft: Vector2Type, bottomRight: Vector2Type): (lhs
 
 export function crossProduct(lhs: Vector2Type, rhs: Vector2Type): number {
 	return lhs.x * rhs.y - lhs.y * rhs.x;
+}
+
+export function linearInterpolation(lhs: Vector2Type, rhs: Vector2Type): (percentage: number) => Vector2Type {
+	const interpolateX = scalarLinearInterpolation(lhs.x, rhs.x);
+	const interpolateY = scalarLinearInterpolation(lhs.y, rhs.y);
+
+	return percentage => ({ x: interpolateX(percentage), y: interpolateY(percentage) });
+}
+
+export function cosineInterpolation(lhs: Vector2Type, rhs: Vector2Type): (percentage: number) => Vector2Type {
+	const interpolateX = scalarCosineInterpolation(lhs.x, rhs.x);
+	const interpolateY = scalarCosineInterpolation(lhs.y, rhs.y);
+
+	return percentage => ({ x: interpolateX(percentage), y: interpolateY(percentage) });
 }

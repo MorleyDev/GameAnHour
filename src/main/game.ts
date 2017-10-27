@@ -1,35 +1,31 @@
-import { Vector2 } from "../pauper/core/maths/vector.maths";
 import { List } from "immutable";
 import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
-import { filter, map, mergeMap } from "rxjs/operators";
+import { filter, map, mergeMap, tap } from "rxjs/operators";
+import { ignoreElements } from "rxjs/operators/ignoreElements";
 import { pipe } from "rxjs/util/pipe";
 
-import { Key } from "../pauper/core/models/keys.model";
-import { Circle, Point2, Text2, Shape2 } from "../pauper/core/models/shapes.model";
+import { cosineInterpolation } from "../pauper/core/maths/interpolation.maths";
+import { Circle, Point2, Shape2, Text2 } from "../pauper/core/models/shapes.model";
 import { Seconds } from "../pauper/core/models/time.model";
 import { isBrowser } from "../pauper/core/utility/is-browser";
 import { createEntitiesStateMap, entityComponentReducer } from "../pauper/entity-component";
 import { createEntitiesStateFilter } from "../pauper/entity-component/create-entities-state-filter.func";
 import { createEntityReducer } from "../pauper/entity-component/create-entity-reducer.func";
 import { EntityId } from "../pauper/entity-component/entity-base.type";
-import {
-	AttachComponentAction,
-	CreateEntityAction,
-	DestroyEntityAction,
-} from "../pauper/entity-component/entity-component.actions";
+import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/entity-component/entity-component.actions";
 import { AppDrivers } from "../pauper/functional/app-drivers";
 import { Clear, Fill, Origin, Rotate } from "../pauper/functional/render-frame.model";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
 import { PhysicsComponent } from "./components/PhysicsComponent";
+import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { engine, updateEngine } from "./physics-engine";
-import { cosineInterpolation } from "../pauper/core/maths/interpolation.maths";
 
 const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
 	if (physics.pendingForces.length === 0) {
@@ -90,6 +86,15 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 				})
 			)(state);
 
+		case "@@COLLISION_START":
+			if (state.componentEntityLinks.get("PhysicsComponent", List<EntityId>()).some(e => e === action.collision.a || e === action.collision.b)) {
+				return {
+					...state,
+					effects: state.effects.concat({ type: "PlaySoundEffect", sound: "boing" } as GameAction)
+				};
+			}
+			return state;
+
 		case "BALL_FINISHED":
 			const ballPhysicsComponent = state.entities.get(action.ball)!.components.get("PhysicsComponent")! as PhysicsComponent;
 			const bucket = state.componentEntityLinks.get("SensorPhysicsComponent", List<EntityId>())
@@ -123,27 +128,26 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 	}
 };
 
-const entityRenderer = createEntitiesStateMap(["PhysicsComponent"], (id: string, physics: PhysicsComponent) => {
+const entityRenderer = createEntitiesStateMap(["RenderedComponent", "PhysicsComponent"], (id: string, { rgb }: RenderedComponent, physics: PhysicsComponent) => {
 	return Origin(physics.position, [
 		Rotate(physics.rotation, [
-			Fill(physics.shape, `rgba(${((255 * physics.elasticity)) | 0}, ${(255 - physics.density) | 0}, ${(255) | 0}, ${(cosineInterpolation(1, 0)(physics.restingTime))})`)
+			Fill(physics.shape, `rgba(${rgb}, ${(cosineInterpolation(1, 0)(physics.restingTime))})`)
 		])
 	]);
 });
 
-const staticEntityRenderer = createEntitiesStateMap(["StaticPhysicsComponent"], (id: string, physics: StaticPhysicsComponent) => {
-	return Origin(physics.position, [
-		Fill(physics.shape, "lightblue")
+const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "StaticPhysicsComponent"], (id: string, { rgb }: RenderedComponent, { position, shape }: StaticPhysicsComponent) => {
+	return Origin(position, [
+		Fill(shape, `rgb(${rgb})`)
 	]);
 });
 
 const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id: string, physics: FloatingScoreComponent, runtime: Seconds) => {
 	const interpolateTo = (runtime - physics.startingTick) / physics.lifespan;
-	const x = cosineInterpolation(physics.startPosition.x, physics.endPosition.x)(interpolateTo);
-	const y = cosineInterpolation(physics.startPosition.y, physics.endPosition.y)(interpolateTo);
+	const position = physics.position(interpolateTo);
 
 	return [
-		Fill(Text2(`${physics.score}`, x, y), `rgba(255, 255, 255, ${1 - interpolateTo})`)
+		Fill(Text2(`${physics.score}`, position.x, position.y), `rgba(255, 255, 255, ${1 - interpolateTo})`)
 	];
 });
 export const render = (state: GameState) => [
@@ -167,11 +171,20 @@ export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => me
 	drivers.mouse!.mouseUp().pipe(
 		mergeMap(() => {
 			const id = EntityId();
+			const physics = PhysicsComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 });
 			return [
 				CreateEntityAction(id),
-				AttachComponentAction(id, PhysicsComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 }))
+				AttachComponentAction(id, physics),
+				AttachComponentAction(id, RenderedComponent(255 * physics.elasticity | 0, 255 - physics.density | 0, 255 | 0))
 			];
 		})
+	),
+	action$.pipe(
+		filter(action => action.type === "PlaySoundEffect"),
+		map(action => (action as ({ readonly type: "PlaySoundEffect"; readonly sound: string })).sound),
+		map(sound => drivers.loader!.getSoundEffect(sound)),
+		map(sound => drivers.audio!.play(sound)),
+		ignoreElements()
 	)
 );
 

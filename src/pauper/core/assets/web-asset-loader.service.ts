@@ -1,13 +1,13 @@
 import { Howl } from "howler";
 
 import { AssetLoader } from "./asset-loader.service";
-import { AudioAsset, ImageAsset } from "./asset.model";
+import { SoundEffectAsset, ImageAsset } from "./asset.model";
 
 export class WebAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
-	private audio: { [id: string]: AudioAsset | undefined } = {};
+	private audio: { [id: string]: SoundEffectAsset | undefined } = {};
 
-	public getAudio(id: string, path?: string): AudioAsset {
+	public getSoundEffect(id: string, path?: string): SoundEffectAsset {
 		const audio = this.audio[id];
 		if (audio) {
 			return audio;
@@ -18,7 +18,7 @@ export class WebAssetLoader implements AssetLoader {
 		}
 	}
 
-	public async loadAudio(id: string, path: string): Promise<AudioAsset> {
+	public async loadSoundEffect(id: string, path: string): Promise<SoundEffectAsset> {
 		const audio = this.audio[id];
 		if (audio) {
 			return audio;

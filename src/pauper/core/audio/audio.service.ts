@@ -1,7 +1,7 @@
-import { AudioAsset } from "../assets/asset.model";
+import { SoundEffectAsset } from "../assets/asset.model";
 
 export abstract class AudioService {
-	public abstract play(audio: AudioAsset): AudioService;
-	public abstract stop(audio: AudioAsset): AudioService;
-	public abstract pause(audio: AudioAsset): AudioService;
+	public abstract play(audio: SoundEffectAsset): AudioService;
+	public abstract stop(audio: SoundEffectAsset): AudioService;
+	public abstract pause(audio: SoundEffectAsset): AudioService;
 }

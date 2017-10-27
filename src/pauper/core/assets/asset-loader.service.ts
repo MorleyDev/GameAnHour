@@ -1,9 +1,9 @@
-import { AudioAsset, ImageAsset } from "./asset.model";
+import { SoundEffectAsset, ImageAsset } from "./asset.model";
 
 export abstract class AssetLoader {
 	public abstract getImage(id: string, path?: string): ImageAsset;
 	public abstract loadImage(id: string, path?: string): Promise<ImageAsset>;
 
-	public abstract getAudio(id: string, path?: string): AudioAsset;
-	public abstract loadAudio(id: string, path: string): Promise<AudioAsset>;
+	public abstract getSoundEffect(id: string, path?: string): SoundEffectAsset;
+	public abstract loadSoundEffect(id: string, path: string): Promise<SoundEffectAsset>;
 }

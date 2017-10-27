@@ -57,8 +57,9 @@ export function createReduxApp<
 
 	const reduxScan = isProduction ? fastScan : storeBackedScan;
 
+	const postProcessSubject = new Subject<TAction>();
 	const subject = new Subject<TAction>();
-	const epicActions$ = app.epic(subject, drivers).pipe(
+	const epicActions$ = app.epic(merge(subject, postProcessSubject), drivers).pipe(
 		tap(action => subject.next(action)),
 		ignoreElements()
 	);
@@ -66,8 +67,9 @@ export function createReduxApp<
 	const applyAction = (state: TState, action: TAction): TState => {
 		const nextState = app.reducer(state, action);
 		const { state: newState, actions: followup } = app.postprocess(nextState);
-
-		return followup.reduce(applyAction, newState);
+		return followup
+			.map(action => sideEffect(action, action => postProcessSubject.next(action)))
+			.reduce(applyAction, newState);
 	};
 	const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 

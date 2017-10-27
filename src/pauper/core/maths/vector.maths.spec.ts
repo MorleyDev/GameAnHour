@@ -1,7 +1,7 @@
 import { test } from "tap";
 
 import { Vector2 } from "./vector.maths";
-import { abs, add, constraint, crossProduct, divide, dot, dotProduct, invert, magnitude, magnitudeSquared, multiply, normal, normalise, subtract } from "./vector.maths.func";
+import { abs, add, constraint, crossProduct, divide, dot, dotProduct, invert, linearInterpolation, magnitude, magnitudeSquared, multiply, normal, normalise, subtract, cosineInterpolation } from "./vector.maths.func";
 import { Vector2Type } from "./vector.maths.type";
 import { Unit } from "./vector.maths.values";
 
@@ -9,7 +9,7 @@ import { Unit } from "./vector.maths.values";
 
 test("core/maths/vector.maths", test => {
 	const make = (x: number, y: number) => Vector2(x, y);
-	
+
 	const within = (tap: typeof test, low: number, high: number) =>
 		(value: number) =>
 			tap.true(
@@ -121,6 +121,30 @@ test("core/maths/vector.maths", test => {
 		test.deepEqual(constraintTo(make(20, 20)), make(10, 10));
 		test.deepEqual(constraintTo(make(-20, -20)), make(-10, -10));
 		test.end();
+	});
+
+	test.test("linearInterpolation :: (Vector2, Vector2) -> Number -> Vector2", test => {
+		test.deepEqual(linearInterpolation(make(10, 5), make(20, 25))(0), make(10, 5));
+		test.deepEqual(linearInterpolation(make(10, 5), make(20, 25))(1), make(20, 25));
+		test.deepEqual(linearInterpolation(make(10, 5), make(-20, -25))(1), make(-20, -25));
+		test.deepEqual(linearInterpolation(make(10, 5), make(-20, 25))(1), make(-20, 25));
+
+		test.deepEqual(linearInterpolation(make(10, 5), make(20, 25))(0.25), make(12.5, 10));
+		test.deepEqual(linearInterpolation(make(10, 5), make(20, 25))(0.5), make(15, 15));
+		test.deepEqual(linearInterpolation(make(10, 5), make(20, 25))(0.75), make(17.5, 20));
+		test.end()
+	});
+
+	test.test("cosineInterpolation :: (Vector2, Vector2) -> Number -> Vector2", test => {
+		test.deepEqual(cosineInterpolation(make(10, 5), make(20, 25))(0), make(10, 5));
+		test.deepEqual(cosineInterpolation(make(10, 5), make(20, 25))(1), make(20, 25));
+		test.deepEqual(cosineInterpolation(make(10, 5), make(-20, -25))(1), make(-20, -25));
+		test.deepEqual(cosineInterpolation(make(10, 5), make(-20, 25))(1), make(-20, 25));
+
+		between(test, make(11.4, 7.9), make(11.6, 8.1))(cosineInterpolation(make(10, 5), make(20, 25))(0.25));
+		between(test, make(14.9, 14.9), make(15.1, 15.1))(cosineInterpolation(make(10, 5), make(20, 25))(0.5));
+		between(test, make(18.4, 21.9), make(18.6, 22.1))(cosineInterpolation(make(10, 5), make(20, 25))(0.75));
+		test.end()
 	});
 
 	test.end();

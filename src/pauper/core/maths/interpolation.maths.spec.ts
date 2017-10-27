@@ -37,8 +37,8 @@ test("core/maths/interpolation.maths", test => {
 		test.equal(cosineInterpolation(-200, 100)(1), 100);
 		test.equal(cosineInterpolation(200, -100)(1), -100);
 
-		within(1.49, 1.51)(cosineInterpolation(1, 2)(0.5));
 		within(1.14, 1.15)(cosineInterpolation(1, 2)(0.25));
+		within(1.49, 1.51)(cosineInterpolation(1, 2)(0.5));
 		within(1.84, 1.86)(cosineInterpolation(1, 2)(0.75));
 		test.end();
 	});

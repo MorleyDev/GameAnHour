@@ -33,16 +33,14 @@ function attachEvents(engine: Engine): Engine {
 	Events.off(engine, "collisionEnd", undefined as any);
 
 	Events.on(engine, "collisionStart", (collision) => {
-		collisionStartEvents.push({
-			a: (collision.pairs[0].bodyA as any).name,
-			b: (collision.pairs[0].bodyB as any).name
-		});
+		const a = (collision.pairs[0].bodyA as any).name;
+		const b = (collision.pairs[0].bodyB as any).name;
+		collisionStartEvents.push({ a, b });
 	});
 	Events.on(engine, "collisionEnd", (collision) => {
-		collisionEndEvents.push({
-			a: (collision.pairs[0].bodyA as any).name,
-			b: (collision.pairs[0].bodyB as any).name
-		});
+		const a = (collision.pairs[0].bodyA as any).name;
+		const b = (collision.pairs[0].bodyB as any).name;
+		collisionEndEvents.push({ a, b });
 	});
 	return engine;
 }
