@@ -1,16 +1,16 @@
-import { Seconds } from "../../pauper/models/time.model";
-import { Bodies, Body, Vector, World, IChamferableBodyDefinition } from "matter-js";
+import { Bodies, Body, IChamferableBodyDefinition, Vector, World } from "matter-js";
 
-import { Radian } from "../../pauper/maths/angles.maths";
-import { Vector2 } from "../../pauper/maths/vector.maths";
-import { Circle } from "../../pauper/models/circle/circle.model";
-import { Point2, Rectangle, Shape2 } from "../../pauper/models/shapes.model";
-import { Shape2Type } from "../../pauper/models/shapes.model.type";
-import { BaseComponent } from "../../pauper/ecs/component-base.type";
-import { EntityId } from "../../pauper/ecs/entity-base.type";
-import { engine } from "../physics-engine";
+import { BaseComponent } from "../../ecs/component-base.type";
+import { EntityId } from "../../ecs/entity-base.type";
+import { Radian } from "../../maths/angles.maths";
+import { Vector2 } from "../../maths/vector.maths";
+import { Circle } from "../../models/circle/circle.model";
+import { Point2, Rectangle, Shape2 } from "../../models/shapes.model";
+import { Shape2Type } from "../../models/shapes.model.type";
+import { Seconds } from "../../models/time.model";
+import { matterJsPhysicsEngine } from "../_inner/matterEngine";
 
-type PhysicsProperties = {
+export type HardBodyProperties = {
 	readonly rotation: Radian;
 	readonly velocity: Vector2;
 	readonly angularVelocity: number;
@@ -18,7 +18,7 @@ type PhysicsProperties = {
 	readonly density: number;
 };
 
-export type PhysicsComponent = BaseComponent<"PhysicsComponent", PhysicsProperties & {
+export type HardBodyComponent = BaseComponent<"HardBodyComponent", HardBodyProperties & {
 	readonly shape: Shape2;
 	readonly position: Point2;
 
@@ -26,8 +26,8 @@ export type PhysicsComponent = BaseComponent<"PhysicsComponent", PhysicsProperti
 	readonly pendingForces: { location: Point2; force: Vector2 }[];
 
 	readonly events: {
-		connect(component: PhysicsComponent, entityId: EntityId): void;
-		disconnect(component: PhysicsComponent, entityId: EntityId): void;
+		connect(component: HardBodyComponent, entityId: EntityId): void;
+		disconnect(component: HardBodyComponent, entityId: EntityId): void;
 	};
 
 	_body: Body | null;
@@ -39,12 +39,12 @@ const Recentre = (position: Point2, shape: Shape2) => {
 	return { position: centre, shape: Shape2.add(shape, offset) };
 };
 
-export const PhysicsComponent = (positionT: Point2, shapeT: Shape2, overloads?: Partial<PhysicsProperties>): PhysicsComponent => {
+export const HardBodyComponent = (positionT: Point2, shapeT: Shape2, overloads?: Partial<HardBodyProperties>): HardBodyComponent => {
 	const { position, shape } = Recentre(positionT, shapeT);
 	return ({
-		name: "PhysicsComponent",
+		name: "HardBodyComponent",
 		events: {
-			connect: (component: PhysicsComponent, entityId: EntityId) => {
+			connect: (component: HardBodyComponent, entityId: EntityId) => {
 				component._body = shapeToBody(Shape2.add(component.shape, component.position), {
 					restitution: component.elasticity,
 					angularVelocity: component.angularVelocity,
@@ -54,10 +54,10 @@ export const PhysicsComponent = (positionT: Point2, shapeT: Shape2, overloads?: 
 					density: component.density,
 					name: entityId
 				});
-				return sideEffect(component, component => World.add(engine.world, component._body!));
+				return sideEffect(component, component => World.add(matterJsPhysicsEngine.world, component._body!));
 			},
-			disconnect: (component: PhysicsComponent, entityId: EntityId) => {
-				return sideEffect(component, component => World.remove(engine.world, component._body!));
+			disconnect: (component: HardBodyComponent, entityId: EntityId) => {
+				return sideEffect(component, component => World.remove(matterJsPhysicsEngine.world, component._body!));
 			}
 		},
 		_body: null,

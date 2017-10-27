@@ -1,3 +1,4 @@
+import { createPhysicsReducer } from "../pauper/physics/reducer/physics-body.reducer";
 import { List } from "immutable";
 import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
@@ -17,18 +18,17 @@ import { entityComponentReducer } from "../pauper/ecs/entity-component.reducer";
 import { cosineInterpolation } from "../pauper/maths/interpolation.maths";
 import { Circle, Point2, Rectangle, Shape2, Text2 } from "../pauper/models/shapes.model";
 import { Seconds } from "../pauper/models/time.model";
+import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
+import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
 import { Clear, Fill, Origin, RenderTarget, Rotate } from "../pauper/render/render-frame.model";
 import { isBrowser } from "../pauper/utility/is-browser";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
-import { PhysicsComponent } from "./components/PhysicsComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
-import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
-import { engine, updateEngine } from "./physics-engine";
 
-const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
+const physicsPreReducer = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	if (physics.pendingForces.length === 0) {
 		return [physics];
 	}
@@ -37,7 +37,7 @@ const physicsPreReducer = createEntityReducer<GameState>(["PhysicsComponent"], (
 	return [{ ...physics, pendingForces: [] }];
 });
 
-const physicsPostReducer = createEntityReducer<GameState>(["PhysicsComponent"], (state, action, physics: PhysicsComponent) => {
+const physicsPostReducer = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	const motion = physics._body!.speed * physics._body!.speed + physics._body!.angularSpeed * physics._body!.angularSpeed;
 	const isResting = motion < 0.075;
 
@@ -58,26 +58,22 @@ const physicsPostReducer = createEntityReducer<GameState>(["PhysicsComponent"], 
 });
 
 
-const deadPhysicsEntities = createEntitiesStateFilter(["PhysicsComponent"], (component: PhysicsComponent) => component.position.y > 1000);
-const restingPhysicsEntities = createEntitiesStateFilter(["PhysicsComponent"], (component: PhysicsComponent) => component.restingTime >= 1);
+const deadPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.position.y > 1000);
+const restingPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.restingTime >= 1);
 const fadedAwayTextBoxes = createEntitiesStateFilter(["FloatingScoreComponent"], (component: FloatingScoreComponent, currentTick: number) => currentTick > component.startingTick + component.lifespan);
+
+const physicsReducer = createPhysicsReducer<GameState>((state, result) => ({
+	...state,
+	effects: state.effects
+		.concat(result.collisionStarts.map(collision => ({ type: "@@COLLISION_START", collision } as GameAction)))
+		.concat(result.collisionEnds.map(collision => ({ type: "@@COLLISION_END", collision } as GameAction)))
+}));
 
 export const reducer = (state: GameState, action: GameAction): GameState => {
 	switch (action.type) {
 		case "@@TICK":
 			return pipe(
-				(s: GameState) => physicsPreReducer(s, action),
-				s => {
-					const physics = updateEngine(engine, action.deltaTime);
-
-					return {
-						...s,
-						effects: s.effects
-							.concat(physics.collisionStart.map(collision => ({ type: "@@COLLISION_START", collision } as GameAction)))
-							.concat(physics.collisionEnd.map(collision => ({ type: "@@COLLISION_END", collision } as GameAction)))
-					};
-				},
-				s => physicsPostReducer(s, action),
+				(s: GameState) => physicsPostReducer(s, action),
 				s => ({ ...s, runtime: s.runtime + action.deltaTime }),
 				s => ({
 					...s,
@@ -88,7 +84,7 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 			)(state);
 
 		case "@@COLLISION_START":
-			if (state.componentEntityLinks.get("PhysicsComponent", List<EntityId>()).some(e => e === action.collision.a || e === action.collision.b)) {
+			if (state.componentEntityLinks.get("HardBodyComponent", List<EntityId>()).some(e => e === action.collision.a || e === action.collision.b)) {
 				return {
 					...state,
 					effects: state.effects.concat({ type: "PlaySoundEffect", sound: "boing" } as GameAction)
@@ -97,11 +93,11 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 			return state;
 
 		case "BALL_FINISHED":
-			const ballPhysicsComponent = state.entities.get(action.ball)!.components.get("PhysicsComponent")! as PhysicsComponent;
-			const bucket = state.componentEntityLinks.get("SensorPhysicsComponent", List<EntityId>())
+			const ballHardBodyComponent = state.entities.get(action.ball)!.components.get("HardBodyComponent")! as HardBodyComponent;
+			const bucket = state.componentEntityLinks.get("SensorHardBodyComponent", List<EntityId>())
 				.find(bucket => {
 					const sensor = (state.entities.get(bucket)!.components.get("SensorPhysicsComponent")! as SensorPhysicsComponent);
-					return Shape2.collision(sensor.shape, Shape2.add(ballPhysicsComponent.shape, ballPhysicsComponent.position));
+					return Shape2.collision(sensor.shape, Shape2.add(ballHardBodyComponent.shape, ballHardBodyComponent.position));
 				});
 
 			if (bucket == null) {
@@ -119,17 +115,17 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 					effects: state.effects.concat([
 						DestroyEntityAction(action.ball),
 						CreateEntityAction(entityId),
-						AttachComponentAction(entityId, FloatingScoreComponent(scoreBucketComponent.value, ballPhysicsComponent.position, state.runtime))
+						AttachComponentAction(entityId, FloatingScoreComponent(scoreBucketComponent.value, ballHardBodyComponent.position, state.runtime))
 					])
 				};
 			}
 
 		default:
-			return entityComponentReducer(state, action);
+			return physicsReducer(entityComponentReducer(state, action), action);
 	}
 };
 
-const entityRenderer = createEntitiesStateMap(["RenderedComponent", "PhysicsComponent"], (id: string, { rgb }: RenderedComponent, physics: PhysicsComponent) => {
+const entityRenderer = createEntitiesStateMap(["RenderedComponent", "HardBodyComponent"], (id: string, { rgb }: RenderedComponent, physics: HardBodyComponent) => {
 	return Origin(physics.position, [
 		Rotate(physics.rotation, [
 			Fill(physics.shape, `rgba(${rgb}, ${(cosineInterpolation(1, 0)(physics.restingTime))})`)
@@ -137,7 +133,7 @@ const entityRenderer = createEntitiesStateMap(["RenderedComponent", "PhysicsComp
 	]);
 });
 
-const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "StaticPhysicsComponent"], (id: string, { rgb }: RenderedComponent, { position, shape }: StaticPhysicsComponent) => {
+const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "StaticBodyComponent"], (id: string, { rgb }: RenderedComponent, { position, shape }: StaticBodyComponent) => {
 	return Origin(position, [
 		Fill(shape, `rgb(${rgb})`)
 	]);
@@ -173,11 +169,12 @@ const tabAwareInterval = (period: Seconds) => {
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	tabAwareInterval(0.01).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
+	tabAwareInterval(0.016).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.016 }))),
+	tabAwareInterval(0.01).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
 	drivers.mouse!.mouseUp().pipe(
 		mergeMap(() => {
 			const id = EntityId();
-			const physics = PhysicsComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 });
+			const physics = HardBodyComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 });
 			return [
 				CreateEntityAction(id),
 				AttachComponentAction(id, physics),

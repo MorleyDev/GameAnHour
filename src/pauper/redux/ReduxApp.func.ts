@@ -29,7 +29,7 @@ export function createReduxApp<
 
 	const logicalTickLimit = drivers.framerates != null && drivers.framerates.logicalTick != null ? drivers.framerates.logicalTick : 10;
 	const logicalRenderLimit = drivers.framerates != null && drivers.framerates.logicalRender != null ? drivers.framerates.logicalRender : 10;
-	
+
 	const storeBackedScan: (reducer: (state: TState, action: TAction) => TState, initialState: TState) => (input: Observable<TAction>) => Observable<TState> =
 		(reducer, initialState) => {
 			const applyAction = (state: TState, action: TAction): TState => profile(action.type, () => sideEffect(store, store => store.dispatch(action as any)).getState());

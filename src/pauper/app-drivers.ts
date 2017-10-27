@@ -16,5 +16,5 @@ export type AppDrivers = {
 	readonly framerates?: {
 		readonly logicalRender?: number;
 		readonly logicalTick?: number;
-	}
+	};
 };

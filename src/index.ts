@@ -1,17 +1,17 @@
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
-import { auditTime, reduce, retryWhen, switchMap, tap, map } from "rxjs/operators";
+import { auditTime, map, reduce, retryWhen, switchMap, tap } from "rxjs/operators";
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "./main/game-bootstrap";
 import { initialState } from "./main/game-initial-state";
+import { AppDrivers } from "./pauper/app-drivers";
 import { WebAssetLoader } from "./pauper/assets/web-asset-loader.service";
 import { WebAudioService } from "./pauper/audio/web-audio.service";
 import { HtmlDocumentKeyboard } from "./pauper/input/HtmlDocumentKeyboard";
 import { HtmlElementMouse } from "./pauper/input/HtmlElementMouse";
-import { AppDrivers } from "./pauper/app-drivers";
 import { createReduxApp } from "./pauper/redux/ReduxApp.func";
 import { ReduxApp } from "./pauper/redux/ReduxApp.type";
 import { FrameCollection } from "./pauper/render/render-frame.model";

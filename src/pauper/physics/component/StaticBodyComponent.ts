@@ -1,20 +1,20 @@
+import { matterJsPhysicsEngine } from "../_inner/matterEngine";
 import { Bodies, Body, Vector, World } from "matter-js";
 
-import { Vector2 } from "../../pauper/maths/vector.maths";
-import { Circle } from "../../pauper/models/circle/circle.model";
-import { Point2, Rectangle, Shape2 } from "../../pauper/models/shapes.model";
-import { Shape2Type } from "../../pauper/models/shapes.model.type";
-import { BaseComponent } from "../../pauper/ecs/component-base.type";
-import { EntityId } from "../../pauper/ecs/entity-base.type";
-import { engine } from "../physics-engine";
+import { Vector2 } from "../../maths/vector.maths";
+import { Circle } from "../../models/shapes.model";
+import { Point2, Rectangle, Shape2 } from "../../models/shapes.model";
+import { Shape2Type } from "../../models/shapes.model.type";
+import { BaseComponent } from "../../ecs/component-base.type";
+import { EntityId } from "../../ecs/entity-base.type";
 
-export type StaticPhysicsComponent = BaseComponent<"StaticPhysicsComponent", {
+export type StaticBodyComponent = BaseComponent<"StaticBodyComponent", {
 	readonly position: Point2;
 	readonly shape: Shape2;
 
 	readonly events: {
-		connect(component: StaticPhysicsComponent, entityId: EntityId): void;
-		disconnect(component: StaticPhysicsComponent, entityId: EntityId): void;
+		connect(component: StaticBodyComponent, entityId: EntityId): void;
+		disconnect(component: StaticBodyComponent, entityId: EntityId): void;
 	};
 
 	_body: Body | null;
@@ -26,18 +26,18 @@ const Recentre = (position: Point2, shape: Shape2) => {
 	return { position: centre, shape: Shape2.add(shape, offset) };
 };
 
-export const StaticPhysicsComponent = (positionT: Point2, shapeT: Shape2): StaticPhysicsComponent => {
+export const StaticBodyComponent = (positionT: Point2, shapeT: Shape2): StaticBodyComponent => {
 	const { position, shape } = Recentre(positionT, shapeT);
 	return ({
-		name: "StaticPhysicsComponent",
+		name: "StaticBodyComponent",
 		events: {
-			connect: (component: StaticPhysicsComponent, entityId: EntityId) => {
+			connect: (component: StaticBodyComponent, entityId: EntityId) => {
 				component._body = shapeToBody(Shape2.add(component.shape, component.position));
 				(component._body as any).name = entityId;
-				return sideEffect(component, component => World.add(engine.world, component._body!));
+				return sideEffect(component, component => World.add(matterJsPhysicsEngine.world, component._body!));
 			},
-			disconnect: (component: StaticPhysicsComponent, entityId: EntityId) => {
-				return sideEffect(component, component => World.remove(engine.world, component._body!));
+			disconnect: (component: StaticBodyComponent, entityId: EntityId) => {
+				return sideEffect(component, component => World.remove(matterJsPhysicsEngine.world, component._body!));
 			}
 		},
 		_body: null,

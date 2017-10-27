@@ -11,12 +11,12 @@ import { AttachComponentAction, CreateEntityAction } from "../pauper/ecs/entity-
 import { Point2 } from "../pauper/models/point/point.model";
 import { Circle, Rectangle } from "../pauper/models/shapes.model";
 import { Triangle2 } from "../pauper/models/triangle/triangle.model";
+import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
 import { GenericAction } from "../pauper/redux/generic.action";
 import { PegComponent } from "./components/PegComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
-import { StaticPhysicsComponent } from "./components/StaticPhysicsComponent";
 
 export const bootstrap: (drivers: AppDrivers) => Observable<GenericAction> = drivers => merge<GenericAction>(
 	fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
@@ -50,7 +50,7 @@ const createPeg = (position: Point2): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(position, Circle(0, 0, 3))),
+		AttachComponentAction(entityId, StaticBodyComponent(position, Circle(0, 0, 3))),
 		AttachComponentAction(entityId, RenderedComponent(128, 118, 100)),
 		AttachComponentAction(entityId, PegComponent())
 	];
@@ -60,7 +60,7 @@ const createLeftTriangle = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 512), Triangle2(Point2(0, 0), Point2(48, 0), Point2(0, -512)))),
+		AttachComponentAction(entityId, StaticBodyComponent(Point2(0, 512), Triangle2(Point2(0, 0), Point2(48, 0), Point2(0, -512)))),
 		AttachComponentAction(entityId, RenderedComponent(175, 205, 225))
 	];
 };
@@ -69,7 +69,7 @@ const createRightTriangle = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(513, 513), Triangle2(Point2(0, 0), Point2(-35, 0), Point2(0, -512)))),
+		AttachComponentAction(entityId, StaticBodyComponent(Point2(513, 513), Triangle2(Point2(0, 0), Point2(-35, 0), Point2(0, -512)))),
 		AttachComponentAction(entityId, RenderedComponent(175, 205, 225))
 	];
 };
@@ -78,7 +78,7 @@ const createBucketPoint = (position: Point2): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(position, Triangle2(Point2(-5, 0), Point2(5, 0), Point2(0, -30)))),
+		AttachComponentAction(entityId, StaticBodyComponent(position, Triangle2(Point2(-5, 0), Point2(5, 0), Point2(0, -30)))),
 		AttachComponentAction(entityId, RenderedComponent(225, 125, 112))
 	];
 };
@@ -87,7 +87,7 @@ const createRightWall = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 0), Rectangle(0, 0, -5, 512)))
+		AttachComponentAction(entityId, StaticBodyComponent(Point2(0, 0), Rectangle(0, 0, -5, 512)))
 	];
 };
 
@@ -95,7 +95,7 @@ const createFloor = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 510), Rectangle(0, 0, 512, 20))),
+		AttachComponentAction(entityId, StaticBodyComponent(Point2(0, 510), Rectangle(0, 0, 512, 20))),
 		AttachComponentAction(entityId, RenderedComponent(175, 205, 225))
 	];
 };
@@ -104,7 +104,7 @@ const createLeftWall = (): GenericAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
-		AttachComponentAction(entityId, StaticPhysicsComponent(Point2(0, 0), Rectangle(512, 0, 5, 512)))
+		AttachComponentAction(entityId, StaticBodyComponent(Point2(0, 0), Rectangle(512, 0, 5, 512)))
 	];
 };
 
