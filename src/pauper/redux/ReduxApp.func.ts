@@ -1,10 +1,9 @@
-import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
 import { applyMiddleware, compose as productionCompose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
 import { auditTime } from "rxjs/operators/auditTime";
-import { bufferTime } from "rxjs/operators/bufferTime";
+import { distinctUntilChanged } from "rxjs/operators/distinctUntilChanged";
 import { ignoreElements } from "rxjs/operators/ignoreElements";
 import { map } from "rxjs/operators/map";
 import { reduce } from "rxjs/operators/reduce";
@@ -14,9 +13,10 @@ import { switchMap } from "rxjs/operators/switchMap";
 import { tap } from "rxjs/operators/tap";
 import { Subject } from "rxjs/Subject";
 
+import { AppDrivers, getGraphicsScheduler, getLogicalScheduler } from "../app-drivers";
 import { profile } from "../profiler";
+import { safeBufferTime } from "../rx-operators/safeBufferTime";
 import { isProduction } from "../utility/is-production";
-import { AppDrivers } from "../app-drivers";
 import { GenericAction } from "./generic.action";
 import { ReduxApp } from "./ReduxApp.type";
 
@@ -37,7 +37,7 @@ export function createReduxApp<
 
 			const store = createStore(reducer as any, initialState, compose(applyMiddleware()));
 			return self => self.pipe(
-				bufferTime(logicalTickLimit),
+				safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers)),
 				scan(applyActions, initialState),
 				distinctUntilChanged()
 			);
@@ -49,7 +49,7 @@ export function createReduxApp<
 			const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 
 			return input => input.pipe(
-				bufferTime(logicalTickLimit),
+				safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers)),
 				scan(applyActions, initialState)
 			);
 		};
@@ -83,7 +83,7 @@ export function createReduxApp<
 	);
 	return merge(
 		state$.pipe(
-			auditTime(logicalRenderLimit),
+			auditTime(logicalRenderLimit, getGraphicsScheduler(drivers)),
 			map(state => app.render(state)),
 			drivers.renderer,
 
@@ -94,12 +94,13 @@ export function createReduxApp<
 }
 
 // Cheating the immutability by exploiting the lack of laziness!
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 
 // Given value T, perform some sideEffect using that value and then return T
 const sideEffect = <T>(seed: T, sideEffect: (value: T) => void): T => {
 	return effectVar(seed, sideEffect(seed));
-}
+};
+
 /* Allows for the value passed in to be retrieved and whatever side-effect causing values have been passed in to be evaluated and discarded */
 const effectVar = <T, U>(value: T, ..._u: U[]): T => value;
 

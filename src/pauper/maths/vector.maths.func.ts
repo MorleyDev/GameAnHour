@@ -1,4 +1,4 @@
-import { linearInterpolation as scalarLinearInterpolation, cosineInterpolation as scalarCosineInterpolation } from "./interpolation.maths";
+import { linearInterpolation as scalarLinearInterpolation, cosineInterpolation as scalarCosineInterpolation, exponentialInterpolation as scalarExponentialInterpolation } from "./interpolation.maths";
 import { Vector2Type } from "./vector.maths.type";
 
 export function abs({ x, y }: Vector2Type): Vector2Type {
@@ -95,4 +95,15 @@ export function cosineInterpolation(lhs: Vector2Type, rhs: Vector2Type): (percen
 	const interpolateY = scalarCosineInterpolation(lhs.y, rhs.y);
 
 	return percentage => ({ x: interpolateX(percentage), y: interpolateY(percentage) });
+}
+
+export function exponentialInterpolation(exponent: number): (lhs: Vector2Type, rhs: Vector2Type) => (percentage: number) => Vector2Type {
+	const exponentialInterpolator = scalarExponentialInterpolation(exponent);
+
+	return (lhs: Vector2Type, rhs: Vector2Type): (percentage: number) => Vector2Type => {
+		const interpolateX = exponentialInterpolator(lhs.x, rhs.x);
+		const interpolateY = exponentialInterpolator(lhs.y, rhs.y);
+	
+		return percentage => ({ x: interpolateX(percentage), y: interpolateY(percentage) });
+	};
 }

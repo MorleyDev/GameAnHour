@@ -7,7 +7,7 @@ import { Blit, Clear, Fill, Frame, FrameCollection, Origin, RenderTarget, Rotate
 // tslint:disable:no-let
 
 export function renderToCanvas({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, frame: FrameCollection): { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D } {
-	return frame.reduce((cc, command) => RenderCommand(cc, command), { canvas, context } as { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D });
+	return frame.reduce((cc: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Frame) => RenderCommand(cc, command), { canvas, context });
 }
 
 function RenderCommand({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Frame): { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D } {
@@ -23,7 +23,7 @@ function RenderCommand({ canvas, context }: { readonly canvas: HTMLCanvasElement
 				return renderOrigin({ canvas, context }, command as Origin);
 
 			case "rendertarget":
-				return renderRenderTarget({ canvas, context }, command as RenderTarget)
+				return renderRenderTarget({ canvas, context }, command as RenderTarget);
 
 			case "rotate":
 				return renderRotate({ canvas, context }, command as Rotate);

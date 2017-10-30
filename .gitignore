@@ -1,7 +1,12 @@
+# Webpack/Node
 dist/
 out/
 yarn.lock
 node_modules
 
+# Go
+engine/*.exe
+
+# Testing
 coverage
 .nyc_output

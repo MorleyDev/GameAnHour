@@ -13,7 +13,7 @@ export type FloatingScoreComponent = BaseComponent<"FloatingScoreComponent", {
 export const FloatingScoreComponent =
 	(score: number, startPosition: Point2, startingTick: Seconds): FloatingScoreComponent => BaseComponent("FloatingScoreComponent", {
 		score,
-		position: Vector2.cosineInterpolation(startPosition, Vector2.add(startPosition, Vector2(0, -50))),
+		position: Vector2.exponentialInterpolation(1.25)(startPosition, Vector2.add(startPosition, Vector2(0, -50))),
 		startingTick,
 		endPosition: Vector2.add(startPosition, Point2(0, -50)),
 		lifespan: 1

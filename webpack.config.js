@@ -4,9 +4,12 @@ const isProd = process.argv.indexOf("--env.prod") >= 0;
 
 module.exports = {
   devtool: 'inline-source-map',
-  entry: './src/index.ts',
+  entry: {
+    index: './src/index.ts',
+    engine: './src/engine.ts'
+  },
   output: {
-    filename: 'dist/index.js'
+    filename: 'dist/[name].js'
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js']
@@ -27,8 +30,8 @@ module.exports = {
   plugins: (isProd
     ? [new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })]
     : [
-        new webpack.HotModuleReplacementPlugin(),
-        new webpack.NamedModulesPlugin()
-      ]
+      new webpack.HotModuleReplacementPlugin(),
+      new webpack.NamedModulesPlugin()
+    ]
   )
 }

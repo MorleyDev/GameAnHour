@@ -17,27 +17,26 @@ import { PegComponent } from "./components/PegComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
+import { GameAction } from "./game.model";
 
-export const bootstrap: (drivers: AppDrivers) => Observable<GenericAction> = drivers => merge<GenericAction>(
+export const bootstrap: (drivers: AppDrivers) => Observable<GameAction> = drivers => merge<GameAction>(
 	fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
 	from([
-		...Range(0, 9).flatMap(i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))).flatMap(createPeg).toArray(),
-		...Range(0, 9).flatMap(i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))).flatMap(createPeg).toArray(),
-		...createBucketPoint(Point2(412, 512)),
-		...createBucketPoint(Point2(362, 512)),
-		...createBucketPoint(Point2(312, 512)),
-		...createBucketPoint(Point2(262, 512)),
-		...createBucketPoint(Point2(212, 512)),
-		...createBucketPoint(Point2(162, 512)),
-		...createBucketPoint(Point2(112, 512)),
-		...createScoreSensor(Point2(80, 510), 0),
-		...createScoreSensor(Point2(138, 510), 10),
-		...createScoreSensor(Point2(187, 510), 6),
-		...createScoreSensor(Point2(237, 510), 3),
-		...createScoreSensor(Point2(287, 510), 3),
-		...createScoreSensor(Point2(338, 510), 6),
-		...createScoreSensor(Point2(385, 510), 10),
-		...createScoreSensor(Point2(446, 510), 0),
+//		...Range(0, 9).flatMap(i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))).flatMap(createPeg).toArray(),
+//		...Range(0, 9).flatMap(i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))).flatMap(createPeg).toArray(),
+//		...createBucketPoint(Point2(412, 512)),
+//		...createBucketPoint(Point2(362, 512)),
+//		...createBucketPoint(Point2(312, 512)),
+//		...createBucketPoint(Point2(262, 512)),
+//		...createBucketPoint(Point2(212, 512)),
+//		...createBucketPoint(Point2(162, 512)),
+//		...createBucketPoint(Point2(112, 512)),
+//		...createScoreSensor(Point2(138, 510), 10),
+//		...createScoreSensor(Point2(187, 510), 6),
+//		...createScoreSensor(Point2(237, 510), 3),
+//		...createScoreSensor(Point2(287, 510), 3),
+//		...createScoreSensor(Point2(338, 510), 6),
+//		...createScoreSensor(Point2(385, 510), 10),
 		...createRightTriangle(),
 		...createLeftTriangle(),
 		...createRightWall(),

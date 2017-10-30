@@ -1,4 +1,7 @@
 import { Observable } from "rxjs/Observable";
+import { IScheduler } from "rxjs/Scheduler";
+import { animationFrame } from "rxjs/scheduler/animationFrame";
+import { async } from "rxjs/scheduler/async";
 
 import { AssetLoader } from "./assets/asset-loader.service";
 import { AudioService } from "./audio/audio.service";
@@ -17,4 +20,17 @@ export type AppDrivers = {
 		readonly logicalRender?: number;
 		readonly logicalTick?: number;
 	};
+
+	readonly schedulers?: {
+		logical?: IScheduler;
+		graphics?: IScheduler;
+	};
 };
+
+export function getLogicalScheduler(driver: AppDrivers): IScheduler {
+	return (driver.schedulers && driver.schedulers.logical) || async;
+}
+
+export function getGraphicsScheduler(driver: AppDrivers): IScheduler {
+	return (driver.schedulers && driver.schedulers.graphics) || animationFrame;
+}

@@ -1,3 +1,5 @@
+import "core-js";
+
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
@@ -54,10 +56,11 @@ const devRememberState = (module as any).hot
 	})
 	: (state$: Observable<any>): Observable<any> => state$;
 
-
 const app$ = game$.pipe(
 	map(game => ({
-		...game,
+		render: (state) => game.render(state),
+		postprocess: prev => game.postprocess(prev),
+		reducer: (prev, curr) => game.reducer(prev, curr),
 		epic: actions$ => merge(game.epic(actions$, drivers), debugHooks.actions$),
 		initialState: debugHooks.currentState,
 		bootstrap: latestBootstrap
