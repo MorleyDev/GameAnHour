@@ -1,3 +1,4 @@
+import { Colour } from "../models/colour.model";
 import { Circle, Rectangle, Text2 } from "../models/shapes.model";
 import { Blit, Clear, Fill, Frame, FrameCollection, Origin, RenderTarget, Rotate, Scale, Stroke } from "./render-frame.model";
 
@@ -92,7 +93,7 @@ function renderFill({ canvas, context }: { readonly canvas: HTMLCanvasElement; r
 	const colour = fill[2];
 
 	context.beginPath();
-	context.fillStyle = colour;
+	context.fillStyle =  `rgba(${colour.r, colour.g, colour.b, colour.a})`;
 	if (Array.isArray(shape)) {
 		context.moveTo(shape[0].x | 0, shape[0].y | 0);
 		for (let i = 1; i < shape.length; ++i) {
@@ -116,7 +117,7 @@ function renderStroke({ canvas, context }: { readonly canvas: HTMLCanvasElement;
 	const colour = fill[2];
 
 	context.beginPath();
-	context.strokeStyle = colour;
+	context.strokeStyle =  `rgba(${colour.r, colour.g, colour.b, colour.a})`;
 	if (Array.isArray(shape)) {
 		context.moveTo(shape[0].x | 0, shape[0].y | 0);
 		for (let i = 1; i < shape.length; ++i) {
@@ -143,21 +144,22 @@ function renderClear({ canvas, context }: { readonly canvas: HTMLCanvasElement; 
 	);
 	context.clearRect(0, 0, canvas.width | 0, canvas.height | 0);
 
-	context.fillStyle = clear[1] || "black";
+	const colour = clear[1] as Colour | undefined;
+	context.fillStyle = colour ? `rgba(${colour.r, colour.g, colour.b, colour.a})` : "black";
 	context.fillRect(0, 0, canvas.width | 0, canvas.height | 0);
 	return { canvas, context };
 }
 
 // tslint:disable-next-line:readonly-keyword
-let _canvasCache: { [_wh: string]: { readonly canvas: HTMLCanvasElement, readonly context: CanvasRenderingContext2D } | null | undefined } = {};
+const canvasCache: { [_wh: string]: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D } | null | undefined } = {};
 
 function renderRenderTarget({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, [_, dst, frames, size]: RenderTarget): { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D } {
 	const width = (size == null ? dst.width : size.x) | 0;
 	const height = (size == null ? dst.height : size.y) | 0;
 	const key = `${width}${height}`;
 
-	let targetCanvas = _canvasCache[key];
-	_canvasCache[key] = null;
+	let targetCanvas = canvasCache[key];
+	canvasCache[key] = null;
 	if (targetCanvas == null) {
 		const newCanvas = document.createElement("canvas");
 		newCanvas.width = (size == null ? dst.width : size.x) | 0;
@@ -167,6 +169,6 @@ function renderRenderTarget({ canvas, context }: { readonly canvas: HTMLCanvasEl
 
 	renderToCanvas(targetCanvas, frames);
 	context.drawImage(targetCanvas.canvas, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
-	_canvasCache[key] = targetCanvas;
+	canvasCache[key] = targetCanvas;
 	return { canvas, context };
 }

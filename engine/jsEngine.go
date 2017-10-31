@@ -1,0 +1,200 @@
+package main
+
+import (
+	"log"
+	"time"
+
+	"github.com/dop251/goja"
+)
+
+type jsTimeout struct {
+	logic    goja.Callable
+	runAfter time.Duration
+}
+
+type JsEngine struct {
+	runtime        *goja.Runtime
+	timers         map[int64]*jsTimeout
+	animationFrame map[int64]goja.Callable
+	nextTimeoutID  int64
+
+	scheduled     []goja.Callable
+	reducer       goja.Callable
+	frameRenderer goja.Callable
+	renderer      goja.Callable
+	bootstrap     goja.Callable
+	latestState   goja.Value
+}
+
+func (engine *JsEngine) getNow() int64 {
+	return time.Now().Unix()
+}
+
+func (engine *JsEngine) setTimout(call goja.FunctionCall) goja.Value {
+	timeout, ok := call.Argument(0).Export().(int64)
+	if !ok {
+		panic("First argument passed to GoEngine_SetTimeout was not a miliseconds number but was " + call.Argument(0).ToString().Export().(string))
+	}
+	fun, ok := goja.AssertFunction(call.Argument(1))
+	if !ok {
+		panic("Second argument passed to GoEngine_SetTimeout was not a callable action but was " + call.Argument(1).ToString().Export().(string))
+	}
+
+	id := engine.nextTimeoutID
+	engine.timers[id] = &jsTimeout{logic: fun, runAfter: (time.Duration(timeout) * time.Millisecond)}
+	engine.nextTimeoutID = id + 1
+	return engine.runtime.ToValue(id)
+}
+
+func (engine *JsEngine) clearTimeout(call goja.FunctionCall) goja.Value {
+	delete(engine.timers, call.Argument(0).Export().(int64))
+	return engine.runtime.ToValue(nil)
+}
+
+func (engine *JsEngine) requestAnimationFrame(call goja.FunctionCall) goja.Value {
+	fun, err := goja.AssertFunction(call.Argument(0))
+	if err {
+		panic("First argument passed to GoEngine_RequestAnimationFrame was not a callable action but was " + call.Argument(0).ToString().Export().(string))
+	}
+	id := engine.nextTimeoutID
+	engine.animationFrame[id] = fun
+	engine.nextTimeoutID = id + 1
+	return engine.runtime.ToValue(id)
+}
+
+func (engine *JsEngine) cancelRequestAnimationFrame(call goja.FunctionCall) goja.Value {
+	delete(engine.animationFrame, call.Argument(0).Export().(int64))
+	return engine.runtime.ToValue(nil)
+}
+
+func (engine *JsEngine) consoleLog(call goja.FunctionCall) goja.Value {
+	result := ""
+	for _, value := range call.Arguments {
+		result = result + (value.ToString().Export().(string)) + " "
+	}
+	log.Print(result)
+	return engine.runtime.ToValue(nil)
+}
+
+func CreateEngine() *JsEngine {
+	vm := goja.New()
+	e := JsEngine{runtime: vm, timers: make(map[int64]*jsTimeout), animationFrame: make(map[int64]goja.Callable), scheduled: make([]goja.Callable, 0)}
+
+	vm.Set("GoEngine_GetNow", e.getNow)
+	vm.Set("GoEngine_Log", e.consoleLog)
+
+	vm.Set("GoEngine_SetTimeout", e.setTimout)
+	vm.Set("GoEngine_ClearTimeout", e.clearTimeout)
+	vm.Set("GoEngine_RequestAnimationFrame", e.requestAnimationFrame)
+	vm.Set("GoEngine_CancelAnimationFrame", e.cancelRequestAnimationFrame)
+
+	vm.Set("GoEngine_PushState", func(call goja.FunctionCall) goja.Value {
+		e.latestState = call.Argument(0)
+		return nil
+	})
+	vm.Set("GoEngine_PushAction", func(call goja.FunctionCall) goja.Value {
+		e.reducer(nil, e.latestState, call.Argument(0))
+		return nil
+	})
+	vm.Set("GoEngine_SetReducer", func(call goja.FunctionCall) goja.Value {
+		reducer, ok := goja.AssertFunction(call.Argument(0))
+		if !ok {
+			panic("GoEngine_SetReducer not given function")
+		}
+		e.reducer = reducer
+		return nil
+	})
+	vm.Set("GoEngine_SetFrameRenderer", func(call goja.FunctionCall) goja.Value {
+		frameRenderer, ok := goja.AssertFunction(call.Argument(0))
+		if !ok {
+			panic("GoEngine_SetFrameRenderer not given function")
+		}
+		e.frameRenderer = frameRenderer
+		return nil
+	})
+	vm.Set("GoEngine_SetRenderer", func(call goja.FunctionCall) goja.Value {
+		e.renderer, _ = goja.AssertFunction(call.Argument(0))
+		return nil
+	})
+	vm.Set("GoEngine_SetBootstrap", func(call goja.FunctionCall) goja.Value {
+		e.bootstrap, _ = goja.AssertFunction(call.Argument(0))
+		return nil
+	})
+
+	_, err := vm.RunString(`
+		setTimeout = function (callback, ms) {
+			var rest = [].concat.apply([], arguments); rest.shift(); rest.shift()
+			return GoEngine_SetTimeout(ms || 0, function () { callback.apply(callback, rest); });
+		};
+		clearTimeout = function (clear) {
+			return GoEngine_ClearTimeout(clear);
+		};
+		requestAnimationFrame = function (callback) {
+			var rest = [].concat.apply([], arguments); rest.shift();
+			return GoEngine_RequestAnimationFrame( function () { callback.apply(callback, rest) } );
+		};
+		cancelAnimationFrame = function (clear) {
+			console.log("cancelAnimationFrame", clear);
+			return GoEngine_CancelAnimationFrame( clear );
+		};
+
+		HTMLElement = function () { };
+		console = {
+			debug: function () { GoEngine_Log.apply(null, arguments); },
+			log: function () { GoEngine_Log.apply(null, arguments); },
+			warn: function () { GoEngine_Log.apply(null, arguments); },
+			error: function () { GoEngine_Log.apply(null, arguments); }
+		};
+	`)
+	if err != nil {
+		panic(err)
+	}
+	return &e
+}
+
+func (engine *JsEngine) RunString(str string) (goja.Value, error) {
+	return engine.runtime.RunString(str)
+}
+
+func (engine *JsEngine) Bootstrap() {
+	engine.bootstrap(nil)
+}
+
+func (engine *JsEngine) Tick(advance time.Duration) {
+	if len(engine.timers) == 0 {
+		return
+	}
+	completedTimers := make([]int64, 0)
+	for k, v := range engine.timers {
+		v.runAfter = v.runAfter - advance
+		if v.runAfter <= 0 {
+			engine.scheduled = append(engine.scheduled, v.logic)
+			completedTimers = append(completedTimers, k)
+		}
+	}
+	for _, timer := range completedTimers {
+		delete(engine.timers, timer)
+	}
+}
+
+func (engine *JsEngine) Animate() {
+	if len(engine.animationFrame) == 0 {
+		return
+	}
+	completedTimers := make([]int64, 0)
+	for k, v := range engine.animationFrame {
+		engine.scheduled = append(engine.scheduled, v)
+		completedTimers = append(completedTimers, k)
+	}
+	for _, timer := range completedTimers {
+		delete(engine.timers, timer)
+	}
+}
+
+func (engine *JsEngine) Flush() {
+	scheduled := engine.scheduled
+	engine.scheduled = make([]goja.Callable, 0)
+	for _, toRun := range scheduled {
+		toRun(nil)
+	}
+}

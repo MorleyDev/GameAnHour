@@ -15,10 +15,12 @@ import { NoOpKeyboard } from "./pauper/input/NoOpKeyboard";
 import { NoOpMouse } from "./pauper/input/NoOpMouse";
 import { FrameCollection } from "./pauper/render/render-frame.model";
 import { renderToString } from "./pauper/render/render-to-string.func";
+import { Subject } from "rxjs/Subject";
 
 declare function GoEngine_SetFrameRenderer(callback: (state: GameState) => FrameCollection): void;
 declare function GoEngine_SetReducer(callback: (state: GameState, action: GameAction) => void): void;
 declare function GoEngine_SetRenderer(callback: (state: FrameCollection) => void): void;
+declare function GoEngine_SetBootstrap(callback: () => void): void;
 
 declare function GoEngine_PushState(state: GameState): void;
 declare function GoEngine_PushAction(action: GameAction): void;
@@ -30,23 +32,20 @@ const drivers: AppDrivers = {
 	loader: new NoOpAssetLoader(),
 	renderer: frames => empty()
 };
+const onAction$ = new Subject<GameAction>();
 
 GoEngine_PushState(initialState);
 GoEngine_SetReducer((state: GameState, action: GameAction) => {
-	function onAction(state: GameState, action: GameAction): GameState {
-		const postProcess = game.postprocess(game.reducer(state, action));
-		return postProcess.actions.reduce(onAction, postProcess.state);
-	}
-	GoEngine_PushState( onAction(state, action) );
+	const postProcess = game.postprocess(game.reducer(state, action));
+
+	onAction$.next(action);
+	GoEngine_PushState(postProcess.state);
+	postProcess.actions.forEach(action => GoEngine_PushAction(action));
 });
 GoEngine_SetFrameRenderer(game.render);
 GoEngine_SetRenderer(state => {
-	console.log("Renderer", state);
-	console.log( renderToString(state) );
+	console.log(renderToString(state));
 });
-
-const actions$bootstrap$ = bootstrap(drivers).pipe(share());
-merge(actions$bootstrap$, game.epic(actions$bootstrap$, drivers))
-	.subscribe(action => {
-		GoEngine_PushAction(action);
-	});
+GoEngine_SetBootstrap(() => {
+	merge(bootstrap(drivers), game.epic(onAction$, drivers)).subscribe(action => GoEngine_PushAction(action));
+});
