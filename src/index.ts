@@ -34,14 +34,7 @@ const drivers: AppDrivers = {
 	keyboard: new HtmlDocumentKeyboard(document),
 	mouse: new HtmlElementMouse(canvas),
 	audio: new WebAudioService(),
-	loader: new WebAssetLoader(),
-	renderer: frames => frames.pipe(
-		auditTime(15, animationFrame),
-		reduce((
-			{ canvas, context }: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D }, frames: FrameCollection) => renderToCanvas({ canvas, context }, frames),
-			{ canvas, context }
-		)
-	)
+	loader: new WebAssetLoader()
 };
 
 const debugHooks = { currentState: initialState, actions$: new Subject<any>() };
@@ -68,13 +61,16 @@ const app$ = game$.pipe(
 
 	switchMap(game =>
 		createReduxApp(drivers, game).pipe(
+			auditTime(10, animationFrame),
+			tap(frame => renderToCanvas({canvas, context}, game.render(frame))),
 			retryWhen(errs => errs.pipe(tap(err => console.error(err))))
 		)
 	),
 	devRememberState
 );
 
-app$.subscribe();
+app$
+	.subscribe();
 game$.next(gameFactory());
 
 

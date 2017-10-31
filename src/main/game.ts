@@ -14,7 +14,7 @@ import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "
 import { entityComponentReducer } from "../pauper/ecs/entity-component.reducer";
 import { exponentialInterpolation } from "../pauper/maths/interpolation.maths";
 import { Colour } from "../pauper/models/colour.model";
-import { Rectangle, Shape2, Text2 } from "../pauper/models/shapes.model";
+import { Rectangle, Shape2, Text2, Point2, Circle } from "../pauper/models/shapes.model";
 import { Seconds } from "../pauper/models/time.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
 import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
@@ -25,6 +25,7 @@ import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
+import { map, mergeMap, filter, ignoreElements } from "rxjs/operators";
 
 const physicsPreReducer = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	if (physics.pendingForces.length === 0) {
@@ -143,12 +144,12 @@ const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id
 });
 
 export const render = (state: GameState) => [
-	Clear(Colour(255, 0, 255)),
-	...Array.from(staticEntityRenderer(state)),
+	Clear(Colour(0, 0, 0)),
+	Array.from(staticEntityRenderer(state)),
 
 	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),
-	...Array.from(entityRenderer(state)),
-	...Array.from(scoreTextRenderer(state, state.runtime))
+	Array.from(entityRenderer(state)),
+	Array.from(scoreTextRenderer(state, state.runtime))
 ];
 
 // TODO: Focus-awareness should be moved into some kind of 'System Driver'
@@ -157,26 +158,26 @@ const tabAwareInterval = (period: Seconds, drivers: AppDrivers) => {
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	//	tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 })))
-	//	tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
-	//	drivers.mouse!.mouseUp().pipe(
-	//		mergeMap(() => {
-	//			const id = EntityId();
-	//			const physics = HardBodyComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 });
-	//			return [
-	//				CreateEntityAction(id),
-	//				AttachComponentAction(id, physics),
-	//				AttachComponentAction(id, RenderedComponent(255 * physics.elasticity | 0, 255 - physics.density | 0, 255 | 0))
-	//			];
-	//		})
-	//	),
-	//	action$.pipe(
-	//		filter(action => action.type === "PlaySoundEffect"),
-	//		map(action => (action as ({ readonly type: "PlaySoundEffect"; readonly sound: string })).sound),
-	//		map(sound => drivers.loader!.getSoundEffect(sound)),
-	//		map(sound => drivers.audio!.play(sound)),
-	//		ignoreElements()
-	//	)
+	tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
+	tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
+	drivers.mouse!.mouseUp().pipe(
+		mergeMap(() => {
+			const id = EntityId();
+			const physics = HardBodyComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 });
+			return [
+				CreateEntityAction(id),
+				AttachComponentAction(id, physics),
+				AttachComponentAction(id, RenderedComponent(255 * physics.elasticity | 0, 255 - physics.density | 0, 255 | 0))
+			];
+		})
+	),
+	action$.pipe(
+		filter(action => action.type === "PlaySoundEffect"),
+		map(action => (action as ({ readonly type: "PlaySoundEffect"; readonly sound: string })).sound),
+		map(sound => drivers.loader!.getSoundEffect(sound)),
+		map(sound => drivers.audio!.play(sound)),
+		ignoreElements()
+	)
 );
 
 export const postprocess = (state: GameState): {

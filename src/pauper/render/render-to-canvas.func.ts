@@ -93,7 +93,7 @@ function renderFill({ canvas, context }: { readonly canvas: HTMLCanvasElement; r
 	const colour = fill[2];
 
 	context.beginPath();
-	context.fillStyle =  `rgba(${colour.r, colour.g, colour.b, colour.a})`;
+	context.fillStyle = getRGBA(colour);
 	if (Array.isArray(shape)) {
 		context.moveTo(shape[0].x | 0, shape[0].y | 0);
 		for (let i = 1; i < shape.length; ++i) {
@@ -117,7 +117,7 @@ function renderStroke({ canvas, context }: { readonly canvas: HTMLCanvasElement;
 	const colour = fill[2];
 
 	context.beginPath();
-	context.strokeStyle =  `rgba(${colour.r, colour.g, colour.b, colour.a})`;
+	context.strokeStyle =  getRGBA(colour);
 	if (Array.isArray(shape)) {
 		context.moveTo(shape[0].x | 0, shape[0].y | 0);
 		for (let i = 1; i < shape.length; ++i) {
@@ -145,7 +145,7 @@ function renderClear({ canvas, context }: { readonly canvas: HTMLCanvasElement; 
 	context.clearRect(0, 0, canvas.width | 0, canvas.height | 0);
 
 	const colour = clear[1] as Colour | undefined;
-	context.fillStyle = colour ? `rgba(${colour.r, colour.g, colour.b, colour.a})` : "black";
+	context.fillStyle = colour ? getRGBA(colour) : "black";
 	context.fillRect(0, 0, canvas.width | 0, canvas.height | 0);
 	return { canvas, context };
 }
@@ -171,4 +171,8 @@ function renderRenderTarget({ canvas, context }: { readonly canvas: HTMLCanvasEl
 	context.drawImage(targetCanvas.canvas, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
 	canvasCache[key] = targetCanvas;
 	return { canvas, context };
+}
+
+function getRGBA(colour: Colour): string {
+	return `rgba(${colour.r | 0}, ${colour.g | 0}, ${colour.b | 0}, ${colour.a})`;
 }

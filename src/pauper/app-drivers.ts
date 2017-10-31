@@ -14,7 +14,6 @@ export type AppDrivers = {
 	readonly mouse?: Mouse;
 	readonly audio?: AudioService;
 	readonly loader?: AssetLoader;
-	readonly renderer: (frame: Observable<FrameCollection>) => Observable<{}>;
 
 	readonly framerates?: {
 		readonly logicalRender?: number;

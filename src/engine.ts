@@ -29,8 +29,7 @@ const drivers: AppDrivers = {
 	keyboard: new NoOpKeyboard(),
 	mouse: new NoOpMouse(),
 	audio: new NoOpAudioService(),
-	loader: new NoOpAssetLoader(),
-	renderer: frames => empty()
+	loader: new NoOpAssetLoader()
 };
 const onAction$ = new Subject<GameAction>();
 

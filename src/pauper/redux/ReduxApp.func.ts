@@ -72,24 +72,13 @@ export function createReduxApp<
 	};
 	const applyActions = (state: TState, actions: ReadonlyArray<TAction>) => actions.reduce(applyAction, state);
 
-	const state$ = app.bootstrap.pipe(
+	return app.bootstrap.pipe(
 		reduce((state: TState, action: TAction) => app.reducer(state, action), app.initialState),
 		switchMap(state =>
 			merge(epicActions$, subject, of({ type: "@@INIT" } as TAction)).pipe(
 				reduxScan(applyAction, state)
 			)
 		),
-		share()
-	);
-	return merge(
-		state$.pipe(
-			auditTime(logicalRenderLimit, getGraphicsScheduler(drivers)),
-			map(state => app.render(state)),
-			drivers.renderer,
-
-			ignoreElements()
-		) as Observable<TState>,
-		state$
 	);
 }
 
