@@ -158,7 +158,7 @@ func renderCommand(window *pixelgl.Window, target pixel.Target, atlas *text.Atla
 		renderFrame(window, target, atlas, matrix.ScaledXY(pixel.V(0, 0), pixel.V(scaleX, scaleY)), frames)
 		return
 
-	case "rotation":
+	case "rotate":
 		radians := extractFloat64(data[0])
 		frames := data[1].([]interface{})
 		renderFrame(window, target, atlas, matrix.Rotated(pixel.V(0, 0), radians), frames)

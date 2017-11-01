@@ -55,8 +55,5 @@ GoEngine_OnMouseDown((x, y, button) => {
 GoEngine_SetBootstrap(() => {
 	merge(bootstrap(drivers), game.epic(onAction$, drivers))
 		.pipe(retryWhen(err => err.pipe(tap(err => console.error(err)))))
-		.subscribe(
-		action => GoEngine_PushAction(action),
-		() => { }
-		);
+		.subscribe(action => GoEngine_PushAction(action), () => { });
 });

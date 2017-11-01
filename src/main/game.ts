@@ -145,12 +145,12 @@ const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id
 });
 
 export const render = (state: GameState) => [
-	Clear(Colour(state.entities.size % 255, 0, 0)),
+	Clear(Colour(0, 0, 0)),
 	Array.from(staticEntityRenderer(state)),
 
-	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),
 	Array.from(entityRenderer(state)),
-	Array.from(scoreTextRenderer(state, state.runtime))
+	Array.from(scoreTextRenderer(state, state.runtime)),
+	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0))
 ];
 
 // TODO: Focus-awareness should be moved into some kind of 'System Driver'
@@ -159,8 +159,8 @@ const tabAwareInterval = (period: Seconds, drivers: AppDrivers) => {
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
-	tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
+	// tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
+	// tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
 	drivers.mouse!.mouseUp().pipe(
 		mergeMap(() => {
 			const id = EntityId();

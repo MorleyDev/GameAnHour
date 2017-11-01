@@ -62,6 +62,8 @@ func game(events GameEvents) {
 			}
 
 			events.framesOut <- frame.Export()
+			break
+
 		case <-events.endIn:
 			events.endOut <- 0
 			return
@@ -76,9 +78,9 @@ func main() {
 	onGraphicsEnd := make(chan interface{}, 1)
 	onFrame := make(chan interface{}, 1)
 
-	onMouseDown := make(chan ClickEvent, 1)
-	onMouseUp := make(chan ClickEvent, 1)
-	onMouseMove := make(chan MouseEvent, 1)
+	onMouseDown := make(chan ClickEvent, 10)
+	onMouseUp := make(chan ClickEvent, 10)
+	onMouseMove := make(chan MouseEvent, 100)
 
 	gameEvents := GameEvents{
 		endIn:     onGraphicsEnd,

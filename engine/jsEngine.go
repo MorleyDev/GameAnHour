@@ -117,7 +117,6 @@ func CreateEngine() *JsEngine {
 			return GoEngine_RequestAnimationFrame( function () { callback.apply(callback, rest) } );
 		};
 		cancelAnimationFrame = function (clear) {
-			console.log("cancelAnimationFrame", clear);
 			return GoEngine_CancelAnimationFrame( clear );
 		};
 
