@@ -3,6 +3,8 @@ package main
 import (
 	"io/ioutil"
 	"time"
+
+	"github.com/dop251/goja"
 )
 
 type GameEvents struct {
@@ -35,10 +37,11 @@ func game(events GameEvents) {
 
 	interval := time.Duration(10) * time.Millisecond
 	tick := time.Tick(interval)
-	animate := time.Tick(interval * 10)
+	animate := time.Tick(time.Duration(16) * time.Millisecond)
 	ticksPerSecond := 0
 
 	second := time.Tick(1 * time.Second)
+	var previousState goja.Value
 	for {
 		select {
 		case down := <-events.input.mouseDown:
@@ -58,18 +61,21 @@ func game(events GameEvents) {
 		case <-tick:
 			ticksPerSecond = ticksPerSecond + 1
 			e.Tick(interval)
-			e.Flush()
+			e.FlushScheduled()
+			e.FlushActions()
 			break
 		case <-animate:
-			e.Animate()
-			e.Flush()
+			if e.latestState != previousState {
+				e.Animate()
+				e.FlushScheduled()
 
-			frame, err := e.frameRenderer(nil, e.latestState)
-			if err != nil {
-				panic(err)
+				frame, err := e.frameRenderer(nil, e.latestState)
+				if err != nil {
+					panic(err)
+				}
+				events.framesOut <- frame.Export()
+				previousState = e.latestState
 			}
-
-			events.framesOut <- frame.Export()
 			break
 
 		case <-events.endIn:

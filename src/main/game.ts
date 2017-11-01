@@ -28,7 +28,7 @@ import { GameAction, GameState } from "./game.model";
 import { map, mergeMap, filter, ignoreElements, tap } from "rxjs/operators";
 import { Map } from "immutable";
 
-const physicsPreReducer = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
+const applyPhysicsForcesToBodies = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	if (physics.pendingForces.length === 0) {
 		return [physics];
 	}
@@ -37,7 +37,7 @@ const physicsPreReducer = createEntityReducer<GameState>(["HardBodyComponent"], 
 	return [{ ...physics, pendingForces: [] }];
 });
 
-const physicsPostReducer = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
+const calculateRestingBodies = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	const motion = physics._body!.speed * physics._body!.speed + physics._body!.angularSpeed * physics._body!.angularSpeed;
 	const isResting = motion < 0.075;
 
@@ -73,7 +73,7 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 	switch (action.type) {
 		case "@@TICK":
 			return pipe(
-				(s: GameState) => physicsPostReducer(s, action),
+				(s: GameState) => calculateRestingBodies(s, action),
 				s => ({ ...s, runtime: s.runtime + action.deltaTime }),
 				s => ({
 					...s,
@@ -160,8 +160,8 @@ const tabAwareInterval = (period: Seconds, drivers: AppDrivers) => {
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	tabAwareInterval(10 * Millisecond, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
-	tabAwareInterval(10 * Millisecond, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
+	tabAwareInterval(10 * Millisecond, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 10 * Millisecond }))),
+	tabAwareInterval(30 * Millisecond, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 30 * Millisecond }))),
 	drivers.mouse!.mouseUp().pipe(
 		mergeMap(() => {
 			const id = EntityId();

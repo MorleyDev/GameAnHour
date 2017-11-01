@@ -185,26 +185,36 @@ func (engine *JsEngine) Tick(advance time.Duration) {
 }
 
 func (engine *JsEngine) Animate() {
-	if len(engine.animationFrame) == 0 {
+	animationCount := len(engine.animationFrame)
+	if animationCount == 0 {
 		return
 	}
-	completedTimers := make([]int64, 0)
+	completedTimers := make([]int64, animationCount)
+	index := 0
 	for k, v := range engine.animationFrame {
 		engine.scheduled = append(engine.scheduled, v)
-		completedTimers = append(completedTimers, k)
+		completedTimers[index] = k
+		index = index + 1
 	}
 	for _, timer := range completedTimers {
 		delete(engine.timers, timer)
 	}
 }
 
-func (engine *JsEngine) Flush() {
+func (engine *JsEngine) FlushScheduled() {
+	if len(engine.scheduled) == 0 {
+		return
+	}
+
 	scheduled := engine.scheduled
 	engine.scheduled = make([]goja.Callable, 0)
 	for _, toRun := range scheduled {
 		toRun(nil)
 	}
-	if engine.latestState == nil {
+}
+
+func (engine *JsEngine) FlushActions() {
+	if engine.latestState == nil || len(engine.pendingActions) == 0 {
 		return
 	}
 
