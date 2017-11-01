@@ -10,12 +10,29 @@ import (
 type jsTimeout struct {
 	logic    goja.Callable
 	runAfter time.Duration
+	id       int64
 }
+
+func (js *jsTimeout) run() { js.logic(nil) }
 
 type jsInterval struct {
 	logic     goja.Callable
 	nextRunIn time.Duration
 	period    time.Duration
+	id        int64
+}
+
+func (js *jsInterval) run() { js.logic(nil) }
+
+type jsAnimationFrame struct {
+	logic goja.Callable
+	id    int64
+}
+
+func (js *jsAnimationFrame) run() { js.logic(nil) }
+
+type Schedulable interface {
+	run()
 }
 
 type jsEngineInputMouse struct {
@@ -25,12 +42,12 @@ type jsEngineInputMouse struct {
 
 type JsEngine struct {
 	runtime        *goja.Runtime
-	timers         map[int64]*jsTimeout
-	intervals      map[int64]*jsInterval
-	animationFrame map[int64]goja.Callable
+	timers         []*jsTimeout
+	intervals      []*jsInterval
+	animationFrame []*jsAnimationFrame
+	scheduled      []Schedulable
 	nextTimeoutID  int64
 
-	scheduled      []goja.Callable
 	reducer        goja.Callable
 	frameRenderer  goja.Callable
 	renderer       goja.Callable
@@ -45,10 +62,10 @@ func CreateEngine() *JsEngine {
 	vm := goja.New()
 	e := JsEngine{
 		runtime:        vm,
-		timers:         make(map[int64]*jsTimeout),
-		intervals:      make(map[int64]*jsInterval),
-		animationFrame: make(map[int64]goja.Callable),
-		scheduled:      make([]goja.Callable, 0),
+		timers:         make([]*jsTimeout, 0),
+		intervals:      make([]*jsInterval, 0),
+		animationFrame: make([]*jsAnimationFrame, 0),
+		scheduled:      make([]Schedulable, 0),
 		pendingActions: make([]goja.Value, 0),
 		input: jsEngineInputMouse{
 			mouseDown: nil,
@@ -160,24 +177,24 @@ func (engine *JsEngine) Bootstrap() {
 }
 
 func (engine *JsEngine) Tick(advance time.Duration) {
-	if len(engine.timers) > 0 {
-		completedTimers := make([]int64, 0)
-		for k, v := range engine.timers {
+	activeTimers := len(engine.timers)
+	if activeTimers > 0 {
+		remainingTimers := make([]*jsTimeout, 0)
+		for _, v := range engine.timers {
 			v.runAfter = v.runAfter - advance
 			if v.runAfter <= 0 {
-				engine.scheduled = append(engine.scheduled, v.logic)
-				completedTimers = append(completedTimers, k)
+				engine.scheduled = append(engine.scheduled, v)
+			} else {
+				remainingTimers = append(remainingTimers, v)
 			}
 		}
-		for _, timer := range completedTimers {
-			delete(engine.timers, timer)
-		}
+		engine.timers = remainingTimers
 	}
 	if len(engine.intervals) > 0 {
 		for _, v := range engine.intervals {
 			v.nextRunIn = v.nextRunIn - advance
 			if v.nextRunIn <= 0 {
-				engine.scheduled = append(engine.scheduled, v.logic)
+				engine.scheduled = append(engine.scheduled, v)
 				v.nextRunIn = v.period + v.nextRunIn
 			}
 		}
@@ -189,16 +206,11 @@ func (engine *JsEngine) Animate() {
 	if animationCount == 0 {
 		return
 	}
-	completedTimers := make([]int64, animationCount)
-	index := 0
-	for k, v := range engine.animationFrame {
+
+	for _, v := range engine.animationFrame {
 		engine.scheduled = append(engine.scheduled, v)
-		completedTimers[index] = k
-		index = index + 1
 	}
-	for _, timer := range completedTimers {
-		delete(engine.timers, timer)
-	}
+	engine.animationFrame = make([]*jsAnimationFrame, 0)
 }
 
 func (engine *JsEngine) FlushScheduled() {
@@ -207,9 +219,9 @@ func (engine *JsEngine) FlushScheduled() {
 	}
 
 	scheduled := engine.scheduled
-	engine.scheduled = make([]goja.Callable, 0)
+	engine.scheduled = make([]Schedulable, 0)
 	for _, toRun := range scheduled {
-		toRun(nil)
+		toRun.run()
 	}
 }
 
@@ -244,15 +256,22 @@ func (engine *JsEngine) setTimout(call goja.FunctionCall) goja.Value {
 	}
 
 	id := engine.nextTimeoutID
-	engine.timers[id] = &jsTimeout{
+	engine.timers = append(engine.timers, &jsTimeout{
+		id:       id,
 		logic:    fun,
-		runAfter: time.Duration(timeout) * time.Millisecond}
+		runAfter: time.Duration(timeout) * time.Millisecond})
 	engine.nextTimeoutID = id + 1
 	return engine.runtime.ToValue(id)
 }
 
 func (engine *JsEngine) clearTimeout(call goja.FunctionCall) goja.Value {
-	delete(engine.timers, call.Argument(0).Export().(int64))
+	target := call.Argument(0).Export().(int64)
+	for index, value := range engine.timers {
+		if value.id == target {
+			engine.timers = append(engine.timers[:index], engine.timers[index+1:]...)
+			break
+		}
+	}
 	return engine.runtime.ToValue(nil)
 }
 
@@ -267,16 +286,23 @@ func (engine *JsEngine) setInterval(call goja.FunctionCall) goja.Value {
 	}
 
 	id := engine.nextTimeoutID
-	engine.intervals[id] = &jsInterval{
+	engine.intervals = append(engine.intervals, &jsInterval{
+		id:        id,
 		logic:     fun,
 		nextRunIn: (time.Duration(timeout) * time.Millisecond),
-		period:    (time.Duration(timeout) * time.Millisecond)}
+		period:    (time.Duration(timeout) * time.Millisecond)})
 	engine.nextTimeoutID = id + 1
 	return engine.runtime.ToValue(id)
 }
 
 func (engine *JsEngine) clearInterval(call goja.FunctionCall) goja.Value {
-	delete(engine.intervals, call.Argument(0).Export().(int64))
+	target := call.Argument(0).Export().(int64)
+	for index, value := range engine.intervals {
+		if value.id == target {
+			engine.intervals = append(engine.intervals[:index], engine.intervals[index+1:]...)
+			break
+		}
+	}
 	return engine.runtime.ToValue(nil)
 }
 
@@ -286,13 +312,19 @@ func (engine *JsEngine) requestAnimationFrame(call goja.FunctionCall) goja.Value
 		panic("First argument passed to GoEngine_RequestAnimationFrame was not a callable action but was " + call.Argument(0).ToString().Export().(string))
 	}
 	id := engine.nextTimeoutID
-	engine.animationFrame[id] = fun
+	engine.animationFrame[id] = &jsAnimationFrame{logic: fun, id: id}
 	engine.nextTimeoutID = id + 1
 	return engine.runtime.ToValue(id)
 }
 
 func (engine *JsEngine) cancelRequestAnimationFrame(call goja.FunctionCall) goja.Value {
-	delete(engine.animationFrame, call.Argument(0).Export().(int64))
+	target := call.Argument(0).Export().(int64)
+	for index, value := range engine.animationFrame {
+		if value.id == target {
+			engine.animationFrame = append(engine.animationFrame[:index], engine.animationFrame[index+1:]...)
+			break
+		}
+	}
 	return engine.runtime.ToValue(nil)
 }
 

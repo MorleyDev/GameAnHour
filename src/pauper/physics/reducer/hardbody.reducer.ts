@@ -17,7 +17,7 @@ export const hardBodyPreReducer = createEntityReducer(["HardBodyComponent"], (st
 
 export const hardBodyPostReducer = createEntityReducer(["HardBodyComponent"], (state, action, hardbody: HardBodyComponent) => {
 	const motion = hardbody._body!.speed * hardbody._body!.speed + hardbody._body!.angularSpeed * hardbody._body!.angularSpeed;
-	const isResting = motion < 0.075;
+	const isResting = motion < 1;
 
 	return [{
 		...hardbody,

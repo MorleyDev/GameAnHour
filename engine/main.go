@@ -35,9 +35,9 @@ func game(events GameEvents) {
 
 	e.Bootstrap()
 
-	interval := time.Duration(10) * time.Millisecond
+	interval := time.Duration(5) * time.Millisecond
 	tick := time.Tick(interval)
-	animate := time.Tick(time.Duration(16) * time.Millisecond)
+	animate := time.Tick(time.Duration(8) * time.Millisecond)
 	ticksPerSecond := 0
 
 	second := time.Tick(1 * time.Second)

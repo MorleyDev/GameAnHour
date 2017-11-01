@@ -37,27 +37,6 @@ const applyPhysicsForcesToBodies = createEntityReducer<GameState>(["HardBodyComp
 	return [{ ...physics, pendingForces: [] }];
 });
 
-const calculateRestingBodies = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
-	const motion = physics._body!.speed * physics._body!.speed + physics._body!.angularSpeed * physics._body!.angularSpeed;
-	const isResting = motion < 0.075;
-
-	return [{
-		...physics,
-		restingTime: isResting ? physics.restingTime + action.deltaTime : 0,
-		position: {
-			x: physics._body!.position.x,
-			y: physics._body!.position.y
-		},
-		velocity: {
-			x: physics._body!.velocity.x,
-			y: physics._body!.velocity.y,
-		},
-		angularVelocity: physics._body!.angularVelocity,
-		rotation: physics._body!.angle
-	}];
-});
-
-
 const deadPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.position.y > 1000);
 const restingPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.restingTime >= 2);
 const fadedAwayTextBoxes = createEntitiesStateFilter(["FloatingScoreComponent"], (component: FloatingScoreComponent, currentTick: number) => currentTick > component.startingTick + component.lifespan);
@@ -73,7 +52,7 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 	switch (action.type) {
 		case "@@TICK":
 			return pipe(
-				(s: GameState) => calculateRestingBodies(s, action),
+				(s: GameState) => applyPhysicsForcesToBodies(s, action),
 				s => ({ ...s, runtime: s.runtime + action.deltaTime }),
 				s => ({
 					...s,
@@ -160,8 +139,7 @@ const tabAwareInterval = (period: Seconds, drivers: AppDrivers) => {
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	tabAwareInterval(10 * Millisecond, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 10 * Millisecond }))),
-	tabAwareInterval(30 * Millisecond, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 30 * Millisecond }))),
+	tabAwareInterval(20 * Millisecond, drivers).pipe(mergeMap(() => [({ type: "@@TICK", deltaTime: 20 * Millisecond }), ({ type: "@@ADVANCE_PHYSICS", deltaTime: 20 * Millisecond })])),
 	drivers.mouse!.mouseUp().pipe(
 		mergeMap(() => {
 			const id = EntityId();
