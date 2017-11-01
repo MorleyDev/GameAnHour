@@ -33,9 +33,12 @@ func game(events GameEvents) {
 
 	e.Bootstrap()
 
-	interval := time.Duration(1) * time.Millisecond
+	interval := time.Duration(10) * time.Millisecond
 	tick := time.Tick(interval)
 	animate := time.Tick(interval * 10)
+	ticksPerSecond := 0
+
+	second := time.Tick(1 * time.Second)
 	for {
 		select {
 		case down := <-events.input.mouseDown:
@@ -48,7 +51,12 @@ func game(events GameEvents) {
 				e.input.mouseUp(nil, e.runtime.ToValue(up.position.X), e.runtime.ToValue(up.position.Y), e.runtime.ToValue(up.button))
 			}
 			break
+		case <-second:
+			println("tps:", ticksPerSecond)
+			ticksPerSecond = 0
+			break
 		case <-tick:
+			ticksPerSecond = ticksPerSecond + 1
 			e.Tick(interval)
 			e.Flush()
 			break

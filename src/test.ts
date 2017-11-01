@@ -4,7 +4,6 @@ import { readdirSync, statSync } from "fs";
 import { join } from "path";
 import { test } from "tap";
 
-
 importTestsIn(__dirname).catch(err => console.error(err));
 
 async function importTestsIn(path: string): Promise<any[]> {

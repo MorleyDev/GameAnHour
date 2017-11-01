@@ -69,10 +69,8 @@ const app$ = game$.pipe(
 	devRememberState
 );
 
-app$
-	.subscribe();
+app$.subscribe();
 game$.next(gameFactory());
-
 
 if ((module as any).hot) {
 	(module as any).hot.accept("./main/game", () => {

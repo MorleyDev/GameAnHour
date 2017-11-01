@@ -12,6 +12,12 @@ type jsTimeout struct {
 	runAfter time.Duration
 }
 
+type jsInterval struct {
+	logic     goja.Callable
+	nextRunIn time.Duration
+	period    time.Duration
+}
+
 type jsEngineInputMouse struct {
 	mouseDown goja.Callable
 	mouseUp   goja.Callable
@@ -20,6 +26,7 @@ type jsEngineInputMouse struct {
 type JsEngine struct {
 	runtime        *goja.Runtime
 	timers         map[int64]*jsTimeout
+	intervals      map[int64]*jsInterval
 	animationFrame map[int64]goja.Callable
 	nextTimeoutID  int64
 
@@ -39,6 +46,7 @@ func CreateEngine() *JsEngine {
 	e := JsEngine{
 		runtime:        vm,
 		timers:         make(map[int64]*jsTimeout),
+		intervals:      make(map[int64]*jsInterval),
 		animationFrame: make(map[int64]goja.Callable),
 		scheduled:      make([]goja.Callable, 0),
 		pendingActions: make([]goja.Value, 0),
@@ -46,11 +54,13 @@ func CreateEngine() *JsEngine {
 			mouseDown: nil,
 			mouseUp:   nil}}
 
-	vm.Set("GoEngine_GetNow", e.getNow)
 	vm.Set("GoEngine_Log", e.consoleLog)
 
+	vm.Set("GoEngine_GetNow", e.getNow)
 	vm.Set("GoEngine_SetTimeout", e.setTimout)
 	vm.Set("GoEngine_ClearTimeout", e.clearTimeout)
+	vm.Set("GoEngine_SetInterval", e.setInterval)
+	vm.Set("GoEngine_ClearInterval", e.clearInterval)
 	vm.Set("GoEngine_RequestAnimationFrame", e.requestAnimationFrame)
 	vm.Set("GoEngine_CancelAnimationFrame", e.cancelRequestAnimationFrame)
 
@@ -112,6 +122,13 @@ func CreateEngine() *JsEngine {
 		clearTimeout = function (clear) {
 			return GoEngine_ClearTimeout(clear);
 		};
+		setInterval = function (callback, ms) {
+			var rest = [].concat.apply([], arguments); rest.shift(); rest.shift()
+			return GoEngine_SetInterval(ms || 0, function () { callback.apply(callback, rest); });
+		};
+		clearInterval = function (clear) {
+			return GoEngine_ClearInterval(clear);
+		};
 		requestAnimationFrame = function (callback) {
 			var rest = [].concat.apply([], arguments); rest.shift();
 			return GoEngine_RequestAnimationFrame( function () { callback.apply(callback, rest) } );
@@ -143,19 +160,27 @@ func (engine *JsEngine) Bootstrap() {
 }
 
 func (engine *JsEngine) Tick(advance time.Duration) {
-	if len(engine.timers) == 0 {
-		return
-	}
-	completedTimers := make([]int64, 0)
-	for k, v := range engine.timers {
-		v.runAfter = v.runAfter - advance
-		if v.runAfter <= 0 {
-			engine.scheduled = append(engine.scheduled, v.logic)
-			completedTimers = append(completedTimers, k)
+	if len(engine.timers) > 0 {
+		completedTimers := make([]int64, 0)
+		for k, v := range engine.timers {
+			v.runAfter = v.runAfter - advance
+			if v.runAfter <= 0 {
+				engine.scheduled = append(engine.scheduled, v.logic)
+				completedTimers = append(completedTimers, k)
+			}
+		}
+		for _, timer := range completedTimers {
+			delete(engine.timers, timer)
 		}
 	}
-	for _, timer := range completedTimers {
-		delete(engine.timers, timer)
+	if len(engine.intervals) > 0 {
+		for _, v := range engine.intervals {
+			v.nextRunIn = v.nextRunIn - advance
+			if v.nextRunIn <= 0 {
+				engine.scheduled = append(engine.scheduled, v.logic)
+				v.nextRunIn = v.period + v.nextRunIn
+			}
+		}
 	}
 }
 
@@ -211,13 +236,37 @@ func (engine *JsEngine) setTimout(call goja.FunctionCall) goja.Value {
 	id := engine.nextTimeoutID
 	engine.timers[id] = &jsTimeout{
 		logic:    fun,
-		runAfter: (time.Duration(timeout) * time.Millisecond)}
+		runAfter: time.Duration(timeout) * time.Millisecond}
 	engine.nextTimeoutID = id + 1
 	return engine.runtime.ToValue(id)
 }
 
 func (engine *JsEngine) clearTimeout(call goja.FunctionCall) goja.Value {
 	delete(engine.timers, call.Argument(0).Export().(int64))
+	return engine.runtime.ToValue(nil)
+}
+
+func (engine *JsEngine) setInterval(call goja.FunctionCall) goja.Value {
+	timeout, ok := call.Argument(0).Export().(int64)
+	if !ok {
+		panic("First argument passed to GoEngine_SetInterval was not a miliseconds number but was " + call.Argument(0).ToString().Export().(string))
+	}
+	fun, ok := goja.AssertFunction(call.Argument(1))
+	if !ok {
+		panic("Second argument passed to GoEngine_SetInterval was not a callable action but was " + call.Argument(1).ToString().Export().(string))
+	}
+
+	id := engine.nextTimeoutID
+	engine.intervals[id] = &jsInterval{
+		logic:     fun,
+		nextRunIn: (time.Duration(timeout) * time.Millisecond),
+		period:    (time.Duration(timeout) * time.Millisecond)}
+	engine.nextTimeoutID = id + 1
+	return engine.runtime.ToValue(id)
+}
+
+func (engine *JsEngine) clearInterval(call goja.FunctionCall) goja.Value {
+	delete(engine.intervals, call.Argument(0).Export().(int64))
 	return engine.runtime.ToValue(nil)
 }
 

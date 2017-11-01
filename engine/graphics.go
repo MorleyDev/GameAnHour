@@ -231,7 +231,11 @@ func renderCommand(window *pixelgl.Window, target pixel.Target, atlas *text.Atla
 }
 
 func mapToColour(colour map[string]interface{}) color.RGBA {
-	return color.RGBA{uint8(extractInt64(colour["r"])), uint8(extractInt64(colour["g"])), uint8(extractInt64(colour["b"])), uint8(extractFloat64(colour["a"]) / 255.0)}
+	return color.RGBA{
+		R: uint8(extractInt64(colour["r"])),
+		G: uint8(extractInt64(colour["g"])),
+		B: uint8(extractInt64(colour["b"])),
+		A: uint8(extractFloat64(colour["a"]) * 255.0)}
 }
 
 func extractFloat64(value interface{}) float64 {

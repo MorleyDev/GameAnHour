@@ -15,7 +15,7 @@ import { entityComponentReducer } from "../pauper/ecs/entity-component.reducer";
 import { exponentialInterpolation } from "../pauper/maths/interpolation.maths";
 import { Colour } from "../pauper/models/colour.model";
 import { Rectangle, Shape2, Text2, Point2, Circle } from "../pauper/models/shapes.model";
-import { Seconds } from "../pauper/models/time.model";
+import { Millisecond, Seconds } from "../pauper/models/time.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
 import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
 import { createPhysicsReducer } from "../pauper/physics/reducer/physics-body.reducer";
@@ -25,7 +25,7 @@ import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
-import { map, mergeMap, filter, ignoreElements } from "rxjs/operators";
+import { map, mergeMap, filter, ignoreElements, tap } from "rxjs/operators";
 import { Map } from "immutable";
 
 const physicsPreReducer = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
@@ -150,17 +150,18 @@ export const render = (state: GameState) => [
 
 	Array.from(entityRenderer(state)),
 	Array.from(scoreTextRenderer(state, state.runtime)),
-	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0))
+	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),
+	Fill(Text2(`Runtime: ${state.runtime}`, 30, 60, "16px", "sans-serif"), Colour(255, 0, 0))
 ];
 
 // TODO: Focus-awareness should be moved into some kind of 'System Driver'
 const tabAwareInterval = (period: Seconds, drivers: AppDrivers) => {
-	return interval(period * 1000);
+	return interval(period / Millisecond);
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	// tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
-	// tabAwareInterval(0.01, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
+	tabAwareInterval(10 * Millisecond, drivers).pipe(map(() => ({ type: "@@TICK", deltaTime: 0.01 }))),
+	tabAwareInterval(10 * Millisecond, drivers).pipe(map(() => ({ type: "@@ADVANCE_PHYSICS", deltaTime: 0.01 }))),
 	drivers.mouse!.mouseUp().pipe(
 		mergeMap(() => {
 			const id = EntityId();
