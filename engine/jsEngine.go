@@ -12,73 +12,39 @@ type jsTimeout struct {
 	runAfter time.Duration
 }
 
+type jsEngineInputMouse struct {
+	mouseDown goja.Callable
+	mouseUp   goja.Callable
+}
+
 type JsEngine struct {
 	runtime        *goja.Runtime
 	timers         map[int64]*jsTimeout
 	animationFrame map[int64]goja.Callable
 	nextTimeoutID  int64
 
-	scheduled     []goja.Callable
-	reducer       goja.Callable
-	frameRenderer goja.Callable
-	renderer      goja.Callable
-	bootstrap     goja.Callable
-	latestState   goja.Value
-}
+	scheduled      []goja.Callable
+	reducer        goja.Callable
+	frameRenderer  goja.Callable
+	renderer       goja.Callable
+	bootstrap      goja.Callable
+	latestState    goja.Value
+	pendingActions []goja.Value
 
-func (engine *JsEngine) getNow() int64 {
-	return time.Now().Unix()
-}
-
-func (engine *JsEngine) setTimout(call goja.FunctionCall) goja.Value {
-	timeout, ok := call.Argument(0).Export().(int64)
-	if !ok {
-		panic("First argument passed to GoEngine_SetTimeout was not a miliseconds number but was " + call.Argument(0).ToString().Export().(string))
-	}
-	fun, ok := goja.AssertFunction(call.Argument(1))
-	if !ok {
-		panic("Second argument passed to GoEngine_SetTimeout was not a callable action but was " + call.Argument(1).ToString().Export().(string))
-	}
-
-	id := engine.nextTimeoutID
-	engine.timers[id] = &jsTimeout{logic: fun, runAfter: (time.Duration(timeout) * time.Millisecond)}
-	engine.nextTimeoutID = id + 1
-	return engine.runtime.ToValue(id)
-}
-
-func (engine *JsEngine) clearTimeout(call goja.FunctionCall) goja.Value {
-	delete(engine.timers, call.Argument(0).Export().(int64))
-	return engine.runtime.ToValue(nil)
-}
-
-func (engine *JsEngine) requestAnimationFrame(call goja.FunctionCall) goja.Value {
-	fun, err := goja.AssertFunction(call.Argument(0))
-	if err {
-		panic("First argument passed to GoEngine_RequestAnimationFrame was not a callable action but was " + call.Argument(0).ToString().Export().(string))
-	}
-	id := engine.nextTimeoutID
-	engine.animationFrame[id] = fun
-	engine.nextTimeoutID = id + 1
-	return engine.runtime.ToValue(id)
-}
-
-func (engine *JsEngine) cancelRequestAnimationFrame(call goja.FunctionCall) goja.Value {
-	delete(engine.animationFrame, call.Argument(0).Export().(int64))
-	return engine.runtime.ToValue(nil)
-}
-
-func (engine *JsEngine) consoleLog(call goja.FunctionCall) goja.Value {
-	result := ""
-	for _, value := range call.Arguments {
-		result = result + (value.ToString().Export().(string)) + " "
-	}
-	log.Print(result)
-	return engine.runtime.ToValue(nil)
+	input jsEngineInputMouse
 }
 
 func CreateEngine() *JsEngine {
 	vm := goja.New()
-	e := JsEngine{runtime: vm, timers: make(map[int64]*jsTimeout), animationFrame: make(map[int64]goja.Callable), scheduled: make([]goja.Callable, 0)}
+	e := JsEngine{
+		runtime:        vm,
+		timers:         make(map[int64]*jsTimeout),
+		animationFrame: make(map[int64]goja.Callable),
+		scheduled:      make([]goja.Callable, 0),
+		pendingActions: make([]goja.Value, 0),
+		input: jsEngineInputMouse{
+			mouseDown: nil,
+			mouseUp:   nil}}
 
 	vm.Set("GoEngine_GetNow", e.getNow)
 	vm.Set("GoEngine_Log", e.consoleLog)
@@ -93,7 +59,7 @@ func CreateEngine() *JsEngine {
 		return nil
 	})
 	vm.Set("GoEngine_PushAction", func(call goja.FunctionCall) goja.Value {
-		e.reducer(nil, e.latestState, call.Argument(0))
+		e.pendingActions = append(e.pendingActions, call.Argument(0))
 		return nil
 	})
 	vm.Set("GoEngine_SetReducer", func(call goja.FunctionCall) goja.Value {
@@ -112,12 +78,29 @@ func CreateEngine() *JsEngine {
 		e.frameRenderer = frameRenderer
 		return nil
 	})
-	vm.Set("GoEngine_SetRenderer", func(call goja.FunctionCall) goja.Value {
-		e.renderer, _ = goja.AssertFunction(call.Argument(0))
+	vm.Set("GoEngine_SetBootstrap", func(call goja.FunctionCall) goja.Value {
+		bootstrap, ok := goja.AssertFunction(call.Argument(0))
+		if !ok {
+			panic("GoEngine_SetFrameRenderer not given function")
+		}
+		e.bootstrap = bootstrap
 		return nil
 	})
-	vm.Set("GoEngine_SetBootstrap", func(call goja.FunctionCall) goja.Value {
-		e.bootstrap, _ = goja.AssertFunction(call.Argument(0))
+
+	vm.Set("GoEngine_OnMouseDown", func(call goja.FunctionCall) goja.Value {
+		mouseDown, ok := goja.AssertFunction(call.Argument(0))
+		if !ok {
+			panic("GoEngine_SetFrameRenderer not given function")
+		}
+		e.input.mouseDown = mouseDown
+		return nil
+	})
+	vm.Set("GoEngine_OnMouseUp", func(call goja.FunctionCall) goja.Value {
+		mouseUp, ok := goja.AssertFunction(call.Argument(0))
+		if !ok {
+			panic("GoEngine_SetFrameRenderer not given function")
+		}
+		e.input.mouseUp = mouseUp
 		return nil
 	})
 
@@ -197,4 +180,69 @@ func (engine *JsEngine) Flush() {
 	for _, toRun := range scheduled {
 		toRun(nil)
 	}
+	if engine.latestState == nil {
+		return
+	}
+
+	actions := engine.pendingActions
+	engine.pendingActions = make([]goja.Value, 0)
+	for _, action := range actions {
+		state, err := engine.reducer(nil, engine.latestState, action)
+		if err != nil {
+			panic(err)
+		}
+		engine.latestState = state
+	}
+}
+
+func (engine *JsEngine) getNow() int64 {
+	return time.Now().Unix()
+}
+
+func (engine *JsEngine) setTimout(call goja.FunctionCall) goja.Value {
+	timeout, ok := call.Argument(0).Export().(int64)
+	if !ok {
+		panic("First argument passed to GoEngine_SetTimeout was not a miliseconds number but was " + call.Argument(0).ToString().Export().(string))
+	}
+	fun, ok := goja.AssertFunction(call.Argument(1))
+	if !ok {
+		panic("Second argument passed to GoEngine_SetTimeout was not a callable action but was " + call.Argument(1).ToString().Export().(string))
+	}
+
+	id := engine.nextTimeoutID
+	engine.timers[id] = &jsTimeout{
+		logic:    fun,
+		runAfter: (time.Duration(timeout) * time.Millisecond)}
+	engine.nextTimeoutID = id + 1
+	return engine.runtime.ToValue(id)
+}
+
+func (engine *JsEngine) clearTimeout(call goja.FunctionCall) goja.Value {
+	delete(engine.timers, call.Argument(0).Export().(int64))
+	return engine.runtime.ToValue(nil)
+}
+
+func (engine *JsEngine) requestAnimationFrame(call goja.FunctionCall) goja.Value {
+	fun, err := goja.AssertFunction(call.Argument(0))
+	if err {
+		panic("First argument passed to GoEngine_RequestAnimationFrame was not a callable action but was " + call.Argument(0).ToString().Export().(string))
+	}
+	id := engine.nextTimeoutID
+	engine.animationFrame[id] = fun
+	engine.nextTimeoutID = id + 1
+	return engine.runtime.ToValue(id)
+}
+
+func (engine *JsEngine) cancelRequestAnimationFrame(call goja.FunctionCall) goja.Value {
+	delete(engine.animationFrame, call.Argument(0).Export().(int64))
+	return engine.runtime.ToValue(nil)
+}
+
+func (engine *JsEngine) consoleLog(call goja.FunctionCall) goja.Value {
+	result := ""
+	for _, value := range call.Arguments {
+		result = result + (value.ToString().Export().(string)) + " "
+	}
+	log.Print(result)
+	return engine.runtime.ToValue(nil)
 }

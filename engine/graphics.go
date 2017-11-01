@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"reflect"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
@@ -18,8 +19,8 @@ type MouseEvent struct {
 }
 
 type ClickEvent struct {
-	MouseEvent
-	button int8
+	position pixel.Vec
+	button   int8
 }
 
 type InputEmitter struct {
@@ -36,11 +37,32 @@ type GraphicsEvents struct {
 	input InputEmitter
 }
 
-func Graphics(events GraphicsEvents) {
-	pixelgl.Run(run(events))
+type GraphicsWindow struct {
+	events GraphicsEvents
 }
 
-func run(events GraphicsEvents) func() {
+func NewWindow(events GraphicsEvents) *GraphicsWindow {
+	return &GraphicsWindow{events}
+}
+
+func (w *GraphicsWindow) Run() {
+	pixelgl.Run(run(w))
+}
+
+func (w *GraphicsWindow) getLatestFrame() []interface{} {
+	var frame []interface{}
+	for {
+		select {
+		case frameRaw := <-w.events.framesIn:
+			frame = frameRaw.([]interface{})
+			break
+		default:
+			return frame
+		}
+	}
+}
+
+func run(w *GraphicsWindow) func() {
 	return func() {
 		cfg := pixelgl.WindowConfig{Title: "GAM", Bounds: pixel.R(0, 0, 512, 512), VSync: true}
 		win, err := pixelgl.NewWindow(cfg)
@@ -49,19 +71,38 @@ func run(events GraphicsEvents) func() {
 		}
 
 		basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+		frameCounter := 0
+		second := time.Tick(time.Second)
 		for {
 			select {
-			case <-events.endIn:
-				events.endOut <- 0
+			case <-w.events.endIn:
+				w.events.endOut <- 0
 				return
-			case frameRaw := <-events.framesIn:
-				renderFrame(win, win, basicAtlas, pixel.IM.Moved(pixel.V(0, 512)), frameRaw.([]interface{}))
+
+			case <-second:
+				win.SetTitle(fmt.Sprintf("%s | FPS: %d", cfg.Title, frameCounter))
+				frameCounter = 0
+
 			default:
+				frameCounter++
+				win.Update()
 				if win.Closed() {
-					events.endOut <- 0
+					w.events.endOut <- 0
 					return
 				}
-				win.Update()
+
+				if win.JustPressed(pixelgl.MouseButtonLeft) {
+					w.events.input.mouseDown <- ClickEvent{position: win.MousePosition(), button: 0}
+				}
+				if win.JustReleased(pixelgl.MouseButtonLeft) {
+					w.events.input.mouseUp <- ClickEvent{position: win.MousePosition(), button: 0}
+				}
+
+				latestFrame := w.getLatestFrame()
+				if latestFrame != nil {
+					renderFrame(win, win, basicAtlas, pixel.IM.Moved(pixel.V(0, 512)), latestFrame)
+				}
+
 			}
 		}
 	}
@@ -182,8 +223,7 @@ func renderCommand(window *pixelgl.Window, target pixel.Target, atlas *text.Atla
 			}
 			return
 		default:
-			println("fill:unknown")
-			return
+			panic("fill:unknown")
 		}
 	case "rendertarget":
 		panic("rendertarget is not supported")

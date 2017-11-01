@@ -26,6 +26,7 @@ import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { map, mergeMap, filter, ignoreElements } from "rxjs/operators";
+import { Map } from "immutable";
 
 const physicsPreReducer = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	if (physics.pendingForces.length === 0) {
@@ -144,7 +145,7 @@ const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id
 });
 
 export const render = (state: GameState) => [
-	Clear(Colour(0, 0, 0)),
+	Clear(Colour(state.entities.size % 255, 0, 0)),
 	Array.from(staticEntityRenderer(state)),
 
 	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),
