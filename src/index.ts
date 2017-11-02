@@ -63,7 +63,7 @@ const app$ = game$.pipe(
 		createReduxApp(drivers, game).pipe(
 			auditTime(10, animationFrame),
 			tap(frame => renderToCanvas({canvas, context}, game.render(frame))),
-			retryWhen(errs => errs.pipe(tap(err => console.error(err))))
+		//	retryWhen(errs => errs.pipe(tap(err => console.error(err))))
 		)
 	),
 	devRememberState

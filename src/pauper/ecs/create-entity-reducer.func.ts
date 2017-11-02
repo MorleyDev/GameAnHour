@@ -1,5 +1,5 @@
-import { List, Map, Set } from "immutable";
-
+import { getComponentsOfEntity } from "./get-components-of-entity.func";
+import { getEntitiesByComponents } from "./get-entities-by-components.func";
 import { GenericAction } from "../redux/generic.action";
 import { SpecificReducer } from "../redux/reducer.type";
 import { BaseComponent } from "./component-base.type";
@@ -10,34 +10,30 @@ export function createEntityReducer<TState extends EntitiesState, TAction extend
 	components: ReadonlyArray<string>,
 	reducer: (state: TState, action: TAction, ..._components: BaseComponent<string, any>[]) => Iterable<BaseComponent>
 ): SpecificReducer<TState, TAction> {
-	return bindEntitiesToReducer<TState, TAction>(components, (state, entity, action) => {
-		const newComponents = reducer(state, action as TAction, ...components.map(name => entity.components.get(name)!));
-		const newComponentPairs = List(newComponents).map(component => [component.name, component] as [string, BaseComponent]);
-		const newComponentHash = Map<EntityId, BaseComponent>(newComponentPairs);
+	const findEntities = getEntitiesByComponents(components);
+	const getComponents = getComponentsOfEntity(components);
 
-		return {
-			...entity,
-			components: entity.components.merge(newComponentHash)
-		};
-	});
+	return (state, action) => {
+		const targetEntities = findEntities(state);
+		const clone: TState & { entities: { [key: string]: BaseEntity } } = ({
+			...(state as any),
+			entities: {
+				...state.entities
+			}
+		});
+		for (const entityId of targetEntities) {
+			const targetEntity = state.entities[entityId];
+			const components = getComponents(targetEntity);
+			const newComponents = reducer(state, action, ...components);
+			const cloneComponents: { [component: string]: BaseComponent } = ({ ...clone.entities[entityId].components });
+			for (const component of newComponents) {
+				cloneComponents[component.name] = component;
+			}
+			clone.entities[entityId] = ({
+				...state.entities[entityId],
+				components: cloneComponents
+			});
+		}
+		return clone;
+	};
 }
-
-type EntityStateReducer<TState, TAction> = (state: TState, entity: BaseEntity, action: TAction) => BaseEntity;
-
-const bindEntitiesToReducer = <TState extends EntitiesState, TAction extends GenericAction>(withComponents: ReadonlyArray<string>, entityStateReducer: EntityStateReducer<TState, TAction>): SpecificReducer<TState, TAction> =>
-	(state, action) => ({
-		...(state as EntitiesState),
-		entities: Set.intersect<EntityId>(List(withComponents)
-			.map(componentName => state.componentEntityLinks.get(componentName, List())))
-			.reduce((entities, target) => entities.update(target, entity => entityStateReducer(state, entity, action)), state.entities)
-	} as TState);
-
-
-type EntityReducer<TAction> = (entity: BaseEntity, action: TAction) => BaseEntity;
-type ComponentReducer<TAction> = (component: BaseComponent, action: TAction) => BaseComponent;
-
-const bindComponentToReducer = <TAction extends GenericAction>(withComponent: string, reducer: ComponentReducer<TAction>): EntityReducer<TAction> =>
-	(entity, action) => ({
-		...entity,
-		components: entity.components.update(withComponent, c => reducer(c, action))
-	});

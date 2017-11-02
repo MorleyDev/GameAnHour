@@ -1,4 +1,3 @@
-import { Range } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
 import { fromPromise } from "rxjs/observable/fromPromise";
@@ -19,11 +18,19 @@ import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction } from "./game.model";
 
+function Range(start: number, amount: number): number[] {
+	return Array(amount).fill(0).map((_, i) => i + start);
+}
+
+function flatMap<T, U>(array: T[], map: (item: T, index: number, whole: T[]) => U[]): U[] {
+	return array.reduce((arr, item, index) => arr.concat(map(item, index, array) as U[]), [] as U[]);
+}
+
 export const bootstrap: (drivers: AppDrivers) => Observable<GameAction> = drivers => merge<GameAction>(
 	fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
 	from([
-		...Range(0, 9).flatMap(i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))).flatMap(createPeg).toArray(),
-		...Range(0, 9).flatMap(i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))).flatMap(createPeg).toArray(),
+		...flatMap(flatMap(Range(0, 9), i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))), createPeg),
+		...flatMap(flatMap(Range(0, 9), i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))), createPeg),
 		...createBucketPoint(Point2(412, 512)),
 		...createBucketPoint(Point2(362, 512)),
 		...createBucketPoint(Point2(312, 512)),

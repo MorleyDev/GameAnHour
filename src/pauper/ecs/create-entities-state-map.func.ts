@@ -1,5 +1,6 @@
-import { List, Map, Set } from "immutable";
-
+import { getComponentsOfEntity } from "./get-components-of-entity.func";
+import { getEntitiesByComponents } from "./get-entities-by-components.func";
+import { createEntitiesStateFilter } from "./create-entities-state-filter.func";
 import { BaseComponent } from "./component-base.type";
 import { EntitiesState } from "./entities.state";
 import { EntityId } from "./entity-base.type";
@@ -7,22 +8,19 @@ import { EntityId } from "./entity-base.type";
 type EntitiesStateMap<TResult>
 	= ((entityId: EntityId, component: BaseComponent<string, any>, ..._extra: any[]) => TResult)
 	| ((entityId: EntityId, component1: BaseComponent<string, any>, component2: BaseComponent<string, any>, ..._extra: any[]) => TResult)
-	| ((entityId: EntityId, component1: BaseComponent<string, any>, component2: BaseComponent<string, any>, component3: BaseComponent<string, any>, ..._extra: any[]) => TResult)
+	| ((entityId: EntityId, component1: BaseComponent<string, any>, component2: BaseComponent<string, any>, component3: BaseComponent<string, any>, ..._extra: any[]) => TResult);
 
 export function createEntitiesStateMap<TResult>(
 	withComponents: ReadonlyArray<string>,
 	mapper: EntitiesStateMap<TResult>
 ): (state: EntitiesState, ..._extra: any[]) => Iterable<TResult> {
-	return (state: EntitiesState, ..._extra: any[]): Iterable<TResult> => {
-		const entityIdSubset = Set.intersect<EntityId>( withComponents.map(componentName => state.componentEntityLinks.get(componentName, List())) );
-		return subset(state.entities, entityIdSubset)
-			.map((entity, entityId) => ({ entityId, map: subset(entity.components, withComponents) }))
-			.map(({ entityId, map }) => (mapper as any)(entityId, ...withComponents.map(component => map.get(component)), ..._extra))
-			.values();
-	};
-}
+	const innerGetEntitiesByComponents = getEntitiesByComponents(withComponents);
+	const innerGetComponentsOfEntity = getComponentsOfEntity(withComponents);
 
-function subset<TKey, TValue>(map: Map<TKey, TValue>, keys: Iterable<TKey>): Map<TKey, TValue> {
-	const keySet = Set(keys);
-	return map.filter((v: TValue, k: TKey) => keySet.has(k));
+	return function * (state: EntitiesState, ...extra: any[]): Iterable<TResult> {
+		for (const entityId of innerGetEntitiesByComponents(state)) {
+			const components = withComponents.map(component => state.entities[entityId].components[component]);
+			yield (mapper as any)(entityId, ...components, ...extra);
+		}
+	};
 }

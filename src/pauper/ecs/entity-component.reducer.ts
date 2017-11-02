@@ -1,5 +1,3 @@
-import { List, Map } from "immutable";
-
 import { createReducer } from "../redux/create-reducer.func";
 import { GenericReducer } from "../redux/reducer.type";
 import { BaseComponent } from "./component-base.type";
@@ -17,46 +15,84 @@ export const entityComponentReducer: GenericReducer = createReducer<EntitiesStat
 export function createEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
 	return {
 		...(state as any),
-		entities: state.entities.concat({ [id]: { id, components: Map<EntityId, BaseComponent>() } })
+		entities: {
+			...state.entities,
+			[id]: { id, components: {} }
+		}
 	};
 }
 
 export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
-	const entity = state.entities.get(id);
+	const entity = state.entities[id];
 	if (entity == null) {
 		console.warn("Tried to remove", entity, "which does not exist");
 		return state;
 	}
 	return {
 		...(state as any),
-		entities: state.entities
-			.update(id, c => sideEffect(c, disconnectEntity))
-			.remove(id),
-		componentEntityLinks: entity.components.reduce((ecLinks, _, key: string) => ecLinks.update(key, values => values.filter(value => value !== entity.id)), state.componentEntityLinks)
+		entities: {
+			...state.entities,
+			[id]: sideEffect(undefined, () => disconnectEntity(state.entities[id]))
+		},
+		componentEntityLinks: removeEntityComponentLinks(state.componentEntityLinks, entity)
 	};
+}
+
+function removeEntityComponentLinks(map: { readonly [key: string]: ReadonlyArray<EntityId> }, entity: BaseEntity): { readonly [key: string]: ReadonlyArray<EntityId> } {
+	const result: { [key: string]: ReadonlyArray<EntityId> } = { ...map };
+	for (const component in entity.components) {
+		result[component] = result[component].filter(f => f !== entity.id);
+	}
+	return result;
+}
+
+
+export function updateComponentLinks(map: { readonly [key: string]: ReadonlyArray<EntityId> }, entity: BaseEntity, component: string): { readonly [key: string]: ReadonlyArray<EntityId> } {
+	const result: { [key: string]: ReadonlyArray<EntityId> } = { ...map };
+	result[component] = result[component].filter(f => f !== entity.id);
+	return result;
 }
 
 export function attachComponent<TState extends EntitiesState>(state: TState, id: EntityId, component: BaseComponent): TState {
-	return {
+	const newState = {
 		...(state as any),
-		entities: state.entities.update(id, entity => ({
-			...entity,
-			components: entity.components.concat({ [component.name]: sideEffect(component, c => connectComponent(c, id)) })
-		})),
-		componentEntityLinks: state.componentEntityLinks.update(component.name, List(), entityIds => entityIds.push(id))
+		entities: {
+			...state.entities,
+			[id]: {
+				...state.entities[id],
+				components: {
+					...state.entities[id].components,
+					[component.name]: component
+				}
+			}
+		},
+		componentEntityLinks: {
+			...state.componentEntityLinks,
+			[component.name]: (state.componentEntityLinks[component.name] || []).concat(id)
+		}
 	};
+	connectComponent(component, id);
+	return newState;
 }
 
 export function detachComponent<TState extends EntitiesState>(state: TState, id: EntityId, componentName: string): TState {
+	detachComponent(state, id, componentName);
 	return {
 		...(state as any),
-		entities: state.entities.update(id, entity => ({
-			...entity,
-			components: entity.components
-				.update(componentName, c => sideEffect(c, c => disconnectComponent(c, id)))
-				.remove(componentName)
-		})),
-		componentEntityLinks: state.componentEntityLinks.update(componentName, List(), entityIds => entityIds.filter(entityId => entityId === id))
+		entities: {
+			...state.entities,
+			[id]: {
+				...state.entities[id],
+				components: {
+					...state.entities[id].components,
+					[componentName]: undefined
+				}
+			}
+		},
+		componentEntityLinks: {
+			...state.componentEntityLinks,
+			[componentName]: state.componentEntityLinks[componentName].filter(v => v !== id)
+		}
 	};
 }
 
@@ -64,8 +100,10 @@ function connectComponent(component: BaseComponent, entityId: EntityId): void {
 	return component && component.events && component.events.connect && component.events.connect(component, entityId);
 }
 
-function disconnectEntity(entity: BaseEntity): number {
-	return entity.components.forEach(component => disconnectComponent(component, entity.id));
+function disconnectEntity(entity: BaseEntity): void {
+	for (const componentName in entity.components) {
+		disconnectComponent(entity.components[componentName], entity.id);
+	}
 }
 
 function disconnectComponent(component: BaseComponent, entityId: EntityId): void {
@@ -73,11 +111,12 @@ function disconnectComponent(component: BaseComponent, entityId: EntityId): void
 }
 
 // Cheating the immutability by exploiting the lack of laziness!
-//----------------------------------------------------------------
+// ----------------------------------------------------------------
 
 // Given value T, perform some sideEffect using that value and then return T
 const sideEffect = <T>(seed: T, sideEffect: (value: T) => void): T => {
 	return effectVar(seed, sideEffect(seed));
-}
+};
+
 /* Allows for the value passed in to be retrieved and whatever side-effect causing values have been passed in to be evaluated and discarded */
 const effectVar = <T, U>(value: T, ..._u: U[]): T => value;

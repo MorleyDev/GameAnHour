@@ -1,4 +1,3 @@
-import { List } from "immutable";
 import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { interval } from "rxjs/observable/interval";
@@ -26,7 +25,6 @@ import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 import { map, mergeMap, filter, ignoreElements, tap } from "rxjs/operators";
-import { Map } from "immutable";
 
 const applyPhysicsForcesToBodies = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	if (physics.pendingForces.length === 0) {
@@ -63,7 +61,7 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 			)(state);
 
 		case "@@COLLISION_START":
-			if (state.componentEntityLinks.get("HardBodyComponent", List<EntityId>()).some(e => e === action.collision.a || e === action.collision.b)) {
+			if ((state.componentEntityLinks["HardBodyComponent"] || []).some(e => e === action.collision.a || e === action.collision.b)) {
 				return {
 					...state,
 					effects: state.effects.concat({ type: "PlaySoundEffect", sound: "boing" } as GameAction)
@@ -72,15 +70,15 @@ export const reducer = (state: GameState, action: GameAction): GameState => {
 			return state;
 
 		case "BALL_FINISHED":
-			const ballHardBodyComponent = state.entities.get(action.ball)!.components.get("HardBodyComponent")! as HardBodyComponent;
-			const bucket = state.componentEntityLinks.get("SensorPhysicsComponent", List<EntityId>())
+			const ballHardBodyComponent = state.entities[action.ball].components["HardBodyComponent"] as HardBodyComponent;
+			const bucket = (state.componentEntityLinks["SensorPhysicsComponent"] || [])
 				.find(bucket => {
-					const sensor = (state.entities.get(bucket)!.components.get("SensorPhysicsComponent")! as SensorPhysicsComponent);
+					const sensor = (state.entities[bucket].components["SensorPhysicsComponent"] as SensorPhysicsComponent);
 					return Shape2.collision(sensor.shape, Shape2.add(ballHardBodyComponent.shape, ballHardBodyComponent.position));
 				});
 
 			const bucketValue = bucket != null
-				? (state.entities.get(bucket)!.components.get("ScoreBucketComponent")! as ScoreBucketComponent).value
+				? (state.entities[bucket].components["ScoreBucketComponent"] as ScoreBucketComponent).value
 				: 0;
 
 			const entityId = EntityId();
@@ -125,8 +123,8 @@ const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id
 
 export const render = (state: GameState) => [
 	Clear(Colour(0, 0, 0)),
-	Array.from(staticEntityRenderer(state)),
 
+	Array.from(staticEntityRenderer(state)),
 	Array.from(entityRenderer(state)),
 	Array.from(scoreTextRenderer(state, state.runtime)),
 	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),

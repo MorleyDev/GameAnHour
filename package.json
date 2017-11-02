@@ -33,7 +33,6 @@
     "@types/matter-js": "0.9.33",
     "core-js": "2.5.1",
     "howler": "2.0.5",
-    "immutable": "4.0.0-rc.7",
     "matter-js": "0.13.0",
     "poly-decomp": "^0.2.1",
     "redux": "3.7.2",

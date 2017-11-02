@@ -1,5 +1,3 @@
-import { Map } from "immutable";
-
 import { BaseComponent } from "./component-base.type";
 
 export type EntityId = string;
@@ -9,5 +7,5 @@ export const EntityId = () => (_nextId++).toString();
 
 export type BaseEntity = {
 	readonly id: EntityId;
-	readonly components: Map<string, BaseComponent>;
+	readonly components: { readonly [component: string]: BaseComponent };
 };
