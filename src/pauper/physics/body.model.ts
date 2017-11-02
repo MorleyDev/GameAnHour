@@ -1,3 +1,3 @@
 export type PhysicsBodyId = number;
 
-export type PhysicsBodyProps = { };
+export type PhysicsBodyProps = {};

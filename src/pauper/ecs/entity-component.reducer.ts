@@ -6,19 +6,22 @@ import { BaseEntity, EntityId } from "./entity-base.type";
 import { AttachComponentAction, CreateEntityAction, DestroyEntityAction, DetachComponentAction } from "./entity-component.actions";
 
 export type EntityComponentReducerEvents = {
-	readonly attach: (entityId: EntityId, component: BaseComponent) => void;
+	readonly attach: (entityId: EntityId, component: BaseComponent) => BaseComponent;
 	readonly detach: (entityId: EntityId, component: BaseComponent) => void;
 };
 
-export const createEntityComponentReducer = (events: {
-	attach: (entityId: EntityId, component: BaseComponent) => void;
-	detach: (entityId: EntityId, component: BaseComponent) => void;
-}): GenericReducer => createReducer<EntitiesState>(
-	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => createEntity(state, action.id)],
-	["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => destroyEntity(state, action.id, events)],
-	["EC_AttachComponentAction", (state: EntitiesState, action: AttachComponentAction) => attachComponent(state, action.id, action.component, events)],
-	["EC_DetachComponentAction", (state: EntitiesState, action: DetachComponentAction) => detachComponent(state, action.id, action.component, events)]
-) as GenericReducer;
+export const identityEntityComponentReducerEvents: EntityComponentReducerEvents = {
+	attach(entityId, component) { return component; },
+	detach(entityId, component) { }
+};
+
+export const createEntityComponentReducer = (events: EntityComponentReducerEvents = identityEntityComponentReducerEvents): GenericReducer =>
+	createReducer<EntitiesState>(
+		["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => createEntity(state, action.id)],
+		["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => destroyEntity(state, action.id, events)],
+		["EC_AttachComponentAction", (state: EntitiesState, action: AttachComponentAction) => attachComponent(state, action.id, action.component, events)],
+		["EC_DetachComponentAction", (state: EntitiesState, action: DetachComponentAction) => detachComponent(state, action.id, action.component, events)]
+	) as GenericReducer;
 
 export function createEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
 	return {
@@ -31,14 +34,14 @@ export function createEntity<TState extends EntitiesState>(state: TState, id: En
 }
 
 export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId, events: EntityComponentReducerEvents): TState {
-	const entity = state.entities[id];
+	disconnectEntity(state.entities[id], events);
 	return {
 		...(state as any),
 		entities: {
 			...state.entities,
-			[id]: sideEffect(undefined, () => disconnectEntity(state.entities[id], events))
+			[id]: undefined
 		},
-		componentEntityLinks: removeEntityComponentLinks(state.componentEntityLinks, entity)
+		componentEntityLinks: removeEntityComponentLinks(state.componentEntityLinks, state.entities[id])
 	};
 }
 
@@ -49,7 +52,6 @@ function removeEntityComponentLinks(map: { readonly [key: string]: ReadonlyArray
 	}
 	return result;
 }
-
 
 export function updateComponentLinks(map: { readonly [key: string]: ReadonlyArray<EntityId> }, entity: BaseEntity, component: string): { readonly [key: string]: ReadonlyArray<EntityId> } {
 	const result: { [key: string]: ReadonlyArray<EntityId> } = { ...map };
@@ -66,7 +68,7 @@ export function attachComponent<TState extends EntitiesState>(state: TState, id:
 				...state.entities[id],
 				components: {
 					...state.entities[id].components,
-					[component.name]: component
+					[component.name]: events.attach(id, component)
 				}
 			}
 		},
@@ -75,7 +77,6 @@ export function attachComponent<TState extends EntitiesState>(state: TState, id:
 			[component.name]: (state.componentEntityLinks[component.name] || []).concat(id)
 		}
 	};
-	events.attach(id, component);
 	return newState;
 }
 
@@ -106,15 +107,3 @@ function disconnectEntity(entity: BaseEntity, events: EntityComponentReducerEven
 		events.detach(entity.id, entity.components[componentName]);
 	}
 }
-
-
-// Cheating the immutability by exploiting the lack of laziness!
-// ----------------------------------------------------------------
-
-// Given value T, perform some sideEffect using that value and then return T
-const sideEffect = <T>(seed: T, sideEffect: (value: T) => void): T => {
-	return effectVar(seed, sideEffect(seed));
-};
-
-/* Allows for the value passed in to be retrieved and whatever side-effect causing values have been passed in to be evaluated and discarded */
-const effectVar = <T, U>(value: T, ..._u: U[]): T => value;

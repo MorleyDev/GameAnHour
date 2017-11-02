@@ -1,10 +1,11 @@
-import { StaticBodyComponent } from "../component/StaticBodyComponent";
-import { HardBodyComponent } from "../component/HardBodyComponent";
-import { matterJsPhysicsEngine } from "../_inner/matterEngine";
+import { Bodies, Body, IChamferableBodyDefinition, Vector, World } from "matter-js";
+
 import { EntityComponentReducerEvents } from "../../ecs/entity-component.reducer";
-import { World, IChamferableBodyDefinition, Bodies, Vector, Body } from "matter-js";
+import { Circle, Rectangle, Shape2 } from "../../models/shapes.model";
 import { Shape2Type } from "../../models/shapes.model.type";
-import { Shape2, Rectangle, Circle } from "../../models/shapes.model";
+import { matterJsPhysicsEngine } from "../_inner/matterEngine";
+import { HardBodyComponent } from "../component/HardBodyComponent";
+import { StaticBodyComponent } from "../component/StaticBodyComponent";
 
 export const physicsEcsEvents: EntityComponentReducerEvents = {
 	attach(entityId, c) {
@@ -22,8 +23,9 @@ export const physicsEcsEvents: EntityComponentReducerEvents = {
 					isStatic: false
 				});
 				World.add(matterJsPhysicsEngine.world, component._body!);
-				return;
+				return component;
 			}
+
 			case "StaticBodyComponent": {
 				const component = c as StaticBodyComponent;
 				component._body = shapeToBody(Shape2.add(component.shape, component.position), {
@@ -32,6 +34,11 @@ export const physicsEcsEvents: EntityComponentReducerEvents = {
 					isStatic: true
 				});
 				World.add(matterJsPhysicsEngine.world, component._body!);
+				return component;
+			}
+
+			default: {
+				return c;
 			}
 		}
 	},

@@ -1,12 +1,8 @@
-import { Bodies, Body, Vector, World } from "matter-js";
+import { Body } from "matter-js";
 
 import { BaseComponent } from "../../ecs/component-base.type";
-import { EntityId } from "../../ecs/entity-base.type";
 import { Vector2 } from "../../maths/vector.maths";
-import { Circle } from "../../models/shapes.model";
-import { Point2, Rectangle, Shape2 } from "../../models/shapes.model";
-import { Shape2Type } from "../../models/shapes.model.type";
-import { matterJsPhysicsEngine } from "../_inner/matterEngine";
+import { Point2, Shape2 } from "../../models/shapes.model";
 
 export type StaticBodyComponent = BaseComponent<"StaticBodyComponent", {
 	readonly position: Point2;

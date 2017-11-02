@@ -1,14 +1,10 @@
-import { Bodies, Body, IChamferableBodyDefinition, Vector, World } from "matter-js";
+import { Body } from "matter-js";
 
 import { BaseComponent } from "../../ecs/component-base.type";
-import { EntityId } from "../../ecs/entity-base.type";
 import { Radian } from "../../maths/angles.maths";
 import { Vector2 } from "../../maths/vector.maths";
-import { Circle } from "../../models/circle/circle.model";
-import { Point2, Rectangle, Shape2 } from "../../models/shapes.model";
-import { Shape2Type } from "../../models/shapes.model.type";
+import { Point2, Shape2 } from "../../models/shapes.model";
 import { Seconds } from "../../models/time.model";
-import { matterJsPhysicsEngine } from "../_inner/matterEngine";
 
 export type HardBodyProperties = {
 	readonly rotation: Radian;

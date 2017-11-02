@@ -1,11 +1,10 @@
-import { Collision } from "../collision.model";
-import { PhysicsUpdateResult } from "../update.model";
 import "poly-decomp";
 
 import { Engine, Events } from "matter-js";
 
-import { EntityId } from "../../ecs/entity-base.type";
 import { Seconds } from "../../models/time.model";
+import { Collision } from "../collision.model";
+import { PhysicsUpdateResult } from "../update.model";
 
 function makeEngine(): Engine {
 	const engine = Engine.create();

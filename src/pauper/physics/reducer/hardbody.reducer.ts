@@ -1,6 +1,7 @@
+import { Body } from "matter-js";
+
 import { createEntityReducer } from "../../ecs/create-entity-reducer.func";
 import { HardBodyComponent } from "../component/HardBodyComponent";
-import { Body } from "matter-js";
 
 
 export const hardBodyPreReducer = createEntityReducer(["HardBodyComponent"], (state, action, hardbody: HardBodyComponent) => {
