@@ -25,11 +25,6 @@ export type HardBodyComponent = BaseComponent<"HardBodyComponent", HardBodyPrope
 	readonly restingTime: Seconds;
 	readonly pendingForces: { location: Point2; force: Vector2 }[];
 
-	readonly events: {
-		connect(component: HardBodyComponent, entityId: EntityId): void;
-		disconnect(component: HardBodyComponent, entityId: EntityId): void;
-	};
-
 	_body: Body | null;
 }>;
 
@@ -43,23 +38,6 @@ export const HardBodyComponent = (positionT: Point2, shapeT: Shape2, overloads?:
 	const { position, shape } = Recentre(positionT, shapeT);
 	return ({
 		name: "HardBodyComponent",
-		events: {
-			connect: (component: HardBodyComponent, entityId: EntityId) => {
-				component._body = shapeToBody(Shape2.add(component.shape, component.position), {
-					restitution: component.elasticity,
-					angularVelocity: component.angularVelocity,
-					angle: component.rotation,
-					velocity: component.velocity,
-					position: component.position,
-					density: component.density,
-					name: entityId
-				});
-				return sideEffect(component, component => World.add(matterJsPhysicsEngine.world, component._body!));
-			},
-			disconnect: (component: HardBodyComponent, entityId: EntityId) => {
-				return sideEffect(component, component => World.remove(matterJsPhysicsEngine.world, component._body!));
-			}
-		},
 		_body: null,
 		shape,
 		position,
@@ -73,27 +51,3 @@ export const HardBodyComponent = (positionT: Point2, shapeT: Shape2, overloads?:
 		...overloads
 	});
 };
-
-const shapeToBody = (shape: Shape2Type, props: IChamferableBodyDefinition & { readonly name: string }): Body => {
-	if (Array.isArray(shape)) {
-		const centre = Shape2.getCentre(shape);
-		return Bodies.fromVertices(centre.x, centre.y, [shape.map(({ x, y }) => Vector.create(x, y))], props);
-	} else if (Rectangle.is(shape)) {
-		return Bodies.rectangle(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height, props);
-	} else if (Circle.is(shape)) {
-		return Bodies.circle(shape.x, shape.y, shape.radius, props);
-	} else {
-		throw new Error();
-	}
-};
-
-// Cheating the immutability by exploiting the lack of laziness!
-// ----------------------------------------------------------------
-
-// Given value T, perform some sideEffect using that value and then return T
-const sideEffect = <T>(seed: T, sideEffect: (value: T) => void): T => {
-	return effectVar(seed, sideEffect(seed));
-};
-
-/* Allows for the value passed in to be retrieved and whatever side-effect causing values have been passed in to be evaluated and discarded */
-const effectVar = <T, U>(value: T, ..._u: U[]): T => value;

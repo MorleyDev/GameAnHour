@@ -35,11 +35,6 @@ type Schedulable interface {
 	run()
 }
 
-type jsEngineInputMouse struct {
-	mouseDown goja.Callable
-	mouseUp   goja.Callable
-}
-
 type JsEngine struct {
 	runtime        *goja.Runtime
 	timers         []*jsTimeout
@@ -47,15 +42,6 @@ type JsEngine struct {
 	animationFrame []*jsAnimationFrame
 	scheduled      []Schedulable
 	nextTimeoutID  int64
-
-	reducer        goja.Callable
-	frameRenderer  goja.Callable
-	renderer       goja.Callable
-	bootstrap      goja.Callable
-	latestState    goja.Value
-	pendingActions []goja.Value
-
-	input jsEngineInputMouse
 }
 
 func CreateEngine() *JsEngine {
@@ -65,14 +51,9 @@ func CreateEngine() *JsEngine {
 		timers:         make([]*jsTimeout, 0),
 		intervals:      make([]*jsInterval, 0),
 		animationFrame: make([]*jsAnimationFrame, 0),
-		scheduled:      make([]Schedulable, 0),
-		pendingActions: make([]goja.Value, 0),
-		input: jsEngineInputMouse{
-			mouseDown: nil,
-			mouseUp:   nil}}
+		scheduled:      make([]Schedulable, 0)}
 
 	vm.Set("GoEngine_Log", e.consoleLog)
-
 	vm.Set("GoEngine_GetNow", e.getNow)
 	vm.Set("GoEngine_SetTimeout", e.setTimout)
 	vm.Set("GoEngine_ClearTimeout", e.clearTimeout)
@@ -80,56 +61,6 @@ func CreateEngine() *JsEngine {
 	vm.Set("GoEngine_ClearInterval", e.clearInterval)
 	vm.Set("GoEngine_RequestAnimationFrame", e.requestAnimationFrame)
 	vm.Set("GoEngine_CancelAnimationFrame", e.cancelRequestAnimationFrame)
-
-	vm.Set("GoEngine_PushState", func(call goja.FunctionCall) goja.Value {
-		e.latestState = call.Argument(0)
-		return nil
-	})
-	vm.Set("GoEngine_PushAction", func(call goja.FunctionCall) goja.Value {
-		e.pendingActions = append(e.pendingActions, call.Argument(0))
-		return nil
-	})
-	vm.Set("GoEngine_SetReducer", func(call goja.FunctionCall) goja.Value {
-		reducer, ok := goja.AssertFunction(call.Argument(0))
-		if !ok {
-			panic("GoEngine_SetReducer not given function")
-		}
-		e.reducer = reducer
-		return nil
-	})
-	vm.Set("GoEngine_SetFrameRenderer", func(call goja.FunctionCall) goja.Value {
-		frameRenderer, ok := goja.AssertFunction(call.Argument(0))
-		if !ok {
-			panic("GoEngine_SetFrameRenderer not given function")
-		}
-		e.frameRenderer = frameRenderer
-		return nil
-	})
-	vm.Set("GoEngine_SetBootstrap", func(call goja.FunctionCall) goja.Value {
-		bootstrap, ok := goja.AssertFunction(call.Argument(0))
-		if !ok {
-			panic("GoEngine_SetFrameRenderer not given function")
-		}
-		e.bootstrap = bootstrap
-		return nil
-	})
-
-	vm.Set("GoEngine_OnMouseDown", func(call goja.FunctionCall) goja.Value {
-		mouseDown, ok := goja.AssertFunction(call.Argument(0))
-		if !ok {
-			panic("GoEngine_SetFrameRenderer not given function")
-		}
-		e.input.mouseDown = mouseDown
-		return nil
-	})
-	vm.Set("GoEngine_OnMouseUp", func(call goja.FunctionCall) goja.Value {
-		mouseUp, ok := goja.AssertFunction(call.Argument(0))
-		if !ok {
-			panic("GoEngine_SetFrameRenderer not given function")
-		}
-		e.input.mouseUp = mouseUp
-		return nil
-	})
 
 	_, err := vm.RunString(`
 		setTimeout = function (callback, ms) {
@@ -168,12 +99,18 @@ func CreateEngine() *JsEngine {
 	return &e
 }
 
-func (engine *JsEngine) RunString(str string) (goja.Value, error) {
-	return engine.runtime.RunString(str)
+func (engine *JsEngine) AddFunc(name string, callback func(call goja.FunctionCall) goja.Value) {
+	engine.runtime.Set(name, func(call goja.FunctionCall) goja.Value {
+		return callback(call)
+	})
 }
 
-func (engine *JsEngine) Bootstrap() {
-	engine.bootstrap(nil)
+func (engine *JsEngine) RunString(str string) goja.Value {
+	result, err := engine.runtime.RunString(str)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 func (engine *JsEngine) Tick(advance time.Duration) {
@@ -222,22 +159,6 @@ func (engine *JsEngine) FlushScheduled() {
 	engine.scheduled = make([]Schedulable, 0)
 	for _, toRun := range scheduled {
 		toRun.run()
-	}
-}
-
-func (engine *JsEngine) FlushActions() {
-	if engine.latestState == nil || len(engine.pendingActions) == 0 {
-		return
-	}
-
-	actions := engine.pendingActions
-	engine.pendingActions = make([]goja.Value, 0)
-	for _, action := range actions {
-		state, err := engine.reducer(nil, engine.latestState, action)
-		if err != nil {
-			panic(err)
-		}
-		engine.latestState = state
 	}
 }
 

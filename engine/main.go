@@ -1,121 +1,75 @@
 package main
 
-import (
-	"io/ioutil"
-	"time"
-
-	"github.com/dop251/goja"
-)
-
-type GameEvents struct {
-	endIn     <-chan interface{}
-	endOut    chan<- interface{}
-	framesOut chan<- interface{}
-	input     InputReceiver
-}
-
-type InputReceiver struct {
-	mouseDown <-chan ClickEvent
-	mouseUp   <-chan ClickEvent
-	mouseMove <-chan MouseEvent
-}
-
-func game(events GameEvents) {
-	e := CreateEngine()
-	data, err := ioutil.ReadFile("../dist/engine.js")
-	if err != nil {
-		panic(err)
-	}
-	src := string(data)
-
-	_, runtimeError := e.RunString(src)
-	if runtimeError != nil {
-		panic(runtimeError)
-	}
-
-	e.Bootstrap()
-
-	interval := time.Duration(5) * time.Millisecond
-	tick := time.Tick(interval)
-	animate := time.Tick(time.Duration(8) * time.Millisecond)
-	ticksPerSecond := 0
-
-	second := time.Tick(1 * time.Second)
-	var previousState goja.Value
-	for {
-		select {
-		case down := <-events.input.mouseDown:
-			if e.input.mouseDown != nil {
-				e.input.mouseDown(nil, e.runtime.ToValue(down.position.X), e.runtime.ToValue(down.position.Y), e.runtime.ToValue(down.button))
-			}
-			break
-		case up := <-events.input.mouseUp:
-			if e.input.mouseUp != nil {
-				e.input.mouseUp(nil, e.runtime.ToValue(up.position.X), e.runtime.ToValue(up.position.Y), e.runtime.ToValue(up.button))
-			}
-			break
-		case <-second:
-			println("tps:", ticksPerSecond)
-			ticksPerSecond = 0
-			break
-		case <-tick:
-			ticksPerSecond = ticksPerSecond + 1
-			e.Tick(interval)
-			e.FlushScheduled()
-			e.FlushActions()
-			break
-		case <-animate:
-			if e.latestState != previousState {
-				e.Animate()
-				e.FlushScheduled()
-
-				frame, err := e.frameRenderer(nil, e.latestState)
-				if err != nil {
-					panic(err)
-				}
-				events.framesOut <- frame.Export()
-				previousState = e.latestState
-			}
-			break
-
-		case <-events.endIn:
-			events.endOut <- 0
-			return
-		default:
-			break
-		}
-	}
-}
+import "sync"
 
 func main() {
 	onGameEnd := make(chan interface{}, 1)
 	onGraphicsEnd := make(chan interface{}, 1)
-	onFrame := make(chan interface{}, 1)
+
+	onRenderingCommand := make(chan []RenderingCommand, 60)
+
+	onGameState := make(chan interface{}, 60)
+	onInitialState := make(chan interface{}, 1)
+
+	onPostStateAction := make(chan interface{}, 1)
+	onBootstrapAction := make(chan interface{}, 1)
+	onEpicAction := make(chan interface{}, 1)
+
+	onFrame := make(chan []interface{}, 60)
 
 	onMouseDown := make(chan ClickEvent, 10)
 	onMouseUp := make(chan ClickEvent, 10)
 	onMouseMove := make(chan MouseEvent, 100)
 
-	gameEvents := GameEvents{
-		endIn:     onGraphicsEnd,
-		endOut:    onGameEnd,
-		framesOut: onFrame,
-		input: InputReceiver{
-			mouseUp:   onMouseUp,
-			mouseDown: onMouseDown,
-			mouseMove: onMouseMove}}
-
 	graphicsEvents := GraphicsEvents{
-		endIn:    onGameEnd,
-		endOut:   onGraphicsEnd,
-		framesIn: onFrame,
+		endIn:               onGameEnd,
+		endOut:              onGraphicsEnd,
+		renderingCommandsIn: onRenderingCommand,
 		input: InputEmitter{
 			mouseUp:   onMouseUp,
 			mouseDown: onMouseDown,
 			mouseMove: onMouseMove}}
 
+	jsRenderToFrame := NewJsFrameRenderer(JsFrameRendererEvents{frameIn: onGameState, frameOut: onFrame})
+	jsRenderToCommands := NewFrameRenderer(FrameRendererEvents{frameIn: onFrame, frameOut: onRenderingCommand})
+	jsReducer := NewJsReducer(JsReducerEvents{initialStateIn: onInitialState, actionIn: merge(onEpicAction, onBootstrapAction), actionOut: onPostStateAction})
+	jsEpic := NewJsEpic(JsEpicEvents{actionsIn: onPostStateAction, actionsOut: onEpicAction, input: InputReceiver{
+		mouseDown: onMouseDown,
+		mouseUp:   onMouseUp,
+		mouseMove: onMouseMove}})
+	jsBootstrap := NewJsBootstrap(JsBootstrapEvents{actionsOut: onBootstrapAction, initialStateOut: onInitialState})
 	window := NewWindow(graphicsEvents)
 
-	go game(gameEvents)
+	go jsRenderToFrame.Run()
+	go jsRenderToCommands.Run()
+	go jsReducer.Run()
+	go jsEpic.Run()
+	go jsBootstrap.Run()
 	window.Run()
+}
+
+func merge(ch ...<-chan interface{}) <-chan interface{} {
+	var wg sync.WaitGroup
+	out := make(chan interface{})
+
+	// Start an output goroutine for each input channel in cs.  output
+	// copies values from c to out until c is closed, then calls wg.Done.
+	output := func(c <-chan interface{}) {
+		for n := range c {
+			out <- n
+		}
+		wg.Done()
+	}
+	wg.Add(2)
+	for _, c := range ch {
+		go output(c)
+	}
+
+	// Start a goroutine to close out once all the output goroutines are
+	// done.  This must start after the wg.Add call.
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }

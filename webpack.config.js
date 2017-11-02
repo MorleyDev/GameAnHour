@@ -6,7 +6,10 @@ module.exports = {
   devtool: 'inline-source-map',
   entry: {
     index: './src/index.ts',
-    engine: './src/engine.ts'
+    "engine/golang/render": './src/engine/golang/render.ts',
+    "engine/golang/reducer": './src/engine/golang/reducer.ts',
+    "engine/golang/bootstrap": './src/engine/golang/bootstrap.ts',
+    "engine/golang/epic": './src/engine/golang/epic.ts'
   },
   output: {
     filename: 'dist/[name].js'

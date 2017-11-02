@@ -1,17 +1,12 @@
 import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
-import { fromPromise } from "rxjs/observable/fromPromise";
-import { merge } from "rxjs/observable/merge";
-import { ignoreElements } from "rxjs/operators";
 
-import { AppDrivers } from "../pauper/app-drivers";
 import { EntityId } from "../pauper/ecs/entity-base.type";
 import { AttachComponentAction, CreateEntityAction } from "../pauper/ecs/entity-component.actions";
 import { Point2 } from "../pauper/models/point/point.model";
 import { Circle, Rectangle } from "../pauper/models/shapes.model";
 import { Triangle2 } from "../pauper/models/triangle/triangle.model";
 import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
-import { GenericAction } from "../pauper/redux/generic.action";
 import { PegComponent } from "./components/PegComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
@@ -26,33 +21,7 @@ function flatMap<T, U>(array: T[], map: (item: T, index: number, whole: T[]) => 
 	return array.reduce((arr, item, index) => arr.concat(map(item, index, array) as U[]), [] as U[]);
 }
 
-export const bootstrap: (drivers: AppDrivers) => Observable<GameAction> = drivers => merge<GameAction>(
-	fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
-	from([
-		...flatMap(flatMap(Range(0, 9), i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))), createPeg),
-		...flatMap(flatMap(Range(0, 9), i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))), createPeg),
-		...createBucketPoint(Point2(412, 512)),
-		...createBucketPoint(Point2(362, 512)),
-		...createBucketPoint(Point2(312, 512)),
-		...createBucketPoint(Point2(262, 512)),
-		...createBucketPoint(Point2(212, 512)),
-		...createBucketPoint(Point2(162, 512)),
-		...createBucketPoint(Point2(112, 512)),
-		...createScoreSensor(Point2(138, 510), 10),
-		...createScoreSensor(Point2(187, 510), 6),
-		...createScoreSensor(Point2(237, 510), 3),
-		...createScoreSensor(Point2(287, 510), 3),
-		...createScoreSensor(Point2(338, 510), 6),
-		...createScoreSensor(Point2(385, 510), 10),
-		...createRightTriangle(),
-		...createLeftTriangle(),
-		...createRightWall(),
-		...createLeftWall(),
-		...createFloor()
-	])
-);
-
-const createPeg = (position: Point2): GenericAction[] => {
+const createPeg = (position: Point2): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -62,7 +31,7 @@ const createPeg = (position: Point2): GenericAction[] => {
 	];
 };
 
-const createLeftTriangle = (): GenericAction[] => {
+const createLeftTriangle = (): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -71,7 +40,7 @@ const createLeftTriangle = (): GenericAction[] => {
 	];
 };
 
-const createRightTriangle = (): GenericAction[] => {
+const createRightTriangle = (): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -80,7 +49,7 @@ const createRightTriangle = (): GenericAction[] => {
 	];
 };
 
-const createBucketPoint = (position: Point2): GenericAction[] => {
+const createBucketPoint = (position: Point2): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -89,7 +58,7 @@ const createBucketPoint = (position: Point2): GenericAction[] => {
 	];
 };
 
-const createRightWall = (): GenericAction[] => {
+const createRightWall = (): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -97,7 +66,7 @@ const createRightWall = (): GenericAction[] => {
 	];
 };
 
-const createFloor = (): GenericAction[] => {
+const createFloor = (): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -106,7 +75,7 @@ const createFloor = (): GenericAction[] => {
 	];
 };
 
-const createLeftWall = (): GenericAction[] => {
+const createLeftWall = (): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -114,7 +83,7 @@ const createLeftWall = (): GenericAction[] => {
 	];
 };
 
-const createScoreSensor = (position: Point2, score: number): GenericAction[] => {
+const createScoreSensor = (position: Point2, score: number): GameAction[] => {
 	const entityId = EntityId();
 	return [
 		CreateEntityAction(entityId),
@@ -122,3 +91,26 @@ const createScoreSensor = (position: Point2, score: number): GenericAction[] => 
 		AttachComponentAction(entityId, ScoreBucketComponent(score))
 	];
 };
+
+export const bootstrap = from([
+	...flatMap(flatMap(Range(0, 9), i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))), createPeg),
+	...flatMap(flatMap(Range(0, 9), i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))), createPeg),
+	...createBucketPoint(Point2(412, 512)),
+	...createBucketPoint(Point2(362, 512)),
+	...createBucketPoint(Point2(312, 512)),
+	...createBucketPoint(Point2(262, 512)),
+	...createBucketPoint(Point2(212, 512)),
+	...createBucketPoint(Point2(162, 512)),
+	...createBucketPoint(Point2(112, 512)),
+	...createScoreSensor(Point2(138, 510), 10),
+	...createScoreSensor(Point2(187, 510), 6),
+	...createScoreSensor(Point2(237, 510), 3),
+	...createScoreSensor(Point2(287, 510), 3),
+	...createScoreSensor(Point2(338, 510), 6),
+	...createScoreSensor(Point2(385, 510), 10),
+	...createRightTriangle(),
+	...createLeftTriangle(),
+	...createRightWall(),
+	...createLeftWall(),
+	...createFloor()
+]);

@@ -1,7 +1,10 @@
+import { physicsEcsEvents } from "../pauper/physics/reducer/ecs-events.func";
 import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
+import { fromPromise } from "rxjs/observable/fromPromise";
 import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
+import { filter, ignoreElements, map, mergeMap } from "rxjs/operators";
 import { pipe } from "rxjs/util/pipe";
 
 import { AppDrivers } from "../pauper/app-drivers";
@@ -10,21 +13,21 @@ import { createEntitiesStateMap } from "../pauper/ecs/create-entities-state-map.
 import { createEntityReducer } from "../pauper/ecs/create-entity-reducer.func";
 import { EntityId } from "../pauper/ecs/entity-base.type";
 import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/ecs/entity-component.actions";
-import { entityComponentReducer } from "../pauper/ecs/entity-component.reducer";
+import { createEntityComponentReducer } from "../pauper/ecs/entity-component.reducer";
 import { exponentialInterpolation } from "../pauper/maths/interpolation.maths";
+import { Vector2 } from "../pauper/maths/vector.maths";
 import { Colour } from "../pauper/models/colour.model";
-import { Rectangle, Shape2, Text2, Point2, Circle } from "../pauper/models/shapes.model";
+import { Circle, Point2, Shape2, Text2 } from "../pauper/models/shapes.model";
 import { Millisecond, Seconds } from "../pauper/models/time.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
 import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
 import { createPhysicsReducer } from "../pauper/physics/reducer/physics-body.reducer";
-import { Clear, Fill, Origin, RenderTarget, Rotate } from "../pauper/render/render-frame.model";
+import { Clear, Fill, Origin, Rotate } from "../pauper/render/render-frame.model";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
-import { map, mergeMap, filter, ignoreElements, tap } from "rxjs/operators";
 
 const applyPhysicsForcesToBodies = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
 	if (physics.pendingForces.length === 0) {
@@ -45,6 +48,8 @@ const physicsReducer = createPhysicsReducer<GameState>((state, result) => ({
 		.concat(result.collisionStarts.map(collision => ({ type: "@@COLLISION_START", collision } as GameAction)))
 		.concat(result.collisionEnds.map(collision => ({ type: "@@COLLISION_END", collision } as GameAction)))
 }));
+
+const entityComponentReducer = createEntityComponentReducer(physicsEcsEvents);
 
 export const reducer = (state: GameState, action: GameAction): GameState => {
 	switch (action.type) {
@@ -114,7 +119,7 @@ const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "Stati
 
 const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id: string, physics: FloatingScoreComponent, runtime: Seconds) => {
 	const interpolateTo = (runtime - physics.startingTick) / physics.lifespan;
-	const position = physics.position(interpolateTo);
+	const position = Vector2.linearInterpolation(physics.startPosition, physics.endPosition)(interpolateTo);
 
 	return [
 		Fill(Text2(`${physics.score}`, position.x, position.y, "24px", "sans-serif"), Colour(255, 255, 255, exponentialInterpolation(Math.E)(1, 0)(interpolateTo)))
@@ -127,6 +132,7 @@ export const render = (state: GameState) => [
 	Array.from(staticEntityRenderer(state)),
 	Array.from(entityRenderer(state)),
 	Array.from(scoreTextRenderer(state, state.runtime)),
+
 	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),
 	Fill(Text2(`Runtime: ${state.runtime}`, 30, 60, "16px", "sans-serif"), Colour(255, 0, 0))
 ];
@@ -137,6 +143,7 @@ const tabAwareInterval = (period: Seconds, drivers: AppDrivers) => {
 };
 
 export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
+	fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
 	tabAwareInterval(20 * Millisecond, drivers).pipe(mergeMap(() => [({ type: "@@TICK", deltaTime: 20 * Millisecond }), ({ type: "@@ADVANCE_PHYSICS", deltaTime: 20 * Millisecond })])),
 	drivers.mouse!.mouseUp().pipe(
 		mergeMap(() => {

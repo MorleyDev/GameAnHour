@@ -5,11 +5,19 @@ import { EntitiesState } from "./entities.state";
 import { BaseEntity, EntityId } from "./entity-base.type";
 import { AttachComponentAction, CreateEntityAction, DestroyEntityAction, DetachComponentAction } from "./entity-component.actions";
 
-export const entityComponentReducer: GenericReducer = createReducer<EntitiesState>(
+export type EntityComponentReducerEvents = {
+	readonly attach: (entityId: EntityId, component: BaseComponent) => void;
+	readonly detach: (entityId: EntityId, component: BaseComponent) => void;
+};
+
+export const createEntityComponentReducer = (events: {
+	attach: (entityId: EntityId, component: BaseComponent) => void;
+	detach: (entityId: EntityId, component: BaseComponent) => void;
+}): GenericReducer => createReducer<EntitiesState>(
 	["EC_CreateEntityAction", (state: EntitiesState, action: CreateEntityAction) => createEntity(state, action.id)],
-	["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => destroyEntity(state, action.id)],
-	["EC_AttachComponentAction", (state: EntitiesState, action: AttachComponentAction) => attachComponent(state, action.id, action.component)],
-	["EC_DetachComponentAction", (state: EntitiesState, action: DetachComponentAction) => detachComponent(state, action.id, action.component)]
+	["EC_DestroyEntityAction", (state: EntitiesState, action: DestroyEntityAction) => destroyEntity(state, action.id, events)],
+	["EC_AttachComponentAction", (state: EntitiesState, action: AttachComponentAction) => attachComponent(state, action.id, action.component, events)],
+	["EC_DetachComponentAction", (state: EntitiesState, action: DetachComponentAction) => detachComponent(state, action.id, action.component, events)]
 ) as GenericReducer;
 
 export function createEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
@@ -22,17 +30,13 @@ export function createEntity<TState extends EntitiesState>(state: TState, id: En
 	};
 }
 
-export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId): TState {
+export function destroyEntity<TState extends EntitiesState>(state: TState, id: EntityId, events: EntityComponentReducerEvents): TState {
 	const entity = state.entities[id];
-	if (entity == null) {
-		console.warn("Tried to remove", entity, "which does not exist");
-		return state;
-	}
 	return {
 		...(state as any),
 		entities: {
 			...state.entities,
-			[id]: sideEffect(undefined, () => disconnectEntity(state.entities[id]))
+			[id]: sideEffect(undefined, () => disconnectEntity(state.entities[id], events))
 		},
 		componentEntityLinks: removeEntityComponentLinks(state.componentEntityLinks, entity)
 	};
@@ -53,7 +57,7 @@ export function updateComponentLinks(map: { readonly [key: string]: ReadonlyArra
 	return result;
 }
 
-export function attachComponent<TState extends EntitiesState>(state: TState, id: EntityId, component: BaseComponent): TState {
+export function attachComponent<TState extends EntitiesState>(state: TState, id: EntityId, component: BaseComponent, events: EntityComponentReducerEvents): TState {
 	const newState = {
 		...(state as any),
 		entities: {
@@ -71,12 +75,12 @@ export function attachComponent<TState extends EntitiesState>(state: TState, id:
 			[component.name]: (state.componentEntityLinks[component.name] || []).concat(id)
 		}
 	};
-	connectComponent(component, id);
+	events.attach(id, component);
 	return newState;
 }
 
-export function detachComponent<TState extends EntitiesState>(state: TState, id: EntityId, componentName: string): TState {
-	detachComponent(state, id, componentName);
+export function detachComponent<TState extends EntitiesState>(state: TState, id: EntityId, componentName: string, events: EntityComponentReducerEvents): TState {
+	events.detach(id, state.entities[id].components[componentName]);
 	return {
 		...(state as any),
 		entities: {
@@ -96,19 +100,13 @@ export function detachComponent<TState extends EntitiesState>(state: TState, id:
 	};
 }
 
-function connectComponent(component: BaseComponent, entityId: EntityId): void {
-	return component && component.events && component.events.connect && component.events.connect(component, entityId);
-}
 
-function disconnectEntity(entity: BaseEntity): void {
+function disconnectEntity(entity: BaseEntity, events: EntityComponentReducerEvents): void {
 	for (const componentName in entity.components) {
-		disconnectComponent(entity.components[componentName], entity.id);
+		events.detach(entity.id, entity.components[componentName]);
 	}
 }
 
-function disconnectComponent(component: BaseComponent, entityId: EntityId): void {
-	return component.events && component.events.disconnect && component.events.disconnect(component, entityId);
-}
 
 // Cheating the immutability by exploiting the lack of laziness!
 // ----------------------------------------------------------------

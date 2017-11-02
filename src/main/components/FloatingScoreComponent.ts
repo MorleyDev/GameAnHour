@@ -5,7 +5,8 @@ import { Vector2 } from "../../pauper/maths/vector.maths";
 
 export type FloatingScoreComponent = BaseComponent<"FloatingScoreComponent", {
 	readonly score: number;
-	readonly position: (percentage: number) => Vector2;
+	readonly startPosition: Vector2;
+	readonly endPosition: Vector2;
 	readonly startingTick: Seconds;
 	readonly lifespan: Seconds;
 }>;
@@ -15,6 +16,7 @@ export const FloatingScoreComponent =
 		score,
 		position: Vector2.exponentialInterpolation(1.25)(startPosition, Vector2.add(startPosition, Vector2(0, -50))),
 		startingTick,
+		startPosition,
 		endPosition: Vector2.add(startPosition, Point2(0, -50)),
 		lifespan: 1
 	});

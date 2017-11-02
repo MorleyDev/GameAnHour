@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image/color"
-	"reflect"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -30,11 +29,43 @@ type InputEmitter struct {
 }
 
 type GraphicsEvents struct {
-	endIn    <-chan interface{}
-	endOut   chan<- interface{}
-	framesIn <-chan interface{}
+	endIn               <-chan interface{}
+	endOut              chan<- interface{}
+	renderingCommandsIn <-chan []RenderingCommand
 
 	input InputEmitter
+}
+
+const (
+	Clear         = iota
+	ClearColour   = iota
+	DrawPolygon   = iota
+	DrawCircle    = iota
+	DrawRectangle = iota
+	DrawText      = iota
+	Origin        = iota
+	Rotate        = iota
+	Scale         = iota
+	RenderTarget  = iota
+)
+
+const (
+	Stroke = iota
+	Fill   = iota
+)
+
+type RenderingCommand struct {
+	command  int
+	format   int
+	points   []pixel.Vec
+	location pixel.Vec
+	radius   float64
+	width    float64
+	height   float64
+	text     string
+	colour   color.RGBA
+	angle    float64
+	children []RenderingCommand
 }
 
 type GraphicsWindow struct {
@@ -47,19 +78,6 @@ func NewWindow(events GraphicsEvents) *GraphicsWindow {
 
 func (w *GraphicsWindow) Run() {
 	pixelgl.Run(run(w))
-}
-
-func (w *GraphicsWindow) getLatestFrame() []interface{} {
-	var frame []interface{}
-	for {
-		select {
-		case frameRaw := <-w.events.framesIn:
-			frame = frameRaw.([]interface{})
-			break
-		default:
-			return frame
-		}
-	}
 }
 
 func run(w *GraphicsWindow) func() {
@@ -100,161 +118,103 @@ func run(w *GraphicsWindow) func() {
 
 				latestFrame := w.getLatestFrame()
 				if latestFrame != nil {
-					renderFrame(win, win, basicAtlas, pixel.IM.Moved(pixel.V(0, 512)), latestFrame)
+					renderCommands(win, win, basicAtlas, pixel.IM.Moved(pixel.V(0, 512)), latestFrame)
 				}
-
 			}
 		}
 	}
 }
 
-func renderFrame(window *pixelgl.Window, target pixel.Target, atlas *text.Atlas, matrix pixel.Matrix, frame []interface{}) {
+func (w *GraphicsWindow) getLatestFrame() []RenderingCommand {
+	var frame []RenderingCommand
+	for {
+		select {
+		case frameRaw := <-w.events.renderingCommandsIn:
+			frame = frameRaw
+			break
+		default:
+			return frame
+		}
+	}
+}
+
+func renderCommands(window *pixelgl.Window, target pixel.Target, atlas *text.Atlas, matrix pixel.Matrix, frame []RenderingCommand) {
 	if len(frame) == 0 {
 		return
 	}
-	switch t := frame[0].(type) {
-	case []interface{}:
-		for _, elementRaw := range frame {
-			renderFrame(window, target, atlas, matrix, elementRaw.([]interface{}))
-		}
-		return
-	case string:
-		renderCommand(window, target, atlas, matrix, t, frame[1:])
-		return
-	default:
-		panic("unknown frame command")
+	for _, command := range frame {
+		command.render(window, target, atlas, matrix)
 	}
 }
 
-func renderCommand(window *pixelgl.Window, target pixel.Target, atlas *text.Atlas, matrix pixel.Matrix, command string, data []interface{}) {
-	switch command {
-	case "clear":
+func (command *RenderingCommand) render(window *pixelgl.Window, target pixel.Target, atlas *text.Atlas, matrix pixel.Matrix) {
+	switch command.command {
+	case Clear:
 		if target == window {
-			if len(data) == 0 {
-				window.Clear(colornames.Black)
-			} else {
-				colour := mapToColour(data[0].(map[string]interface{}))
-				window.Clear(colour)
-			}
+			window.Clear(colornames.Black)
+		} else {
+			panic("rendertarget not supported")
+		}
+		return
+	case ClearColour:
+		if target == window {
+			window.Clear(command.colour)
 		} else {
 			panic("rendertarget not supported")
 		}
 		return
 
-	case "origin":
-		translate := data[0].(map[string]interface{})
-		translateX := extractFloat64(translate["x"])
-		translateY := -extractFloat64(translate["y"])
-		frames := data[1].([]interface{})
-
-		renderFrame(window, target, atlas, matrix.Moved(pixel.V(translateX, translateY)), frames)
+	case Origin:
+		renderCommands(window, target, atlas, matrix.Moved(pixel.V(command.location.X, command.location.Y)), command.children)
 		return
 
-	case "scale":
-		scale := data[0].(map[string]interface{})
-		scaleX := extractFloat64(scale["x"])
-		scaleY := extractFloat64(scale["y"])
-		frames := data[1].([]interface{})
-		renderFrame(window, target, atlas, matrix.ScaledXY(pixel.V(0, 0), pixel.V(scaleX, scaleY)), frames)
+	case Scale:
+		renderCommands(window, target, atlas, matrix.ScaledXY(pixel.V(0, 0), pixel.V(command.location.X, command.location.Y)), command.children)
 		return
 
-	case "rotate":
-		radians := extractFloat64(data[0])
-		frames := data[1].([]interface{})
-		renderFrame(window, target, atlas, matrix.Rotated(pixel.V(0, 0), radians), frames)
+	case Rotate:
+		renderCommands(window, target, atlas, matrix.Rotated(pixel.V(0, 0), command.angle), command.children)
 		return
 
-	case "stroke":
-	case "fill":
-		colour := mapToColour(data[1].(map[string]interface{}))
-
-		switch shape := data[0].(type) {
-		case []interface{}:
-			imd := imdraw.New(nil)
-			imd.SetMatrix(matrix)
-			imd.Color = colour
-			for _, point := range shape {
-				p := point.(map[string]interface{})
-				imd.Push(pixel.V(extractFloat64(p["x"]), -extractFloat64(p["y"])))
-			}
-			imd.Polygon(0)
-			imd.Draw(target)
-			return
-
-		case map[string]interface{}:
-			x := extractFloat64(shape["x"])
-			y := -extractFloat64(shape["y"])
-
-			colour := mapToColour(data[1].(map[string]interface{}))
-			radius, okRadius := shape["radius"]
-			if okRadius {
-				r := extractFloat64(radius)
-				imd := imdraw.New(nil)
-				imd.SetMatrix(matrix)
-				imd.Color = colour
-				imd.Push(pixel.V(x, y))
-				imd.Circle(r, 0)
-				imd.Draw(target)
-				return
-			}
-
-			width, okWidth := shape["width"]
-			height, okHeight := shape["height"]
-			if okWidth && okHeight {
-				w := extractFloat64(width)
-				h := extractFloat64(height)
-
-				imd := imdraw.New(nil)
-				imd.SetMatrix(matrix)
-				imd.Color = colour
-				imd.Push(pixel.V(x, y))
-				imd.Push(pixel.V(x+w, y))
-				imd.Push(pixel.V(x+w, y+h))
-				imd.Push(pixel.V(x, y+h))
-				imd.Polygon(0)
-				return
-			}
-
-			txt, okText := shape["text"]
-			if okText {
-				basicTxt := text.New(pixel.V(x, y), atlas)
-				fmt.Fprintln(basicTxt, txt.(string))
-				basicTxt.Draw(target, matrix)
-			}
-			return
-		default:
-			panic("fill:unknown")
+	case DrawPolygon:
+		imd := imdraw.New(nil)
+		imd.SetMatrix(matrix)
+		imd.Color = command.colour
+		for _, point := range command.points {
+			imd.Push(pixel.V(point.X, -point.Y))
 		}
-	case "rendertarget":
+		imd.Polygon(0)
+		imd.Line(0)
+		imd.Draw(target)
+		return
+
+	case DrawCircle:
+		imd := imdraw.New(nil)
+		imd.SetMatrix(matrix)
+		imd.Color = command.colour
+		imd.Push(pixel.V(command.location.X, command.location.Y))
+		imd.Circle(command.radius, 0)
+		imd.Draw(target)
+		return
+
+	case DrawRectangle:
+		imd := imdraw.New(nil)
+		imd.SetMatrix(matrix)
+		imd.Color = command.colour
+		imd.Push(pixel.V(command.location.X, command.location.Y))
+		imd.Push(pixel.V(command.location.X+command.width, command.location.Y))
+		imd.Push(pixel.V(command.location.X+command.width, command.location.Y+command.height))
+		imd.Push(pixel.V(command.location.X, command.location.Y+command.height))
+		imd.Polygon(0)
+		return
+
+	case DrawText:
+		basicTxt := text.New(command.location, atlas)
+		fmt.Fprintln(basicTxt, command.text)
+		basicTxt.Draw(target, matrix)
+		return
+
+	case RenderTarget:
 		panic("rendertarget is not supported")
-	}
-}
-
-func mapToColour(colour map[string]interface{}) color.RGBA {
-	return color.RGBA{
-		R: uint8(extractInt64(colour["r"])),
-		G: uint8(extractInt64(colour["g"])),
-		B: uint8(extractInt64(colour["b"])),
-		A: uint8(extractFloat64(colour["a"]) * 255.0)}
-}
-
-func extractFloat64(value interface{}) float64 {
-	switch c := value.(type) {
-	case int64:
-		return float64(c)
-	case float64:
-		return c
-	default:
-		panic("Value was not int64 or float64 but was " + reflect.TypeOf(c).String())
-	}
-}
-func extractInt64(value interface{}) int64 {
-	switch c := value.(type) {
-	case int64:
-		return c
-	case float64:
-		return int64(c)
-	default:
-		panic("Value was not int64 or float64 but was " + reflect.TypeOf(c).String())
 	}
 }
