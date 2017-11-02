@@ -32,7 +32,7 @@ func main() {
 
 	jsRenderToFrame := NewJsFrameRenderer(JsFrameRendererEvents{frameIn: onGameState, frameOut: onFrame})
 	jsRenderToCommands := NewFrameRenderer(FrameRendererEvents{frameIn: onFrame, frameOut: onRenderingCommand})
-	jsReducer := NewJsReducer(JsReducerEvents{initialStateIn: onInitialState, actionIn: merge(onEpicAction, onBootstrapAction), actionOut: onPostStateAction})
+	jsReducer := NewJsReducer(JsReducerEvents{initialStateIn: onInitialState, actionIn: merge(onEpicAction, onBootstrapAction), actionOut: onPostStateAction, stateOut: onGameState})
 	jsEpic := NewJsEpic(JsEpicEvents{actionsIn: onPostStateAction, actionsOut: onEpicAction, input: InputReceiver{
 		mouseDown: onMouseDown,
 		mouseUp:   onMouseUp,

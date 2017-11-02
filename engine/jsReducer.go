@@ -59,5 +59,6 @@ func (r *JsReducer) Run() {
 			panic(err)
 		}
 		latestState = s.Export()
+		r.events.stateOut <- latestState
 	}
 }

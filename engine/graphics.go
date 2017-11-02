@@ -118,7 +118,7 @@ func run(w *GraphicsWindow) func() {
 
 				latestFrame := w.getLatestFrame()
 				if latestFrame != nil {
-					renderCommands(win, win, basicAtlas, pixel.IM.Moved(pixel.V(0, 512)), latestFrame)
+					renderCommands(win, win, basicAtlas, pixel.IM, latestFrame)
 				}
 			}
 		}
@@ -181,7 +181,7 @@ func (command *RenderingCommand) render(window *pixelgl.Window, target pixel.Tar
 		imd.SetMatrix(matrix)
 		imd.Color = command.colour
 		for _, point := range command.points {
-			imd.Push(pixel.V(point.X, -point.Y))
+			imd.Push(pixel.V(point.X, point.Y))
 		}
 		imd.Polygon(0)
 		imd.Line(0)

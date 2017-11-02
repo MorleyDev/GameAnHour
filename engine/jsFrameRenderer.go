@@ -48,8 +48,7 @@ func NewJsFrameRenderer(events JsFrameRendererEvents) *JsFrameRenderer {
 func (r *JsFrameRenderer) Run() {
 	for {
 		frame := <-r.events.frameIn
-
-		rendered, err := r.render(r.runtime.runtime.ToValue(frame))
+		rendered, err := r.render(nil, r.runtime.runtime.ToValue(frame))
 		if err != nil {
 			panic(err)
 		}

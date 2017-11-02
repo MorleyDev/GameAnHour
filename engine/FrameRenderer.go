@@ -63,7 +63,7 @@ func renderCommand(command string, data []interface{}) RenderingCommand {
 	case "origin":
 		translate := data[0].(map[string]interface{})
 		translateX := extractFloat64(translate["x"])
-		translateY := -extractFloat64(translate["y"])
+		translateY := extractFloat64(translate["y"])
 		frames := data[1].([]interface{})
 		return RenderingCommand{command: Origin, location: pixel.V(translateX, translateY), children: frameToRenderingCommands(frames)}
 
@@ -88,13 +88,13 @@ func renderCommand(command string, data []interface{}) RenderingCommand {
 			points := make([]pixel.Vec, len(shape))
 			for index, point := range shape {
 				p := point.(map[string]interface{})
-				points[index] = pixel.V(extractFloat64(p["x"]), -extractFloat64(p["y"]))
+				points[index] = pixel.V(extractFloat64(p["x"]), extractFloat64(p["y"]))
 			}
 			return RenderingCommand{command: DrawPolygon, points: points, colour: colour}
 
 		case map[string]interface{}:
 			x := extractFloat64(shape["x"])
-			y := -extractFloat64(shape["y"])
+			y := extractFloat64(shape["y"])
 
 			colour := mapToColour(data[1].(map[string]interface{}))
 			radius, okRadius := shape["radius"]
