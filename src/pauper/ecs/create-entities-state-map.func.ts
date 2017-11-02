@@ -18,7 +18,7 @@ export function createEntitiesStateMap<TResult>(
 	const innerGetComponentsOfEntity = getComponentsOfEntity(withComponents);
 
 	return function * (state: EntitiesState, ...extra: any[]): Iterable<TResult> {
-		for (const entityId of innerGetEntitiesByComponents(state)) {
+		for (const entityId of Array.from(innerGetEntitiesByComponents(state))) {
 			const components = withComponents.map(component => state.entities[entityId].components[component]);
 			yield (mapper as any)(entityId, ...components, ...extra);
 		}

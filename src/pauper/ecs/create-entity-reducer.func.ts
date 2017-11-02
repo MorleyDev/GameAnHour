@@ -21,12 +21,12 @@ export function createEntityReducer<TState extends EntitiesState, TAction extend
 				...state.entities
 			}
 		});
-		for (const entityId of targetEntities) {
+		for (const entityId of Array.from(targetEntities)) {
 			const targetEntity = state.entities[entityId];
 			const components = getComponents(targetEntity);
 			const newComponents = reducer(state, action, ...components);
 			const cloneComponents: { [component: string]: BaseComponent } = ({ ...clone.entities[entityId].components });
-			for (const component of newComponents) {
+			for (const component of Array.from(newComponents)) {
 				cloneComponents[component.name] = component;
 			}
 			clone.entities[entityId] = ({

@@ -7,7 +7,7 @@
             "es2017",
             "dom"
         ],
-        "target": "es2017",
+        "target": "es5",
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
         "outDir": "dist",
