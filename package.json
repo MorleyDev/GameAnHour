@@ -18,14 +18,14 @@
     "@types/node": "8.0.47",
     "tap": "10.7.2",
     "tap-dot": "1.0.5",
-    "ts-loader": "3.1.0",
+    "ts-loader": "3.1.1",
     "ts-node": "3.3.0",
     "tslint": "5.8.0",
     "tslint-immutable": "4.4.0",
-    "typescript": "rc",
+    "typescript": "2.6.1",
     "webpack": "3.8.1",
     "webpack-closure-compiler": "2.1.5",
-    "webpack-dev-server": "2.9.3"
+    "webpack-dev-server": "2.9.4"
   },
   "dependencies": {
     "@types/core-js": "0.9.43",
@@ -36,7 +36,6 @@
     "matter-js": "0.13.0",
     "poly-decomp": "^0.2.1",
     "redux": "3.7.2",
-    "redux-observable": "0.16.0",
     "rxfiddle": "1.0.4",
     "rxjs": "5.5.2"
   }
