@@ -1,0 +1,12 @@
+{
+	"files.associations": {
+		"ios": "cpp",
+		"system_error": "cpp",
+		"vector": "cpp",
+		"xiosbase": "cpp",
+		"xstring": "cpp",
+		"xtree": "cpp"
+	},
+	"C_Cpp.addWorkspaceRootToIncludePath": true,
+	"C_Cpp.autocomplete": "Default"
+}
