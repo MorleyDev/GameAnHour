@@ -5,11 +5,12 @@ const isProd = process.argv.indexOf("--env.prod") >= 0;
 module.exports = {
   devtool: 'inline-source-map',
   entry: {
-    index: './src/index.ts',
+    "index": './src/index.ts',
     "engine/golang/render": './src/engine/golang/render.ts',
     "engine/golang/reducer": './src/engine/golang/reducer.ts',
     "engine/golang/bootstrap": './src/engine/golang/bootstrap.ts',
-    "engine/golang/epic": './src/engine/golang/epic.ts'
+    "engine/golang/epic": './src/engine/golang/epic.ts',
+    "engine/sfml/index": './src/engine/sfml/index.ts'
   },
   output: {
     filename: 'dist/[name].js'

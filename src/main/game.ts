@@ -1,4 +1,3 @@
-import { physicsEcsEvents } from "../pauper/physics/reducer/ecs-events.func";
 import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { fromPromise } from "rxjs/observable/fromPromise";
@@ -21,6 +20,7 @@ import { Circle, Point2, Shape2, Text2 } from "../pauper/models/shapes.model";
 import { Millisecond, Seconds } from "../pauper/models/time.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
 import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
+import { physicsEcsEvents } from "../pauper/physics/reducer/ecs-events.func";
 import { createPhysicsReducer } from "../pauper/physics/reducer/physics-body.reducer";
 import { Clear, Fill, Origin, Rotate } from "../pauper/render/render-frame.model";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";

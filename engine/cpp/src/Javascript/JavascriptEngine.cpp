@@ -14,6 +14,7 @@ JavascriptEngine::JavascriptEngine()
         : context(duk_create_heap_default()) {
     duk_console_init(context, 0);
     add(
+            "global",
             "if (typeof global === 'undefined') {"
             "    (function () {"
             "        var global = new Function('return this;')();"
@@ -32,11 +33,11 @@ JavascriptEngine::~JavascriptEngine() {
     duk_destroy_heap(context);
 }
 
-void JavascriptEngine::add(std::string script)
+void JavascriptEngine::add(std::string name, std::string script)
 {
     push(script);
     if (duk_peval(context) != 0)
-        throw std::runtime_error(duk_safe_to_string(context, -1));
+        throw std::runtime_error(std::string(name) + ":" + duk_safe_to_string(context, -1));
     pop();
 }
 
@@ -47,7 +48,7 @@ void JavascriptEngine::load(std::string filepath) {
     }
 
     auto script = std::string((std::istreambuf_iterator<char>(engineCode)), std::istreambuf_iterator<char>());
-    add(script);
+    add(filepath, script);
 }
 
 void JavascriptEngine::setGlobalFunction(std::string name, std::function<duk_ret_t (duk_context*)> function, int nargs)

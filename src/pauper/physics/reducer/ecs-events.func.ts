@@ -10,9 +10,6 @@ import { StaticBodyComponent } from "../component/StaticBodyComponent";
 
 export const physicsEcsEvents: EntityComponentReducerEvents = {
 	attach(entityId, c) {
-		if (!isBrowser) { // TODO: FIX
-			return c;
-		}
 		switch (c.name) {
 			case "HardBodyComponent": {
 				const component = c as HardBodyComponent;
@@ -47,10 +44,6 @@ export const physicsEcsEvents: EntityComponentReducerEvents = {
 		}
 	},
 	detach(entityId, c) {
-		if (!isBrowser) { // TODO: FIX
-			return c;
-		}
-
 		switch (c.name) {
 			case "HardBodyComponent":
 			case "StaticBodyComponent": {

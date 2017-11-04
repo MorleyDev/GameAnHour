@@ -92,7 +92,7 @@ const createScoreSensor = (position: Point2, score: number): GameAction[] => {
 	];
 };
 
-export const bootstrap = from([
+export const bootstrap = from<GameAction>([
 	...flatMap(flatMap(Range(0, 9), i => Range(0, 6).map(j => Point2(i * 42 + 85, j * 72 + 95))), createPeg),
 	...flatMap(flatMap(Range(0, 9), i => Range(0, 5).map(j => Point2(i * 42 + 105, j * 72 + 130))), createPeg),
 	...createBucketPoint(Point2(412, 512)),

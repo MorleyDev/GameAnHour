@@ -17,21 +17,24 @@ export const hardBodyPreReducer = createEntityReducer(["HardBodyComponent"], (st
 });
 
 export const hardBodyPostReducer = createEntityReducer(["HardBodyComponent"], (state, action, hardbody: HardBodyComponent) => {
-	const motion = hardbody._body!.speed * hardbody._body!.speed + hardbody._body!.angularSpeed * hardbody._body!.angularSpeed;
+	if (hardbody._body == null) {
+		return [ hardbody ];
+	}
+	const motion = hardbody._body.speed * hardbody._body.speed + hardbody._body.angularSpeed * hardbody._body.angularSpeed;
 	const isResting = motion < 1;
 
 	return [{
 		...hardbody,
 		restingTime: isResting ? hardbody.restingTime + action.deltaTime : 0,
 		position: {
-			x: hardbody._body!.position.x,
-			y: hardbody._body!.position.y
+			x: hardbody._body.position.x,
+			y: hardbody._body.position.y
 		},
 		velocity: {
-			x: hardbody._body!.velocity.x,
-			y: hardbody._body!.velocity.y,
+			x: hardbody._body.velocity.x,
+			y: hardbody._body.velocity.y,
 		},
-		angularVelocity: hardbody._body!.angularVelocity,
-		rotation: hardbody._body!.angle
+		angularVelocity: hardbody._body.angularVelocity,
+		rotation: hardbody._body.angle
 	}];
 });

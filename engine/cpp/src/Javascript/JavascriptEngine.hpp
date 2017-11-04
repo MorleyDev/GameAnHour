@@ -35,7 +35,7 @@ public:
     JavascriptEngine();
     ~JavascriptEngine();
 
-    void add(std::string script);
+    void add(std::string name, std::string script);
     void load(std::string filepath);
     void setGlobalFunction(std::string name, std::function<duk_ret_t (duk_context*)> function, int nargs = 0);
 
