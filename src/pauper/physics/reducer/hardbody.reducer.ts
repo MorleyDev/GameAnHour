@@ -1,40 +1,23 @@
-import { Body } from "matter-js";
-
 import { createEntityReducer } from "../../ecs/create-entity-reducer.func";
+import { Vector2 } from "../../maths/vector.maths";
 import { HardBodyComponent } from "../component/HardBodyComponent";
 
-
-export const hardBodyPreReducer = createEntityReducer(["HardBodyComponent"], (state, action, hardbody: HardBodyComponent) => {
+export const hardBodyPreReducer = (applyForce: (c: HardBodyComponent, location: Vector2, force: Vector2) => void) => createEntityReducer(["HardBodyComponent"], (state, action, hardbody: HardBodyComponent) => {
 	if (hardbody.pendingForces.length === 0) {
 		return [hardbody];
 	}
 
-	hardbody.pendingForces.forEach(({ location, force }) => Body.applyForce(hardbody._body!, location, force));
+	hardbody.pendingForces.forEach(({ location, force }) => applyForce(hardbody, location, force));
 	return [{
 		...hardbody,
 		pendingForces: []
 	}];
 });
 
-export const hardBodyPostReducer = createEntityReducer(["HardBodyComponent"], (state, action, hardbody: HardBodyComponent) => {
-	if (hardbody._body == null) {
-		return [ hardbody ];
-	}
-	const motion = hardbody._body.speed * hardbody._body.speed + hardbody._body.angularSpeed * hardbody._body.angularSpeed;
-	const isResting = motion < 1;
-
+export const hardBodyPostReducer = (sync: (c: HardBodyComponent) => HardBodyComponent) => createEntityReducer(["HardBodyComponent"], (state, action, hb: HardBodyComponent) => {
+	const hardbody = sync(hb);
 	return [{
 		...hardbody,
-		restingTime: isResting ? hardbody.restingTime + action.deltaTime : 0,
-		position: {
-			x: hardbody._body.position.x,
-			y: hardbody._body.position.y
-		},
-		velocity: {
-			x: hardbody._body.velocity.x,
-			y: hardbody._body.velocity.y,
-		},
-		angularVelocity: hardbody._body.angularVelocity,
-		rotation: hardbody._body.angle
+		restingTime: hardbody.isResting ? hardbody.restingTime + action.deltaTime : 0
 	}];
 });

@@ -13,11 +13,14 @@
 int main() {
 	try {
 		sf::RenderWindow window(sf::VideoMode(512, 512), "GAM");
-		window.setVerticalSyncEnabled(true);
+        //window.setVerticalSyncEnabled(true);
+
+        std::vector<sf::Transform> stack;
+        stack.push_back(sf::Transform::Identity);
 
 		JavascriptEngine engine;
 		attachTimers(engine);
-		attachSfml(engine, window);
+		attachSfml(engine, window, stack);
 
 		engine.load("./dist/engine/sfml/index.js");
 
@@ -31,6 +34,7 @@ int main() {
 			previousTime = currentTime;
 			tick(engine, diffMilliseconds);
 
+            window.clear();
 			animate(engine);
 			draw(engine, window);
 			window.display();

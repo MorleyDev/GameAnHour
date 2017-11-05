@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <functional>
+#include <iostream>
 
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/CircleShape.hpp>
@@ -158,216 +159,179 @@ const char* sfmlScript =
         "    };"
         "})();";
 
-std::unordered_map<std::string, std::function<void (duk_context*, std::size_t, sf::RenderWindow&, std::vector<sf::Transform>&, sf::RenderStates&)>> drawCommands;
-
-void recursivelyDraw(duk_context* ctx, sf::RenderWindow& window, std::vector<sf::Transform> &stack, sf::RenderStates &renderStates) {
-    auto arraySize = duk_get_length(ctx, -1);
-    for(auto i = 0; i < arraySize; ++i) {
-        duk_get_prop_index(ctx, -1, i);
-        if (duk_is_array(ctx, -1)) {
-            recursivelyDraw(ctx, window, stack, renderStates);
-            duk_pop(ctx);
-            continue;
-        } else {
-            std::string command = (duk_safe_to_string(ctx, -1));
-            duk_pop(ctx);
-
-            auto it = drawCommands.find(command);
-            if (it != drawCommands.end()) {
-                drawCommands[command](ctx, arraySize - (i + 1), window, stack, renderStates);
-            }
-            break;
-        }
-    }
-}
-
-auto getColour(duk_context* context) {
-    duk_get_prop_string(context, -1, "r");
-    duk_get_prop_string(context, -2, "g");
-    duk_get_prop_string(context, -3, "b");
-    duk_get_prop_string(context, -4, "a");
-    auto r = duk_get_int(context, -4);
-    auto g = duk_get_int(context, -3);
-    auto b = duk_get_int(context, -2);
-    auto a = duk_get_number(context, -1);
-    duk_pop_n(context, 4);
-
-    return sf::Color(r, g, b, static_cast<std::uint8_t >(255.0 * a));
-}
-
-void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window) {
+void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform> &stack) {
     engine.add("sfml", sfmlScript);
     engine.setGlobalFunction("SFML_Close", [&window](duk_context* ctx) {
         window.close();
-        return 1;
+        return 0;
     });
+    engine.setGlobalFunction("SFML_Clear", [&window](duk_context* ctx) {
+       auto b = duk_get_number(ctx, -1);
+       auto g = duk_get_number(ctx, -2);
+       auto r = duk_get_number(ctx, -3);
+       window.clear(sf::Color(r, g, b));
+       return 0;
+    }, 3);
+    engine.setGlobalFunction("SFML_Stroke_Circle", [&window, &stack](duk_context* ctx) {
+        auto a = duk_get_number(ctx, -1);
+        auto b = duk_get_number(ctx, -2);
+        auto g = duk_get_number(ctx, -3);
+        auto r = duk_get_number(ctx, -4);
+        auto radius = duk_get_number(ctx, -5);
+        auto y = duk_get_number(ctx, -6);
+        auto x = duk_get_number(ctx, -7);
 
-    drawCommands["clear"] = [](duk_context* context, std::size_t args, sf::RenderWindow& window, std::vector<sf::Transform> &stack, sf::RenderStates &renderStates) {
-        if (args == 0) {
-            window.clear(sf::Color::Black);
-        } else {
-            duk_get_prop_index(context, -1, 1);
-            auto colour = getColour(context);
-            window.clear(colour);
-            duk_pop(context);
-        }
-    };
+        sf::Color color(r, g ,b, a * 255);
+        sf::CircleShape circleShape(radius);
+        circleShape.setOrigin(radius, radius);
+        circleShape.setPosition(x, y);
+        circleShape.setFillColor(sf::Color(r, g ,b, a * 255));
+        circleShape.setOutlineThickness(1.0f);
+        circleShape.setOutlineColor(color);
+        window.draw(circleShape, sf::RenderStates(stack.back()));
+        return 0;
+    }, 7);
+    engine.setGlobalFunction("SFML_Stroke_Rectangle", [&window, &stack](duk_context* ctx) {
+        auto a = duk_get_number(ctx, -1);
+        auto b = duk_get_number(ctx, -2);
+        auto g = duk_get_number(ctx, -3);
+        auto r = duk_get_number(ctx, -4);
+        auto height = duk_get_number(ctx, -5);
+        auto width = duk_get_number(ctx, -6);
+        auto y = duk_get_number(ctx, -7);
+        auto x = duk_get_number(ctx, -8);
 
-    drawCommands["origin"] = [](duk_context* context, std::size_t args, sf::RenderWindow& window, std::vector<sf::Transform> &stack, sf::RenderStates &renderStates) {
-        if(args != 2) {
-            throw std::runtime_error("Not enough arguments provided to origin command");
-        }
+        sf::Color color(r, g ,b, a * 255);
+        sf::RectangleShape rectShape(sf::Vector2f(width, height));
+        rectShape.setPosition(x, y);
+        rectShape.setFillColor(sf::Color::Transparent);
+        rectShape.setOutlineThickness(1.0f);
+        rectShape.setOutlineColor(color);
+        window.draw(rectShape, sf::RenderStates(stack.back()));
+        return 0;
+    }, 8);
+    engine.setGlobalFunction("SFML_Stroke_Triangle", [&window, &stack](duk_context* ctx) {
+        auto a = duk_get_number(ctx, -1);
+        auto b = duk_get_number(ctx, -2);
+        auto g = duk_get_number(ctx, -3);
+        auto r = duk_get_number(ctx, -4);
+        auto y3 = duk_get_number(ctx, -5);
+        auto x3 = duk_get_number(ctx, -6);
+        auto y2 = duk_get_number(ctx, -7);
+        auto x2 = duk_get_number(ctx, -8);
+        auto y1 = duk_get_number(ctx, -9);
+        auto x1 = duk_get_number(ctx, -10);
 
-        duk_get_prop_index(context, -1, 1); // Position
-        duk_get_prop_string(context, -1, "x");
-        duk_get_prop_string(context, -2, "y");
-        auto y = duk_get_number(context, -1);
-        auto x = duk_get_number(context, -2);
-        duk_pop_3(context);
+        sf::Color color(r, g ,b, a * 255);
+        sf::VertexArray array(sf::PrimitiveType::LineStrip, 4);
+        array[0] = sf::Vertex(sf::Vector2f(x1, y1), color);
+        array[1] = sf::Vertex(sf::Vector2f(x2, y2), color);
+        array[2] = sf::Vertex(sf::Vector2f(x3, y3), color);
+        array[4] = sf::Vertex(sf::Vector2f(x1, y1), color);
+        window.draw(array, sf::RenderStates(stack.back()));
+        return 0;
+    }, 10);
+    engine.setGlobalFunction("SFML_Fill_Circle", [&window, &stack](duk_context* ctx) {
+        auto a = duk_get_number(ctx, -1);
+        auto b = duk_get_number(ctx, -2);
+        auto g = duk_get_number(ctx, -3);
+        auto r = duk_get_number(ctx, -4);
+        auto radius = duk_get_number(ctx, -5);
+        auto y = duk_get_number(ctx, -6);
+        auto x = duk_get_number(ctx, -7);
 
-        sf::Transform transform(stack.back());
-        transform.translate(x, y);
-        renderStates.transform = transform;
-        stack.push_back(transform);
-        duk_get_prop_index(context, -1, 2);
-         recursivelyDraw(context, window, stack, renderStates);
-        duk_pop(context);
+        sf::CircleShape circleShape(radius);
+        circleShape.setOrigin(radius, radius);
+        circleShape.setPosition(x, y);
+        circleShape.setFillColor(sf::Color(r, g ,b, a * 255));
+        window.draw(circleShape, sf::RenderStates(stack.back()));
+        return 0;
+    }, 7);
+    engine.setGlobalFunction("SFML_Fill_Rectangle", [&window, &stack](duk_context* ctx) {
+        auto a = duk_get_number(ctx, -1);
+        auto b = duk_get_number(ctx, -2);
+        auto g = duk_get_number(ctx, -3);
+        auto r = duk_get_number(ctx, -4);
+        auto height = duk_get_number(ctx, -5);
+        auto width = duk_get_number(ctx, -6);
+        auto y = duk_get_number(ctx, -7);
+        auto x = duk_get_number(ctx, -8);
+
+        sf::RectangleShape rectShape(sf::Vector2f(width, height));
+        rectShape.setPosition(x, y);
+        rectShape.setFillColor(sf::Color(r, g ,b, a * 255));
+        window.draw(rectShape, sf::RenderStates(stack.back()));
+        return 0;
+    }, 8);
+    engine.setGlobalFunction("SFML_Fill_Triangle", [&window, &stack](duk_context* ctx) {
+        auto a = duk_get_number(ctx, -1);
+        auto b = duk_get_number(ctx, -2);
+        auto g = duk_get_number(ctx, -3);
+        auto r = duk_get_number(ctx, -4);
+        auto y3 = duk_get_number(ctx, -5);
+        auto x3 = duk_get_number(ctx, -6);
+        auto y2 = duk_get_number(ctx, -7);
+        auto x2 = duk_get_number(ctx, -8);
+        auto y1 = duk_get_number(ctx, -9);
+        auto x1 = duk_get_number(ctx, -10);
+
+        sf::Color color(r, g ,b, a * 255);
+        sf::VertexArray array(sf::PrimitiveType::Triangles, 3);
+        array[0] = sf::Vertex(sf::Vector2f(x1, y1), color);
+        array[1] = sf::Vertex(sf::Vector2f(x2, y2), color);
+        array[2] = sf::Vertex(sf::Vector2f(x3, y3), color);
+        window.draw(array, sf::RenderStates(stack.back()));
+        return 0;
+    }, 10);
+    engine.setGlobalFunction("SFML_Draw_Line", [&window, &stack](duk_context* ctx) {
+        auto a = duk_get_number(ctx, -1);
+        auto b = duk_get_number(ctx, -2);
+        auto g = duk_get_number(ctx, -3);
+        auto r = duk_get_number(ctx, -4);
+        auto y2 = duk_get_number(ctx, -5);
+        auto x2 = duk_get_number(ctx, -6);
+        auto y1 = duk_get_number(ctx, -7);
+        auto x1 = duk_get_number(ctx, -8);
+
+        sf::Color color(r, g ,b, a * 255);
+        sf::VertexArray array(sf::PrimitiveType::Lines, 2);
+        array[0] = sf::Vertex(sf::Vector2f(x1, y1), color);
+        array[1] = sf::Vertex(sf::Vector2f(x2, y2), color);
+        window.draw(array, sf::RenderStates(stack.back()));
+        return 0;
+    }, 8);
+
+    engine.setGlobalFunction("SFML_Push_Translate", [&stack](duk_context* ctx) {
+        auto y = duk_get_number(ctx, -1);
+        auto x = duk_get_number(ctx, -2);
+        auto m = sf::Transform(stack.back());
+        m.translate(x, y);
+        stack.push_back(m);
+        return 0;
+    }, 2);
+    engine.setGlobalFunction("SFML_Push_Scale", [&stack](duk_context* ctx) {
+        auto y = duk_get_number(ctx, -1);
+        auto x = duk_get_number(ctx, -2);
+        auto m = sf::Transform(stack.back());
+        m.scale(x, y);
+        stack.push_back(m);
+        return 0;
+    }, 2);
+    engine.setGlobalFunction("SFML_Push_Rotate", [&stack](duk_context* ctx) {
+        auto radians = duk_get_number(ctx, -1);
+        auto m = sf::Transform(stack.back());
+        m.rotate(radians * 57.2958);
+        stack.push_back(m);
+        return 0;
+    }, 1);
+    engine.setGlobalFunction("SFML_Pop", [&stack](duk_context* ctx) {
         stack.pop_back();
-        renderStates.transform = stack.back();
-    };
-
-    drawCommands["scale"] = [](duk_context* context, std::size_t args, sf::RenderWindow& window, std::vector<sf::Transform> &stack, sf::RenderStates &renderStates) {
-        if(args != 2) {
-            throw std::runtime_error("Not enough arguments provided to scale command");
-        }
-
-        duk_get_prop_index(context, -1, 1); // Position
-        duk_get_prop_string(context, -1, "x");
-        duk_get_prop_string(context, -2, "y");
-        auto y = duk_get_number(context, -1);
-        auto x = duk_get_number(context, -2);
-        duk_pop_3(context);
-
-        sf::Transform transform(stack.back());
-        transform.scale(x, y);
-        renderStates.transform = transform;
-        stack.push_back(transform);
-        duk_get_prop_index(context, -1, 2);
-        recursivelyDraw(context, window, stack, renderStates);
-        duk_pop(context);
-        stack.pop_back();
-        renderStates.transform = stack.back();
-    };
-
-    drawCommands["rotate"] = [](duk_context* context, std::size_t args, sf::RenderWindow& window, std::vector<sf::Transform> &stack, sf::RenderStates &renderStates) {
-        if(args != 2) {
-            throw std::runtime_error("Not enough arguments provided to rotate command");
-        }
-
-        duk_get_prop_index(context, -1, 1); // Radians
-        auto radians = duk_get_number(context, -1);
-        duk_pop(context);
-
-        sf::Transform transform(stack.back());
-        transform.rotate(radians * 57.2958);
-        renderStates.transform = transform;
-        stack.push_back(transform);
-        duk_get_prop_index(context, -1, 2);
-         recursivelyDraw(context, window, stack, renderStates);
-        duk_pop(context);
-        stack.pop_back();
-        renderStates.transform = stack.back();
-    };
-
-    auto strokeOrFill = [](bool isFill, duk_context* context, std::size_t args, sf::RenderWindow& window, std::vector<sf::Transform> &stack, sf::RenderStates &renderStates) {
-        if (args != 2) {
-            throw std::runtime_error("Not enough arguments provided to fill command");
-        } else {
-            duk_get_prop_index(context, -1, 2); // Colour
-            auto colour = getColour(context);
-            duk_pop(context);
-
-            duk_get_prop_index(context, -1, 1); // Shape
-            if (duk_is_array(context, -1)) {
-                auto count = duk_get_length(context, -1);
-
-                sf::VertexArray vertexArray(count == 2 ? sf::PrimitiveType::Lines : sf::PrimitiveType::Triangles, count);
-                for (auto i = 0; i < count; ++i) {
-                    duk_get_prop_index(context, -1, i);
-                    duk_get_prop_string(context, -1, "x");
-                    auto x = duk_get_number(context, -1);
-                    duk_pop(context);
-
-                    duk_get_prop_string(context, -1, "y");
-                    auto y = duk_get_number(context, -1);
-                    duk_pop(context);
-                    duk_pop(context);
-                    vertexArray[i] = sf::Vertex(sf::Vector2f(x, y), colour);
-                }
-                window.draw(vertexArray, renderStates);
-            } else {
-                duk_get_prop_string(context, -1, "x");
-                duk_get_prop_string(context, -2, "y");
-                auto y = duk_get_number(context, -1);
-                auto x = duk_get_number(context, -2);
-                duk_pop_2(context);
-
-                if (duk_has_prop_string(context, -1, "text")) {
-                    // TODO
-                } else if (duk_has_prop_string(context, -1, "radius")) {
-                    duk_get_prop_string(context, -1, "radius");
-                    auto r = duk_get_number(context, -1);
-                    duk_pop(context);
-
-                    sf::CircleShape circle(r);
-                    if (!isFill) {
-                        circle.setOutlineThickness(1.0f);
-                        circle.setOutlineColor(colour);
-                        circle.setFillColor(sf::Color::Transparent);
-                    } else {
-                        circle.setFillColor(colour);
-                    }
-                    circle.setPosition(x, y);
-                    circle.setOrigin(r, r);
-                    window.draw(circle, renderStates);
-                }  else if (duk_has_prop_string(context, -1, "width")) {
-                    duk_get_prop_string(context, -1, "width");
-                    duk_get_prop_string(context, -2, "height");
-                    auto w = duk_get_number(context, -2);
-                    auto h = duk_get_number(context, -1);
-                    duk_pop_2(context);
-
-                    sf::RectangleShape rectangle(sf::Vector2f(w, h));
-                    rectangle.setPosition(x, y);
-                    if (!isFill) {
-                        rectangle.setOutlineThickness(1.0f);
-                        rectangle.setOutlineColor(colour);
-                        rectangle.setFillColor(sf::Color::Transparent);
-                    } else {
-                        rectangle.setFillColor(colour);
-                    }
-                    window.draw(rectangle, renderStates);
-                }
-            }
-            duk_pop(context);
-        }
-    };
-
-    drawCommands["fill"] = std::bind(strokeOrFill, true, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
-    drawCommands["stroke"] = std::bind(strokeOrFill, false, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+        return 0;
+    });
 }
 
 void draw(JavascriptEngine &engine, sf::RenderWindow &window) {
-    std::vector<sf::Transform> stack;
-    sf::RenderStates renderStates(sf::Transform::Identity);
-    stack.push_back(sf::Transform::Identity);
-    
-    engine.invoke([&window, &stack, &renderStates](duk_context* ctx) {
-        if (!duk_is_array(ctx, -1)) {
-            throw std::runtime_error("Invalid rendering: Result not array");
-        }
-        recursivelyDraw(ctx, window, stack, renderStates);
-    }, "SFML_Render");
+    engine.trigger("SFML_Render");
 }
 
 void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window) {

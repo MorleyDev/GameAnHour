@@ -6,10 +6,6 @@ module.exports = {
   devtool: 'inline-source-map',
   entry: {
     "index": './src/index.ts',
-    "engine/golang/render": './src/engine/golang/render.ts',
-    "engine/golang/reducer": './src/engine/golang/reducer.ts',
-    "engine/golang/bootstrap": './src/engine/golang/bootstrap.ts',
-    "engine/golang/epic": './src/engine/golang/epic.ts',
     "engine/sfml/index": './src/engine/sfml/index.ts'
   },
   output: {
@@ -20,7 +16,20 @@ module.exports = {
   },
   module: {
     rules: [
-      { test: /\.tsx?$/, loader: 'ts-loader' }
+      {
+        test: /\.tsx?$/,
+        use: [{
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+            plugins: [
+              "closure-elimination",
+              "loop-optimizer",
+              "preval"
+            ]
+          }
+        }, 'ts-loader']
+      }
     ]
   },
   devServer: {
@@ -32,7 +41,7 @@ module.exports = {
     inline: true
   },
   plugins: (isProd
-    ? [new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })]
+    ? []
     : [
       new webpack.HotModuleReplacementPlugin(),
       new webpack.NamedModulesPlugin()

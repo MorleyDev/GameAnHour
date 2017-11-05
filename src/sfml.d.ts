@@ -6,8 +6,22 @@ type SfmlEvent
 	| { type: 11; parameters: [number /*x*/, number /*y*/] };
 
 declare function SFML_Close(): void;
-declare function SFML_SetRenderer(renderer: () => any[]): void;
+declare function SFML_SetRenderer(renderer: () => void): void;
 declare function SFML_FlushEvents(handler: (event: SfmlEvent) => void): void;
+
+declare function SFML_Clear(r: number, g: number, b: number): void;
+declare function SFML_Fill_Circle(x: number, y: number, radius: number, r: number, g: number, b: number, a: number): void;
+declare function SFML_Fill_Rectangle(x: number, y: number, width: number, height: number, r: number, g: number, b: number, a: number): void;
+declare function SFML_Fill_Triangle(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, r: number, g: number, b: number, a: number): void;
+declare function SFML_Stroke_Circle(x: number, y: number, radius: number, r: number, g: number, b: number, a: number): void;
+declare function SFML_Stroke_Rectangle(x: number, y: number, width: number, height: number, r: number, g: number, b: number, a: number): void;
+declare function SFML_Stroke_Triangle(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, r: number, g: number, b: number, a: number): void;
+declare function SFML_Draw_Line(x1: number, y1: number, x2: number, y2: number, r: number, g: number, b: number, a: number): void;
+
+declare function SFML_Push_Translate(x: number, y: number): void;
+declare function SFML_Push_Scale(x: number, y: number): void;
+declare function SFML_Push_Rotate(radians: number): void;
+declare function SFML_Pop(): void;
 
 declare const SFML_Events: {
 	Closed: 0,

@@ -4,7 +4,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include "JavascriptEngine.hpp"
 
-void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window);
+void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform>& stack);
 void draw(JavascriptEngine &engine, sf::RenderWindow &window);
 void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window);
 

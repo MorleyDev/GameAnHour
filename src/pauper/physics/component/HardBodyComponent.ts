@@ -1,5 +1,3 @@
-import { Body } from "matter-js";
-
 import { BaseComponent } from "../../ecs/component-base.type";
 import { Radian } from "../../maths/angles.maths";
 import { Vector2 } from "../../maths/vector.maths";
@@ -18,10 +16,11 @@ export type HardBodyComponent = BaseComponent<"HardBodyComponent", HardBodyPrope
 	readonly shape: Shape2;
 	readonly position: Point2;
 
+	readonly isResting: boolean;
 	readonly restingTime: Seconds;
 	readonly pendingForces: { location: Point2; force: Vector2 }[];
 
-	_body: Body | null;
+	_body: any | null;
 }>;
 
 const Recentre = (position: Point2, shape: Shape2) => {
@@ -40,6 +39,7 @@ export const HardBodyComponent = (positionT: Point2, shapeT: Shape2, overloads?:
 		velocity: Vector2(0, 0),
 		elasticity: 0,
 		angularVelocity: 0,
+		isResting: false,
 		restingTime: 0,
 		rotation: 0,
 		pendingForces: [],

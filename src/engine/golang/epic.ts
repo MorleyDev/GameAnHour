@@ -1,3 +1,5 @@
+import { AppDrivers } from "../../pauper/app-drivers";
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import "core-js";
 
 import { merge } from "rxjs/observable/merge";
@@ -16,7 +18,15 @@ const drivers = {
 	keyboard: new NoOpKeyboard(),
 	mouse: new SubjectMouse(),
 	audio: new NoOpAudioService(),
-	loader: new NoOpAssetLoader()
+	loader: new NoOpAssetLoader(),
+	framerates: {
+		logicalRender: 20,
+		logicalTick: 20
+	},
+	physics: {
+		events: matterJsPhysicsEcsEvents,
+		reducer: matterJsPhysicsReducer
+	}
 };
 
 declare function GoEngine_OnAction(callback: (action: GameAction) => void): void;
@@ -35,7 +45,7 @@ GoEngine_OnMouseDown((x, y, button) => {
 const onEpicAction$ = new Subject<GameAction>();
 const onEngineAction$ = new Subject<GameAction>();
 
-epic(merge(onEngineAction$, onEpicAction$), drivers).subscribe(action => {
+epic(merge(onEngineAction$, onEpicAction$), drivers as AppDrivers).subscribe(action => {
 	onEpicAction$.next(action);
 	GoEngine_PushAction(action);
 });

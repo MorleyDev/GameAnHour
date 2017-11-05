@@ -7,7 +7,7 @@
             "es2017",
             "dom"
         ],
-        "target": "es3",
+        "target": "es5",
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
         "outDir": "dist",
@@ -17,6 +17,7 @@
     },
     "exclude": [
         "webpack.config.js",
+        "node_modules/**/*",
         "dist/**/*"
     ]
 }

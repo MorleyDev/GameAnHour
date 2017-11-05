@@ -4,7 +4,7 @@ import { using } from "rxjs/observable/using";
 import { isBrowser } from "./utility/is-browser";
 import { isProduction } from "./utility/is-production";
 
-const stats: { [key: string]: { count: number; max: number; min: number; total: number } } = {};
+export const stats: { [key: string]: { count: number; max: number; min: number; total: number } } = {};
 if (isBrowser) {
 	(window as any).stats = stats;
 }
@@ -14,7 +14,7 @@ export const profile = isProduction
 	: <T>(name: string, func: () => T) => {
 		const startTime = Date.now();
 		const result = func();
-		const takenTime = Date.now() - startTime;
+		const takenTime = (Date.now() - startTime) / 1000;
 		const prevStats = stats[name] || { count: 0, max: takenTime, min: takenTime, total: 0 };
 		stats[name] = {
 			count: prevStats.count + 1,

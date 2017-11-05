@@ -1,5 +1,3 @@
-import { Body } from "matter-js";
-
 import { BaseComponent } from "../../ecs/component-base.type";
 import { Vector2 } from "../../maths/vector.maths";
 import { Point2, Shape2 } from "../../models/shapes.model";
@@ -7,7 +5,7 @@ import { Point2, Shape2 } from "../../models/shapes.model";
 export type StaticBodyComponent = BaseComponent<"StaticBodyComponent", {
 	readonly position: Point2;
 	readonly shape: Shape2;
-	_body: Body | null;
+	_body: any | null;
 }>;
 
 const Recentre = (position: Point2, shape: Shape2) => {

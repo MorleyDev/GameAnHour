@@ -1,4 +1,3 @@
-import { Body } from "matter-js";
 import { Observable } from "rxjs/Observable";
 import { fromPromise } from "rxjs/observable/fromPromise";
 import { interval } from "rxjs/observable/interval";
@@ -9,7 +8,6 @@ import { pipe } from "rxjs/util/pipe";
 import { AppDrivers } from "../pauper/app-drivers";
 import { createEntitiesStateFilter } from "../pauper/ecs/create-entities-state-filter.func";
 import { createEntitiesStateMap } from "../pauper/ecs/create-entities-state-map.func";
-import { createEntityReducer } from "../pauper/ecs/create-entity-reducer.func";
 import { EntityId } from "../pauper/ecs/entity-base.type";
 import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/ecs/entity-component.actions";
 import { createEntityComponentReducer } from "../pauper/ecs/entity-component.reducer";
@@ -20,8 +18,6 @@ import { Circle, Point2, Shape2, Text2 } from "../pauper/models/shapes.model";
 import { Millisecond, Seconds } from "../pauper/models/time.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
 import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
-import { physicsEcsEvents } from "../pauper/physics/reducer/ecs-events.func";
-import { createPhysicsReducer } from "../pauper/physics/reducer/physics-body.reducer";
 import { Clear, Fill, Origin, Rotate } from "../pauper/render/render-frame.model";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
@@ -29,78 +25,70 @@ import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
 
-const applyPhysicsForcesToBodies = createEntityReducer<GameState>(["HardBodyComponent"], (state, action, physics: HardBodyComponent) => {
-	if (physics.pendingForces.length === 0) {
-		return [physics];
-	}
-
-	physics.pendingForces.forEach(({ location, force }) => Body.applyForce(physics._body!, location, force));
-	return [{ ...physics, pendingForces: [] }];
-});
-
 const deadPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.position.y > 1000);
 const restingPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.restingTime >= 2);
 const fadedAwayTextBoxes = createEntitiesStateFilter(["FloatingScoreComponent"], (component: FloatingScoreComponent, currentTick: number) => currentTick > component.startingTick + component.lifespan);
 
-const physicsReducer = createPhysicsReducer<GameState>((state, result) => ({
-	...state,
-	effects: state.effects
-		.concat(result.collisionStarts.map(collision => ({ type: "@@COLLISION_START", collision } as GameAction)))
-		.concat(result.collisionEnds.map(collision => ({ type: "@@COLLISION_END", collision } as GameAction)))
-}));
+export const reducer = (drivers: AppDrivers) => {
+	const physicsReducer = drivers.physics.reducer<GameState, GameAction>((state, result) => ({
+		...state,
+		effects: state.effects
+			.concat(result.collisionStarts.map(collision => ({ type: "@@COLLISION_START", collision } as GameAction)))
+			.concat(result.collisionEnds.map(collision => ({ type: "@@COLLISION_END", collision } as GameAction)))
+	}));
 
-const entityComponentReducer = createEntityComponentReducer(physicsEcsEvents);
+	const entityComponentReducer = createEntityComponentReducer(drivers.physics.events);
 
-export const reducer = (state: GameState, action: GameAction): GameState => {
-	switch (action.type) {
-		case "@@TICK":
-			return pipe(
-				(s: GameState) => applyPhysicsForcesToBodies(s, action),
-				s => ({ ...s, runtime: s.runtime + action.deltaTime }),
-				s => ({
-					...s,
-					effects: s.effects
-						.concat(Array.from(fadedAwayTextBoxes(s, s.runtime)).map(DestroyEntityAction))
-						.concat(Array.from(restingPhysicsEntities(s)).map(ball => ({ type: "BALL_FINISHED", ball } as GameAction)))
-				})
-			)(state);
+	return (state: GameState, action: GameAction): GameState => {
+		switch (action.type) {
+			case "@@TICK":
+				const readyToRemoveBoxes = Array.from(fadedAwayTextBoxes(state, state.runtime)).map(e => DestroyEntityAction(e) as GameAction);
+				const readyToFinishBalls = Array.from(restingPhysicsEntities(state)).map(ball => ({ type: "BALL_FINISHED", ball } as GameAction));
+				const effects = readyToRemoveBoxes.concat(readyToFinishBalls);
 
-		case "@@COLLISION_START":
-			if ((state.componentEntityLinks["HardBodyComponent"] || []).some(e => e === action.collision.a || e === action.collision.b)) {
 				return {
 					...state,
-					effects: state.effects.concat({ type: "PlaySoundEffect", sound: "boing" } as GameAction)
+					runtime: state.runtime + action.deltaTime,
+					effects: state.effects.concat(effects)
 				};
-			}
-			return state;
 
-		case "BALL_FINISHED":
-			const ballHardBodyComponent = state.entities[action.ball].components["HardBodyComponent"] as HardBodyComponent;
-			const bucket = (state.componentEntityLinks["SensorPhysicsComponent"] || [])
-				.find(bucket => {
-					const sensor = (state.entities[bucket].components["SensorPhysicsComponent"] as SensorPhysicsComponent);
-					return Shape2.collision(sensor.shape, Shape2.add(ballHardBodyComponent.shape, ballHardBodyComponent.position));
-				});
+			case "@@COLLISION_START":
+				if ((state.componentEntityLinks["HardBodyComponent"] || []).some(e => e === action.collision.a || e === action.collision.b)) {
+					return {
+						...state,
+						effects: state.effects.concat({ type: "PlaySoundEffect", sound: "boing" } as GameAction)
+					};
+				}
+				return state;
 
-			const bucketValue = bucket != null
-				? (state.entities[bucket].components["ScoreBucketComponent"] as ScoreBucketComponent).value
-				: 0;
+			case "BALL_FINISHED":
+				const ballHardBodyComponent = state.entities[action.ball].components["HardBodyComponent"] as HardBodyComponent;
+				const bucket = (state.componentEntityLinks["SensorPhysicsComponent"] || [])
+					.find(bucket => {
+						const sensor = (state.entities[bucket].components["SensorPhysicsComponent"] as SensorPhysicsComponent);
+						return Shape2.collision(sensor.shape, Shape2.add(ballHardBodyComponent.shape, ballHardBodyComponent.position));
+					});
 
-			const entityId = EntityId();
+				const bucketValue = bucket != null
+					? (state.entities[bucket].components["ScoreBucketComponent"] as ScoreBucketComponent).value
+					: 0;
 
-			return {
-				...state,
-				score: state.score + bucketValue,
-				effects: state.effects.concat([
-					DestroyEntityAction(action.ball),
-					CreateEntityAction(entityId),
-					AttachComponentAction(entityId, FloatingScoreComponent(bucketValue, ballHardBodyComponent.position, state.runtime))
-				])
-			};
+				const entityId = EntityId();
 
-		default:
-			return physicsReducer(entityComponentReducer(state, action), action);
-	}
+				return {
+					...state,
+					score: state.score + bucketValue,
+					effects: state.effects.concat([
+						DestroyEntityAction(action.ball),
+						CreateEntityAction(entityId),
+						AttachComponentAction(entityId, FloatingScoreComponent(bucketValue, ballHardBodyComponent.position, state.runtime))
+					])
+				};
+
+			default:
+				return physicsReducer(entityComponentReducer(state, action), action);
+		}
+	};
 };
 
 const entityRenderer = createEntitiesStateMap(["RenderedComponent", "HardBodyComponent"], (id: string, { rgb }: RenderedComponent, physics: HardBodyComponent) => {

@@ -1,3 +1,4 @@
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
@@ -20,18 +21,27 @@ import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
 const canvas = document.getElementById("render-target")! as HTMLCanvasElement;
 const context = canvas.getContext("2d")!;
 const element = document.getElementById("canvas-container")!;
-const drivers: AppDrivers = {
+const drivers = {
 	keyboard: new HtmlDocumentKeyboard(document),
 	mouse: new HtmlElementMouse(canvas),
 	audio: new WebAudioService(),
-	loader: new WebAssetLoader()
+	loader: new WebAssetLoader(),
+	physics: {
+		events: matterJsPhysicsEcsEvents,
+		reducer: matterJsPhysicsReducer
+	},
+	framerates: {
+		logicalTick: 10,
+		logicalRender: 10
+	}
 };
 
+const r = game.reducer(drivers as AppDrivers);
 const g = {
 	render: (state: GameState) => game.render(state),
 	postprocess: (prev: GameState) => game.postprocess(prev),
-	reducer: (prev: GameState, curr: GameAction) => game.reducer(prev, curr),
-	epic: (actions$: Observable<GameAction>) => game.epic(actions$, drivers),
+	reducer: (prev: GameState, curr: GameAction) => r(prev, curr),
+	epic: (actions$: Observable<GameAction>) => game.epic(actions$, drivers as AppDrivers),
 	initialState,
 	bootstrap: bootstrap
 };
@@ -58,7 +68,7 @@ const fastScan: (reducer: (state: GameState, action: GameAction) => GameState, i
 		const applyActions = (state: GameState, actions: ReadonlyArray<GameAction>) => actions.reduce(applyAction, state);
 
 		return self => self.pipe(
-			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers)),
+			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers as AppDrivers)),
 			scan(applyActions, initialState),
 			distinctUntilChanged()
 		);

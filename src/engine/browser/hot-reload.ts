@@ -1,3 +1,4 @@
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import { GameAction, GameState } from "../../main/game.model";
 import { applyMiddleware, compose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
@@ -31,11 +32,19 @@ const canvas = document.getElementById("render-target")! as HTMLCanvasElement;
 const context = canvas.getContext("2d")!;
 
 const element = document.getElementById("canvas-container")!;
-const drivers: AppDrivers = {
+const drivers = {
 	keyboard: new HtmlDocumentKeyboard(document),
 	mouse: new HtmlElementMouse(canvas),
 	audio: new WebAudioService(),
-	loader: new WebAssetLoader()
+	loader: new WebAssetLoader(),
+	physics: {
+		events: matterJsPhysicsEcsEvents,
+		reducer: matterJsPhysicsReducer
+	},
+	framerates: {
+		logicalTick: 10,
+		logicalRender: 10
+	}
 };
 
 const debugHooks = { currenGameState: initialState, actions$: new Subject<any>() };
@@ -63,7 +72,7 @@ const storeBackedScan: (reducer: (state: GameState, action: GameAction) => GameS
 
 		const store = createStore(reducer as any, initialState, c(applyMiddleware()));
 		return self => self.pipe(
-			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers)),
+			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers as AppDrivers)),
 			scan(applyActions, initialState),
 			distinctUntilChanged()
 		);
