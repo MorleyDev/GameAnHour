@@ -17,8 +17,8 @@ function Range(start: number, amount: number): number[] {
 	return Array(amount).fill(0).map((_, i) => i + start);
 }
 
-function flatMap<T, U>(array: T[], map: (item: T, index: number, whole: T[]) => U[]): U[] {
-	return array.reduce((arr, item, index) => arr.concat(map(item, index, array) as U[]), [] as U[]);
+function flatMap<T, U>(array: T[], mapper: (item: T, index: number, whole: T[]) => U[]): U[] {
+	return array.reduce((arr, item, index) => arr.concat(mapper(item, index, array) as U[]), [] as U[]);
 }
 
 const createPeg = (position: Point2): GameAction[] => {

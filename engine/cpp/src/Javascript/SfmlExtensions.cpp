@@ -25,10 +25,6 @@ const char* sfmlScript =
         "            handler(events[i]);"
         "        }"
         "    };"
-        "    SFML_SetRenderer = function (renderer) {"
-        "        SFML_Render = renderer;"
-        "    };"
-        "    SFML_Render = function () {  return ['clear']; };"
         "    SFML_Events = {"
         "        Closed: 0,"
         "        Resized: 1,"
@@ -331,10 +327,6 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
         stack.pop_back();
         return 0;
     });
-}
-
-void draw(JavascriptEngine &engine, sf::RenderWindow &window) {
-    engine.trigger("SFML_Render");
 }
 
 void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window) {

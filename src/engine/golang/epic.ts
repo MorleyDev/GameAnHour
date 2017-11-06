@@ -1,21 +1,21 @@
-import { AppDrivers } from "../../pauper/app-drivers";
-import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
-import "core-js";
+import "babel-polyfill";
 
 import { merge } from "rxjs/observable/merge";
 import { Subject } from "rxjs/Subject";
 
-import { epic } from "../../main/game";
+import { epic } from "../../main/game-epic";
 import { GameAction } from "../../main/game.model";
+import { AppDrivers } from "../../pauper/app-drivers";
 import { NoOpAssetLoader } from "../../pauper/assets/noop-asset-loader.service";
 import { NoOpAudioService } from "../../pauper/audio/noop-audio.service";
-import { NoOpKeyboard } from "../../pauper/input/NoOpKeyboard";
+import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
 import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { MouseButton } from "../../pauper/models/mouse-button.model";
 import { Point2 } from "../../pauper/models/shapes.model";
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 
 const drivers = {
-	keyboard: new NoOpKeyboard(),
+	keyboard: new SubjectKeyboard(),
 	mouse: new SubjectMouse(),
 	audio: new NoOpAudioService(),
 	loader: new NoOpAssetLoader(),
@@ -45,7 +45,7 @@ GoEngine_OnMouseDown((x, y, button) => {
 const onEpicAction$ = new Subject<GameAction>();
 const onEngineAction$ = new Subject<GameAction>();
 
-epic(merge(onEngineAction$, onEpicAction$), drivers as AppDrivers).subscribe(action => {
+epic(drivers as AppDrivers)(merge(onEngineAction$, onEpicAction$)).subscribe(action => {
 	onEpicAction$.next(action);
 	GoEngine_PushAction(action);
 });

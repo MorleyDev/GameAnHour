@@ -1,3 +1,5 @@
+import { render } from "../../main/game-render";
+import { postprocess, reducer } from "../../main/game-reducer";
 import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
@@ -6,7 +8,7 @@ import { auditTime, distinctUntilChanged, ignoreElements, reduce, retryWhen, sca
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
 
-import * as game from "../../main/game";
+import { epic } from "../../main/game-epic";
 import { bootstrap } from "../../main/game-bootstrap";
 import { initialState } from "../../main/game-initial-state";
 import { GameAction, GameState } from "../../main/game.model";
@@ -36,12 +38,12 @@ const drivers = {
 	}
 };
 
-const r = game.reducer(drivers as AppDrivers);
+const r = reducer(drivers as AppDrivers);
 const g = {
-	render: (state: GameState) => game.render(state),
-	postprocess: (prev: GameState) => game.postprocess(prev),
-	reducer: (prev: GameState, curr: GameAction) => r(prev, curr),
-	epic: (actions$: Observable<GameAction>) => game.epic(actions$, drivers as AppDrivers),
+	render,
+	postprocess,
+	reducer: r,
+	epic: epic(drivers as AppDrivers),
 	initialState,
 	bootstrap: bootstrap
 };
@@ -90,9 +92,13 @@ const app$ = bootstrap.pipe(
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 		fastScan(applyAction, initialState),
 		auditTime(10, animationFrame),
-		tap(frame => renderToCanvas({ canvas, context }, game.render(frame))),
+		tap(frame => renderToCanvas({ canvas, context }, render(frame))),
 		retryWhen(errs => errs.pipe(tap(err => console.error(err))))
 	))
 );
 
-app$.subscribe();
+app$.subscribe(
+	() => { },
+	err => { console.error(err); },
+	() => { }
+);

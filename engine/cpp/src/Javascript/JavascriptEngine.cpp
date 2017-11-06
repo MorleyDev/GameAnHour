@@ -1,5 +1,5 @@
 #include "JavascriptEngine.hpp"
-#include "../../duk_console.h"
+#include "duk_console.h"
 
 #include <fstream>
 

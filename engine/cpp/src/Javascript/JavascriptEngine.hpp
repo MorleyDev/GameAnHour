@@ -6,7 +6,7 @@
 
 #define DUK_USE_LIGHTFUNC_BUILTINS
 
-#include "../../duktape.h"
+#include "duktape.h"
 
 class JavascriptEngine
 {

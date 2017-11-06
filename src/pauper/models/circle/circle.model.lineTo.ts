@@ -35,14 +35,17 @@ export function lineCircleToPoint2(lhs: CircleType, rhs: Point2Type): Line2Type 
 }
 
 export function lineCircleToTriangle2(lhs: CircleType, rhs: Triangle2Type): Line2Type {
-	return [lineLine2ToCircle([rhs[0], rhs[1]], lhs), lineLine2ToCircle([rhs[1], rhs[0]], lhs), lineLine2ToCircle([rhs[2], rhs[0]], lhs)]
-		.map(([a, b]) => [b, a] as Line2Type)
-		.map(line => ({
-			segment: line,
-			length2: magnitudeSquared(subtract(line[1], lhs))
-		}))
-		.reduce((prev, curr) => prev.length2 < curr.length2 ? prev : curr)
-		.segment;
+	const a = lineLine2ToCircle([rhs[0], rhs[1]], lhs);
+	const b = lineLine2ToCircle([rhs[1], rhs[0]], lhs);
+	const c = lineLine2ToCircle([rhs[2], rhs[0]], lhs);
+	const magA = magnitudeSquared(subtract(a[0], lhs));
+	const magB = magnitudeSquared(subtract(b[0], lhs));
+	const magC = magnitudeSquared(subtract(c[0], lhs));
+	if (magA < magB) {
+		return magA < magC ? a : c;
+	} else {
+		return magB < magC ? b : c;
+	}
 }
 
 export function lineCircleToCircle(lhs: CircleType, rhs: CircleType): Line2Type {

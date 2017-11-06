@@ -1,4 +1,4 @@
-import "core-js";
+import "babel-polyfill";
 
 import { bootstrap } from "../../main/game-bootstrap";
 import { initialState } from "../../main/game-initial-state";

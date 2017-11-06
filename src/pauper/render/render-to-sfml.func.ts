@@ -1,17 +1,9 @@
 import { Colour } from "../models/colour.model";
 import { Circle, Rectangle, Text2 } from "../models/shapes.model";
-import { Blit, Clear, Fill, Frame, FrameCollection, Origin, RenderTarget, Rotate, Scale, Stroke } from "./render-frame.model";
+import { Blit, Clear, Fill, Frame, FrameCollection, FrameCommandType, Origin, RenderTarget, Rotate, Scale, Stroke } from "./render-frame.model";
 
-// Canvas operations break all the rules!
-// tslint:disable:no-expression-statement
-// tslint:disable:no-object-mutation
-// tslint:disable:no-let
-// tslint:disable:prefer-for-of
 
 export function renderToSfml(frame: FrameCollection): void {
-	for (let i = 0; i < frame.length; ++i) {
-		RenderCommand(frame[i]);
-	}
 	frame.forEach((command: Frame) => RenderCommand(command));
 }
 
@@ -21,28 +13,28 @@ function RenderCommand(command: Frame): void {
 		return renderToSfml(command as FrameCollection);
 	} else {
 		switch (commandType) {
-			case "clear":
+			case FrameCommandType.Clear:
 				return renderClear(command as Clear);
 
-			case "origin":
+			case FrameCommandType.Origin:
 				return renderOrigin(command as Origin);
 
-			case "rendertarget":
+			case FrameCommandType.RenderTarget:
 				return renderRenderTarget(command as RenderTarget);
 
-			case "rotate":
+			case FrameCommandType.Rotate:
 				return renderRotate(command as Rotate);
 
-			case "scale":
+			case FrameCommandType.Scale:
 				return renderScale(command as Scale);
 
-			case "fill":
+			case FrameCommandType.Fill:
 				return renderFill(command as Fill);
 
-			case "stroke":
+			case FrameCommandType.Stroke:
 				return renderStroke(command as Stroke);
 
-			case "blit":
+			case FrameCommandType.Blit:
 				return renderBlit(command as Blit);
 		}
 	}

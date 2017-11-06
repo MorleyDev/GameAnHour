@@ -1,4 +1,4 @@
-import "core-js";
+import "babel-polyfill";
 
 import { readdirSync, statSync } from "fs";
 import { join } from "path";

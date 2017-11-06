@@ -9,26 +9,37 @@ export const Frame = (..._commands: (FrameCommand | Frame)[]) => _commands;
 export interface FrameCollection extends Array<Frame | FrameCommand> { }
 export type FrameCommand = Clear | Origin | Scale | Rotate | Fill | Stroke | Blit | RenderTarget;
 
-export type Clear = ["clear"] | ["clear", Colour];
-export const Clear = (colour?: Colour): Clear => colour != null ? ["clear", colour] : ["clear"];
+export enum FrameCommandType {
+	Clear,
+	Origin,
+	Rotate,
+	Scale,
+	Fill,
+	Stroke,
+	Blit,
+	RenderTarget
+}
 
-export type Origin = ["origin", Point2, FrameCollection];
-export const Origin = (origin: Point2, child: FrameCollection): Origin => ["origin", origin, child];
+export type Clear = [FrameCommandType.Clear] | [FrameCommandType.Clear, Colour];
+export const Clear = (colour?: Colour): Clear => colour != null ? [FrameCommandType.Clear, colour] : [FrameCommandType.Clear];
 
-export type Rotate = ["rotate", Radian, FrameCollection];
-export const Rotate = (radian: Radian, child: FrameCollection): Rotate => ["rotate", radian, child];
+export type Origin = [FrameCommandType.Origin, Point2, FrameCollection];
+export const Origin = (origin: Point2, child: FrameCollection): Origin => [FrameCommandType.Origin, origin, child];
 
-export type Scale = ["scale", Point2, FrameCollection];
-export const Scale = (scale: Point2, child: FrameCollection): Scale => ["scale", scale, child];
+export type Rotate = [FrameCommandType.Rotate, Radian, FrameCollection];
+export const Rotate = (radian: Radian, child: FrameCollection): Rotate => [FrameCommandType.Rotate, radian, child];
 
-export type Fill = ["fill", Shape2, Colour];
-export const Fill = (dst: Shape2, colour: Colour): Fill => ["fill", dst, colour];
+export type Scale = [FrameCommandType.Scale, Point2, FrameCollection];
+export const Scale = (scale: Point2, child: FrameCollection): Scale => [FrameCommandType.Scale, scale, child];
 
-export type Stroke = ["stroke", Shape2, Colour];
-export const Stroke = (dst: Shape2, colour: Colour): Stroke => ["stroke", dst, colour];
+export type Fill = [FrameCommandType.Fill, Shape2, Colour];
+export const Fill = (dst: Shape2, colour: Colour): Fill => [FrameCommandType.Fill, dst, colour];
 
-export type Blit = ["blit", BlittableAsset, Point2] | ["blit", BlittableAsset, Rectangle, Rectangle];
-export const Blit = (image: BlittableAsset, dst: Point2 | Rectangle, src?: Rectangle): Blit => src != null ? ["blit", image, dst, src] : ["blit", image, dst];
+export type Stroke = [FrameCommandType.Stroke, Shape2, Colour];
+export const Stroke = (dst: Shape2, colour: Colour): Stroke => [FrameCommandType.Stroke, dst, colour];
 
-export type RenderTarget = ["rendertarget", Rectangle, FrameCollection, Point2 | undefined];
-export const RenderTarget = (dst: Rectangle, frame: FrameCollection, size?: Point2): RenderTarget => ["rendertarget", dst, frame, size];
+export type Blit = [FrameCommandType.Blit, BlittableAsset, Point2] | [FrameCommandType.Blit, BlittableAsset, Rectangle, Rectangle];
+export const Blit = (image: BlittableAsset, dst: Point2 | Rectangle, src?: Rectangle): Blit => src != null ? [FrameCommandType.Blit, image, dst, src] : [FrameCommandType.Blit, image, dst];
+
+export type RenderTarget = [FrameCommandType.RenderTarget, Rectangle, FrameCollection, Point2 | undefined];
+export const RenderTarget = (dst: Rectangle, frame: FrameCollection, size?: Point2): RenderTarget => [FrameCommandType.RenderTarget, dst, frame, size];

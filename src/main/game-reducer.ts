@@ -1,26 +1,11 @@
-import { Observable } from "rxjs/Observable";
-import { fromPromise } from "rxjs/observable/fromPromise";
-import { interval } from "rxjs/observable/interval";
-import { merge } from "rxjs/observable/merge";
-import { filter, ignoreElements, map, mergeMap } from "rxjs/operators";
-import { pipe } from "rxjs/util/pipe";
-
 import { AppDrivers } from "../pauper/app-drivers";
 import { createEntitiesStateFilter } from "../pauper/ecs/create-entities-state-filter.func";
-import { createEntitiesStateMap } from "../pauper/ecs/create-entities-state-map.func";
 import { EntityId } from "../pauper/ecs/entity-base.type";
 import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/ecs/entity-component.actions";
 import { createEntityComponentReducer } from "../pauper/ecs/entity-component.reducer";
-import { exponentialInterpolation } from "../pauper/maths/interpolation.maths";
-import { Vector2 } from "../pauper/maths/vector.maths";
-import { Colour } from "../pauper/models/colour.model";
-import { Circle, Point2, Shape2, Text2 } from "../pauper/models/shapes.model";
-import { Millisecond, Seconds } from "../pauper/models/time.model";
+import { Shape2 } from "../pauper/models/shapes.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
-import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
-import { Clear, Fill, Origin, Rotate } from "../pauper/render/render-frame.model";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
-import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
@@ -90,68 +75,6 @@ export const reducer = (drivers: AppDrivers) => {
 		}
 	};
 };
-
-const entityRenderer = createEntitiesStateMap(["RenderedComponent", "HardBodyComponent"], (id: string, { rgb }: RenderedComponent, physics: HardBodyComponent) => {
-	return Origin(physics.position, [
-		Rotate(physics.rotation, [
-			Fill(physics.shape, Colour(rgb.r, rgb.g, rgb.b, exponentialInterpolation(Math.E)(1, 0)(Math.max(1, physics.restingTime) - 1) ** 2))
-		])
-	]);
-});
-
-const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "StaticBodyComponent"], (id: string, { rgb }: RenderedComponent, { position, shape }: StaticBodyComponent) => {
-	return Origin(position, [
-		Fill(shape, rgb)
-	]);
-});
-
-const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id: string, physics: FloatingScoreComponent, runtime: Seconds) => {
-	const interpolateTo = (runtime - physics.startingTick) / physics.lifespan;
-	const position = Vector2.linearInterpolation(physics.startPosition, physics.endPosition)(interpolateTo);
-
-	return [
-		Fill(Text2(`${physics.score}`, position.x, position.y, "24px", "sans-serif"), Colour(255, 255, 255, exponentialInterpolation(Math.E)(1, 0)(interpolateTo)))
-	];
-});
-
-export const render = (state: GameState) => [
-	Clear(Colour(0, 0, 0)),
-
-	Array.from(staticEntityRenderer(state)),
-	Array.from(entityRenderer(state)),
-	Array.from(scoreTextRenderer(state, state.runtime)),
-
-	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),
-	Fill(Text2(`Runtime: ${state.runtime}`, 30, 60, "16px", "sans-serif"), Colour(255, 0, 0))
-];
-
-// TODO: Focus-awareness should be moved into some kind of 'System Driver'
-const tabAwareInterval = (period: Seconds, drivers: AppDrivers) => {
-	return interval(period / Millisecond);
-};
-
-export const epic = (action$: Observable<GameAction>, drivers: AppDrivers) => merge<GameAction>(
-	fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
-	tabAwareInterval(20 * Millisecond, drivers).pipe(mergeMap(() => [({ type: "@@TICK", deltaTime: 20 * Millisecond }), ({ type: "@@ADVANCE_PHYSICS", deltaTime: 20 * Millisecond })])),
-	drivers.mouse!.mouseUp().pipe(
-		mergeMap(() => {
-			const id = EntityId();
-			const physics = HardBodyComponent(Point2((Math.random() * 306 + 106) | 0, 25), Circle(0, 0, (Math.random() * 12.5 + 2.5) | 0), { density: (Math.random() * 40 + 10) | 0, elasticity: ((Math.random() * 100) | 0) / 100 });
-			return [
-				CreateEntityAction(id),
-				AttachComponentAction(id, physics),
-				AttachComponentAction(id, RenderedComponent(255 * physics.elasticity | 0, 255 - physics.density | 0, 255 | 0))
-			];
-		})
-	),
-	action$.pipe(
-		filter(action => action.type === "PlaySoundEffect"),
-		map(action => (action as ({ readonly type: "PlaySoundEffect"; readonly sound: string })).sound),
-		map(sound => drivers.loader!.getSoundEffect(sound)),
-		map(sound => drivers.audio!.play(sound)),
-		ignoreElements()
-	)
-);
 
 export const postprocess = (state: GameState): {
 	readonly state: GameState;

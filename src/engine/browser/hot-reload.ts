@@ -1,21 +1,21 @@
-import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
-import { GameAction, GameState } from "../../main/game.model";
 import { applyMiddleware, compose, createStore } from "redux";
 import { Observable } from "rxjs/Observable";
 import { empty } from "rxjs/observable/empty";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
-import { ignoreElements, auditTime, distinctUntilChanged, map, reduce, retryWhen, scan, switchMap, tap } from "rxjs/operators";
+import { auditTime, distinctUntilChanged, ignoreElements, reduce, scan, switchMap, tap } from "rxjs/operators";
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "../../main/game-bootstrap";
 import { initialState } from "../../main/game-initial-state";
+import { GameAction, GameState } from "../../main/game.model";
 import { AppDrivers, getLogicalScheduler } from "../../pauper/app-drivers";
 import { WebAssetLoader } from "../../pauper/assets/web-asset-loader.service";
 import { WebAudioService } from "../../pauper/audio/web-audio.service";
 import { HtmlDocumentKeyboard } from "../../pauper/input/HtmlDocumentKeyboard";
 import { HtmlElementMouse } from "../../pauper/input/HtmlElementMouse";
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import { profile } from "../../pauper/profiler";
 import { renderToCanvas } from "../../pauper/render/render-to-canvas.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
@@ -23,7 +23,11 @@ import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
 // import RxFiddle from "rxfiddle";
 // (window as any).fiddle = new RxFiddle(require("rxjs/Rx")).auto();
 
-const gameFactory: () => any = () => require("../../main/game");
+const gameFactory: () => any = () => ({
+	...require("../../main/game-render"),
+	...require("../../main/game-reducer"),
+	...require("../../main/game-epic"),
+});
 
 const game$ = new Subject<any>();
 
@@ -109,15 +113,20 @@ const app$ = game$.pipe(
 				)
 			),
 			auditTime(10, animationFrame),
-			tap(frame => renderToCanvas({ canvas, context }, game.render(frame)))
+			tap(frame => renderToCanvas({ canvas, context }, game.render(frame))),
 		);
 	}),
 	devRememberState
 );
 
-app$.subscribe();
+app$.subscribe(
+	() => { },
+	err => { console.error(err); },
+	() => { }
+);
 game$.next(gameFactory());
 
-(module as any).hot.accept("../../main/game", () => {
-	game$.next(gameFactory());
-});
+
+(module as any).hot.accept("../../main/game-reducer", () => game$.next(gameFactory()));
+(module as any).hot.accept("../../main/game-epic", () => game$.next(gameFactory()));
+(module as any).hot.accept("../../main/game-render", () => game$.next(gameFactory()));
