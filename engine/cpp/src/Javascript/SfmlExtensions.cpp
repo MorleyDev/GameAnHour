@@ -300,6 +300,9 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
         window.draw(array, sf::RenderStates(stack.back()));
         return 0;
     }, 8);
+    engine.setGlobalFunction("SFML_Draw_Text", [&window, &stack](duk_context* ctX) {
+        return 0;
+    });
 
     engine.setGlobalFunction("SFML_Push_Translate", [&stack](duk_context* ctx) {
         auto y = duk_get_number(ctx, -1);

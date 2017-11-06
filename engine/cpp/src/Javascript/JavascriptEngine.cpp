@@ -35,8 +35,10 @@ JavascriptEngine::~JavascriptEngine() {
 
 void JavascriptEngine::add(std::string name, std::string script)
 {
-    push(script);
-    if (duk_peval(context) != 0)
+    std::string wrapped = std::string("function () {\n") + script + "\n}";
+    push(name);
+    duk_compile_lstring_filename(context, DUK_COMPILE_FUNCTION, wrapped.c_str(), wrapped.length());
+    if (duk_pcall(context, 0) != 0)
         throw std::runtime_error(std::string(name) + ":" + duk_safe_to_string(context, -1));
     pop();
 }
@@ -51,8 +53,7 @@ void JavascriptEngine::load(std::string filepath) {
     add(filepath, script);
 }
 
-void JavascriptEngine::setGlobalFunction(std::string name, std::function<duk_ret_t (duk_context*)> function, int nargs)
-{
+void JavascriptEngine::setGlobalFunction(std::string name, std::function<duk_ret_t (duk_context*)> function, int nargs) {
     globalFunctions.push_back(function);
     auto index = globalFunctions.size() - 1;
 

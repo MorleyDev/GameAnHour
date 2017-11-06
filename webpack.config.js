@@ -24,8 +24,10 @@ module.exports = {
             presets: ['@babel/preset-env'],
             plugins: [
               "closure-elimination",
-              "loop-optimizer",
-              "preval"
+              //"loop-optimizer",
+              "preval",
+              "tailcall-optimization",
+              //"module:fast-async"
             ]
           }
         }, 'ts-loader']
@@ -41,7 +43,7 @@ module.exports = {
     inline: true
   },
   plugins: (isProd
-    ? []
+    ? [new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })]
     : [
       new webpack.HotModuleReplacementPlugin(),
       new webpack.NamedModulesPlugin()

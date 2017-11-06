@@ -34,7 +34,6 @@ int main() {
 			previousTime = currentTime;
 			tick(engine, diffMilliseconds);
 
-            window.clear();
 			animate(engine);
 			draw(engine, window);
 			window.display();

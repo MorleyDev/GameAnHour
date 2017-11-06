@@ -94,10 +94,7 @@ try {
 		switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 			fastScan(applyAction, initialState),
 			auditTime(drivers.framerates.logicalRender),
-			tap(frame => latestState = frame),
-			retryWhen(errs => errs.pipe(tap(err => {
-				console.error(`${err.name}: ${err.message}\n${err.stack}`);
-			})))
+			tap(frame => latestState = frame)
 		))
 	);
 	const sub = app$.subscribe();

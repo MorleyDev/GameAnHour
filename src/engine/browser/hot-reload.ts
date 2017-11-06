@@ -17,16 +17,15 @@ import { WebAudioService } from "../../pauper/audio/web-audio.service";
 import { HtmlDocumentKeyboard } from "../../pauper/input/HtmlDocumentKeyboard";
 import { HtmlElementMouse } from "../../pauper/input/HtmlElementMouse";
 import { profile } from "../../pauper/profiler";
-import { ReduxApp } from "../../pauper/redux/ReduxApp.type";
 import { renderToCanvas } from "../../pauper/render/render-to-canvas.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
 
 // import RxFiddle from "rxfiddle";
 // (window as any).fiddle = new RxFiddle(require("rxjs/Rx")).auto();
 
-const gameFactory: () => ReduxApp<any, any> = () => require("../../main/game");
+const gameFactory: () => any = () => require("../../main/game");
 
-const game$ = new Subject<ReduxApp<any, any>>();
+const game$ = new Subject<any>();
 
 const canvas = document.getElementById("render-target")! as HTMLCanvasElement;
 const context = canvas.getContext("2d")!;
@@ -85,29 +84,34 @@ const epicActions$ = (game: any): Observable<GameAction> => game.epic(merge(subj
 	ignoreElements()
 );
 
-const applyAction = (game: any) => (state: GameState, action: GameAction): GameState => {
-	const nexGameState = game.reducer(state, action);
-	const { state: newState, actions: followup } = game.postprocess(nexGameState);
-	return followup
-		.map((action: GameAction) => {
-			postProcessSubject.next(action);
-			return action;
-		})
-		.reduce(applyAction(game), newState);
+const applyAction = (game: any) => {
+	const r = game.reducer(drivers);
+	return (state: GameState, action: GameAction): GameState => {
+		const nexGameState = r(state, action);
+		const { state: newState, actions: followup } = game.postprocess(nexGameState);
+		return followup
+			.map((action: GameAction) => {
+				postProcessSubject.next(action);
+				return action;
+			})
+			.reduce(applyAction(game), newState);
+	};
 };
 
 const app$ = game$.pipe(
-		switchMap(game => latestBootstrap.pipe(
-			reduce((state: GameState, action: GameAction) => game.reducer(state, action), initialState),
-		switchMap(state =>
-			merge(epicActions$(game), subject, of({ type: "@@INIT" } as GameAction)).pipe(
-				storeBackedScan(applyAction(game), state)
-			)
-		),
-		auditTime(10, animationFrame),
-		tap(frame => renderToCanvas({ canvas, context }, game.render(frame))),
-		retryWhen(errs => errs.pipe(tap(err => console.error(err))))
-	)),
+	switchMap(game => {
+		const r = game.reducer(drivers);
+		return latestBootstrap.pipe(
+			reduce((state: GameState, action: GameAction) => r(state, action), initialState),
+			switchMap(state =>
+				merge(epicActions$(game), subject, of({ type: "@@INIT" } as GameAction)).pipe(
+					storeBackedScan(applyAction(game), state)
+				)
+			),
+			auditTime(10, animationFrame),
+			tap(frame => renderToCanvas({ canvas, context }, game.render(frame)))
+		);
+	}),
 	devRememberState
 );
 
