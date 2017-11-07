@@ -5,7 +5,7 @@ import { GameAction, GameState } from "../../main/game.model";
 import { AppDrivers } from "../../pauper/app-drivers";
 import { NoOpAssetLoader } from "../../pauper/assets/noop-asset-loader.service";
 import { NoOpAudioService } from "../../pauper/audio/noop-audio.service";
-import { NoOpKeyboard } from "../../pauper/input/NoOpKeyboard";
+import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
 import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 
@@ -13,7 +13,7 @@ declare function GoEngine_SetReducer(callback: (state: GameState, action: GameAc
 declare function GoEngine_PushAction(action: GameAction): void;
 
 const drivers = {
-	keyboard: new NoOpKeyboard(),
+	keyboard: new SubjectKeyboard(),
 	mouse: new SubjectMouse(),
 	audio: new NoOpAudioService(),
 	loader: new NoOpAssetLoader(),

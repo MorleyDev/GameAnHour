@@ -1,4 +1,3 @@
-import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
 
 import { EntityId } from "../pauper/ecs/entity-base.type";

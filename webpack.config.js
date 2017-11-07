@@ -91,8 +91,8 @@ module.exports = {
           mathRandomSeed: Math.random(),
           speculate: true
         }
-      }),
-      new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })
+      })//,
+      //new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })
     ]
     : [
       new webpack.HotModuleReplacementPlugin(),
