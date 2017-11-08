@@ -6,8 +6,8 @@ pushd src
 popd
 
 pushd build
-	mkdir debug
-	pushd debug
+	mkdir debug-mingw32
+	pushd debug-mingw32
 		mkdir SFML
 		pushd SFML
 			cmake ..\..\..\src\SFML -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug
@@ -15,8 +15,8 @@ pushd build
 		popd
 	popd
 
-	mkdir release
-	pushd release
+	mkdir release-mingw32
+	pushd release-mingw32
 		mkdir SFML
 		pushd SFML
 			cmake ..\..\..\src\SFML -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
@@ -26,7 +26,7 @@ pushd build
 popd
 
 xcopy src\SFML\include .\include\ /S /Y
-xcopy build\debug\SFML\lib\*.a .\lib\debug\ /S /Y
-xcopy build\debug\SFML\lib\*.dll .\bin\debug\ /S /Y
-xcopy build\release\SFML\lib\*.a .\lib\release\ /S /Y
-xcopy build\release\SFML\lib\*.dll .\bin\release\ /S /Y
+xcopy build\debug-mingw32\SFML\lib\*.a .\lib\debug-mingw32\ /S /Y
+xcopy build\debug-mingw32\SFML\lib\*.dll .\bin\debug-mingw32\ /S /Y
+xcopy build\release-mingw32\SFML\lib\*.a .\lib\release-mingw32\ /S /Y
+xcopy build\release-mingw32\SFML\lib\*.dll .\bin\release-mingw32\ /S /Y

@@ -20,5 +20,5 @@ pushd src
 popd
 
 xcopy src\Box2D\Box2D\Box2D\*.h .\include\Box2D\ /S /Y
-xcopy src\Box2D\Box2D\Build\gmake\bin\Debug\*.a .\lib\debug\ /S /Y
-xcopy src\Box2D\Box2D\Build\gmake\bin\Release\*.a .\lib\release\ /S /Y
+xcopy src\Box2D\Box2D\Build\gmake\bin\Debug\*.a .\lib\debug-mingw32\ /S /Y
+xcopy src\Box2D\Box2D\Build\gmake\bin\Release\*.a .\lib\release-mingw32\ /S /Y
