@@ -8,9 +8,9 @@
 #include "Javascript/JavascriptEngine.hpp"
 #include "Javascript/TimerExtensions.hpp"
 #include "Javascript/SfmlExtensions.hpp"
-#include "Profile/Profiler.hpp"
 #include "Javascript/Box2dExtensions.hpp"
 #include "Javascript/ReduxExtensions.hpp"
+#include "Profile/Profiler.hpp"
 
 int main() {
 	try {

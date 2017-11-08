@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.6)
 project(GameAnHour)
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/include")
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    link_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/lib/debug")
+else()
+    link_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/lib/release")
+endif()
+
 add_executable(GameAnHour
         src/main.cpp
         src/Javascript/JavascriptEngine.cpp
@@ -9,3 +16,11 @@ add_executable(GameAnHour
         src/Profile/Profiler.cpp
         src/Javascript/Box2dExtensions.cpp
         src/Javascript/ReduxExtensions.cpp)
+set_property(TARGET GameAnHour PROPERTY CXX_STANDARD 17)
+
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    target_link_libraries(GameAnHour sfml-audio-d sfml-graphics-d sfml-network-d sfml-window-d sfml-system-d Box2D duktape)
+else()
+    target_link_libraries(GameAnHour sfml-audio sfml-graphics sfml-network sfml-window sfml-system Box2D duktape)
+endif()
+

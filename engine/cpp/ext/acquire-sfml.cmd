@@ -1,9 +1,3 @@
-mkdir src
-mkdir build
-mkdir include
-mkdir bin
-mkdir lib
-
 pushd src
 	git clone https://github.com/SFML/SFML
 	pushd SFML
