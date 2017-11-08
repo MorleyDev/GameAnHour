@@ -5,25 +5,25 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/include")
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         link_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/lib/debug-mingw32")
-    else()
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         link_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/lib/debug-vs2017")
     endif()
 else()
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         link_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/lib/release-mingw32")
-    else()
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         link_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/lib/release-vs2017")
     endif()
 endif()
 
 add_executable(GameAnHour
-        src/main.cpp
-        src/Javascript/JavascriptEngine.cpp
-        src/Javascript/TimerExtensions.cpp
-        src/Javascript/SfmlExtensions.cpp
-        src/Profile/Profiler.cpp
-        src/Javascript/Box2dExtensions.cpp
-        src/Javascript/ReduxExtensions.cpp)
+    src/main.cpp
+    src/Javascript/JavascriptEngine.cpp
+    src/Javascript/TimerExtensions.cpp
+    src/Javascript/SfmlExtensions.cpp
+    src/Profile/Profiler.cpp
+    src/Javascript/Box2dExtensions.cpp
+    src/Javascript/ReduxExtensions.cpp)
 set_property(TARGET GameAnHour PROPERTY CXX_STANDARD 17)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -31,3 +31,4 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
 else()
     target_link_libraries(GameAnHour sfml-audio sfml-graphics sfml-network sfml-window sfml-system Box2D duktape)
 endif()
+
