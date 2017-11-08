@@ -19,7 +19,7 @@ pushd build
 	pushd release-vs2017
 		mkdir SFML
 		pushd SFML
-			cmake ..\..\..\src\SFML -G"Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release
+			cmake ..\..\..\src\SFML -G"Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release -DSFML_USE_STATIC_STD_LIBS=1
 			cmake --build . --config release
 		popd
 	popd

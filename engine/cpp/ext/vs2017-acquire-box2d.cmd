@@ -6,6 +6,13 @@ pushd src
 	pushd Box2D
 		pushd Box2D
 			premake5 vs2017
+		popd
+	popd
+popd
+powershell .\vs2017-box2d-mt.ps1
+pushd src
+	pushd Box2D
+		pushd Box2D
 			pushd Build
 				pushd vs2017
 					msbuild Box2D.vcxproj /p:Configuration=Debug /p:Platform=x64
