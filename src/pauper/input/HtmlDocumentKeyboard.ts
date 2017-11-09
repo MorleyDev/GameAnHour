@@ -1,6 +1,6 @@
 import { Observable } from "rxjs/Observable";
 import { fromEvent } from "rxjs/observable/fromEvent";
-import { map } from "rxjs/operators/map";
+import { map } from "rxjs/operators";
 
 import { Key } from "../models/keys.model";
 import { Keyboard } from "./Keyboard";

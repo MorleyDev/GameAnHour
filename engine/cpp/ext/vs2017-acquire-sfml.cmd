@@ -31,3 +31,5 @@ xcopy build\debug-vs2017\SFML\lib\Debug\*.pdb .\lib\debug-vs2017\ /S /Y
 xcopy build\debug-vs2017\SFML\lib\Debug\*.dll .\bin\debug-vs2017\ /S /Y
 xcopy build\release-vs2017\SFML\lib\Release\*.lib .\lib\release-vs2017\ /S /Y
 xcopy build\release-vs2017\SFML\lib\Release\*.dll .\bin\release-vs2017\ /S /Y
+xcopy src\SFML\extlibs\libs-msvc-universal\x64\*.lib .\lib\release-vs2017\ /S /Y
+xcopy src\SFML\extlibs\bin\x64\*.dll .\bin\release-vs2017\ /S /Y

@@ -19,7 +19,7 @@ pushd build
 	pushd release-vs2017
 		mkdir Box2D
 		pushd Box2D
-			cmake ..\..\..\src\box2d\Box2D -G"Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release -DBOX2D_BUILD_EXAMPLES=OFF
+			cmake ..\..\..\src\box2d\Box2D -G"Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release -DBOX2D_BUILD_EXAMPLES=OFF -DCMAKE_CXX_FLAGS_RELEASE="/MT"
 			cmake --build . --config release
 		popd
 	popd
