@@ -20,6 +20,7 @@ struct Profile {
 	const char* name;
 	Profiler* profiler;
 	std::chrono::system_clock::time_point startTime;
+
 	Profile(Profiler& profiler, const char* name)
 		: profiler(&profiler),
 		name(name),
@@ -42,18 +43,25 @@ struct Profile {
 class Profiler {
 private:
 	std::unordered_map<const char*, ProfilerStats> stats;
+	std::chrono::system_clock::time_point startTime;
+
 public:
-	Profile profile(const char* name);
+	Profiler();
 
 	template<typename TCallback> void profile(const char* name, TCallback callback) {
-		auto startTime = std::chrono::system_clock::now();
+		auto profileStartTime = std::chrono::system_clock::now();
 		callback();
-		record(name, std::chrono::system_clock::now() - startTime);
+		record(name, std::chrono::system_clock::now() - profileStartTime);
 	}
 
 	void record(const char* name, std::chrono::duration<double> duration);
+	Profile profile(const char* name);
 
-	std::unordered_map<const char*, ProfilerStats> statdump() { return stats; };
+	inline std::unordered_map<const char*, ProfilerStats> statdump() { return stats; };
+	void printdump();
+
+	std::chrono::duration<double> getProfiledTimed();
+	std::chrono::duration<double> getCurrentRunTime();
 };
 
 inline Profile::~Profile() {

@@ -54,20 +54,7 @@ int main() {
 				previousFrame = currentTime;
 			};
 		}
-		const auto endTime = std::chrono::system_clock::now();
-		const auto stats = profiler.statdump();
-		const auto totalTime = std::chrono::duration<double>(endTime - startTime).count();
-
-		auto profiledTime = 0.0;
-		for (auto stat : stats) {
-			profiledTime += stat.second.total;
-			auto avg = stat.second.total / stat.second.count;
-			auto min = stat.second.min;
-			auto max = stat.second.max;
-			std::cout << "Engine#" << stat.first << " | " << avg << " | ~" << std::floor((stat.second.total / totalTime) * 100) << "% | (" << min << " - " << max << ") | x" << stat.second.count << std::endl;
-		}
-		const auto unaccountedTime = std::abs(totalTime - profiledTime);
-		std::cout << "Cpp#Unknown" << " | " << unaccountedTime << " | ~" << std::floor((unaccountedTime / totalTime) * 100) << "% | (" << unaccountedTime << " - " << unaccountedTime << ")" << std::endl;
+		profiler.printdump();
 	}
 	catch (const std::exception &err)
 	{
