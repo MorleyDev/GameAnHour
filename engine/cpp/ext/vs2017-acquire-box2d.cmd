@@ -1,29 +1,34 @@
 pushd src
-	git clone https://github.com/erincatto/Box2D
-popd
-
-pushd src
-	pushd Box2D
-		pushd Box2D
-			premake5 vs2017
-		popd
+	git clone https://github.com/behdad/box2d
+	pushd box2d
+		git checkout tags/v2.3.1
 	popd
 popd
-powershell .\vs2017-box2d-mt.ps1
-pushd src
-	pushd Box2D
+
+pushd build
+	mkdir debug-vs2017
+	pushd debug-vs2017
+		mkdir Box2D
 		pushd Box2D
-			pushd Build
-				pushd vs2017
-					msbuild Box2D.vcxproj /p:Configuration=Debug /p:Platform=x64
-					msbuild Box2D.vcxproj /p:Configuration=Release /p:Platform=x64
-				popd
-			popd
+			cmake ..\..\..\src\box2d\Box2D -G"Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Debug -DBOX2D_BUILD_EXAMPLES=OFF
+			cmake --build . --config debug
+		popd
+	popd
+
+	mkdir release-vs2017
+	pushd release-vs2017
+		mkdir Box2D
+		pushd Box2D
+			cmake ..\..\..\src\box2d\Box2D -G"Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release -DBOX2D_BUILD_EXAMPLES=OFF
+			cmake --build . --config release
 		popd
 	popd
 popd
 
 xcopy src\Box2D\Box2D\Box2D\*.h .\include\Box2D\ /S /Y
-xcopy src\Box2D\Box2D\Build\vs2017\bin\Debug\*.lib .\lib\debug-vs2017\ /S /Y
-xcopy src\Box2D\Box2D\Build\vs2017\bin\Debug\*.pdb .\lib\debug-vs2017\ /S /Y
-xcopy src\Box2D\Box2D\Build\vs2017\bin\Release\*.lib .\lib\release-vs2017\ /S /Y
+
+xcopy build\debug-vs2017\Box2D\Box2D\Debug\*.lib .\lib\debug-vs2017\ /S /Y
+xcopy build\debug-vs2017\Box2D\Box2D\Debug\*.pdb .\lib\debug-vs2017\ /S /Y
+xcopy build\debug-vs2017\Box2D\Box2D\Debug\*.dll .\bin\debug-vs2017\ /S /Y
+xcopy build\release-vs2017\Box2D\Box2D\Release\*.lib .\lib\release-vs2017\ /S /Y
+xcopy build\release-vs2017\Box2D\Box2D\Release\*.dll .\bin\release-vs2017\ /S /Y
