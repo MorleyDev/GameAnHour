@@ -4,8 +4,8 @@
 #include "JavascriptEngine.hpp"
 
 struct Redux {
-    std::string stateJson = "{}";
-    std::vector<std::string> actionQueue;
+	std::string stateJson = "{}";
+	std::vector<std::string> actionQueue;
 };
 
 void attachRedux(JavascriptEngine &engine, Redux &redux);

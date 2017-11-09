@@ -9,15 +9,15 @@
 #include "JavascriptEngine.hpp"
 
 struct Box2d_Entity {
-    b2Body* body;
+	b2Body* body;
 };
 
 struct Box2d {
-    Box2d() : world(b2Vec2(0.0f, 0.0f)), bodies(), nextBodyId(0) { }
+	Box2d() : world(b2Vec2(0.0f, 0.0f)), bodies(), nextBodyId(0) { }
 
-    b2World world;
-    std::unordered_map<std::size_t, std::unique_ptr<Box2d_Entity>> bodies;
-    std::size_t nextBodyId;
+	b2World world;
+	std::unordered_map<std::size_t, std::unique_ptr<Box2d_Entity>> bodies;
+	std::size_t nextBodyId;
 };
 
 void attachBox2d(JavascriptEngine &engine, Box2d &box2d);
