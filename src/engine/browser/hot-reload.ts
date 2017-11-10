@@ -17,19 +17,27 @@ import { HtmlDocumentKeyboard } from "../../pauper/input/HtmlDocumentKeyboard";
 import { HtmlElementMouse } from "../../pauper/input/HtmlElementMouse";
 import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import { profile } from "../../pauper/profiler";
+import { FrameCollection } from "../../pauper/render/render-frame.model";
 import { renderToCanvas } from "../../pauper/render/render-to-canvas.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
 
 // import RxFiddle from "rxfiddle";
 // (window as any).fiddle = new RxFiddle(require("rxjs/Rx")).auto();
 
-const gameFactory: () => any = () => ({
+type GameDefinition = {
+	render: (state: GameState) => FrameCollection;
+	reducer: (drivers: AppDrivers) => (state: GameState, action: GameAction) => GameState;
+	postprocess: (state: GameState) => { readonly state: GameState; readonly actions: ReadonlyArray<GameAction> };
+	epic: (drivers: AppDrivers) => (action$: Observable<GameAction>) => Observable<GameAction>;
+};
+
+const gameFactory: () => GameDefinition = () => ({
 	...require("../../main/game-render"),
 	...require("../../main/game-reducer"),
 	...require("../../main/game-epic"),
 });
 
-const game$ = new Subject<any>();
+const game$ = new Subject<GameDefinition>();
 
 const canvas = document.getElementById("render-target")! as HTMLCanvasElement;
 const context = canvas.getContext("2d")!;
@@ -83,13 +91,13 @@ const storeBackedScan: (reducer: (state: GameState, action: GameAction) => GameS
 
 const postProcessSubject = new Subject<GameAction>();
 const subject = new Subject<GameAction>();
-const epicActions$ = (game: any): Observable<GameAction> => game.epic(merge(subject, postProcessSubject), drivers).pipe(
+const epicActions$ = (game: GameDefinition): Observable<GameAction> => game.epic(drivers as AppDrivers)(merge(subject, postProcessSubject)).pipe(
 	tap((action: GameAction) => subject.next(action)),
 	ignoreElements()
 );
 
-const applyAction = (game: any) => {
-	const r = game.reducer(drivers);
+const applyAction = (game: GameDefinition) => {
+	const r = game.reducer(drivers as AppDrivers);
 	return (state: GameState, action: GameAction): GameState => {
 		const nexGameState = r(state, action);
 		const { state: newState, actions: followup } = game.postprocess(nexGameState);
@@ -104,7 +112,7 @@ const applyAction = (game: any) => {
 
 const app$ = game$.pipe(
 	switchMap(game => {
-		const r = game.reducer(drivers);
+		const r = game.reducer(drivers as AppDrivers);
 		return latestBootstrap.pipe(
 			reduce((state: GameState, action: GameAction) => r(state, action), initialState),
 			switchMap(state =>

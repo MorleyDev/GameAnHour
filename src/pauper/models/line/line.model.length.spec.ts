@@ -5,7 +5,7 @@ import { Line2Type } from "./line.model.type";
 
 /* tslint:disable */
 
-test("core/models/line/line.model.length.spec", test => {
+test("pauper/models/line/line.model.length.spec", test => {
 	const make = (x1: number, y1: number, x2: number, y2: number): Line2Type => [{ x: x1, y: y1 }, { x: x2, y: y2 }];
 
 	const within = (tap: typeof test, low: number, high: number) =>

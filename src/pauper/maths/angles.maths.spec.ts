@@ -5,7 +5,7 @@ import * as angles from "./angles.maths";
 import { Vector2 } from "./vector.maths";
 
 /* tslint:disable */
-test("core/maths/angles.maths", test => {
+test("pauper/maths/angles.maths", test => {
 	test.test("toRadians :: Degree -> Radian", test => {
 		const within = (low: number, high: number) =>
 			(value: number) => test.is(

@@ -12,21 +12,27 @@ export class HtmlElementMouse implements Mouse {
 	}
 
 	public mouseDown(type?: MouseButton): Observable<Point2Type> {
-		return fromEvent(this.element, "mousedown").pipe(
+		const element = this.element;
+
+		return fromEvent(element, "mousedown").pipe(
 			filterByMouseButton(type),
 			map((event: MouseEvent) => ({ x: event.offsetX, y: event.offsetY }))
 		);
 	}
 
 	public mouseUp(type?: MouseButton): Observable<Point2Type> {
-		return fromEvent(this.element, "mouseup").pipe(
+		const element = this.element;
+
+		return fromEvent(element, "mouseup").pipe(
 			filterByMouseButton(type),
 			map((event: MouseEvent) => ({ x: event.offsetX, y: event.offsetY }))
 		);
 	}
 
 	public mouseMove(): Observable<Point2Type> {
-		return fromEvent(this.element, "mousemove").pipe(
+		const element = this.element;
+
+		return fromEvent(element, "mousemove").pipe(
 			map((event: {}) => ({ x: (event as MouseEvent).offsetX, y: (event as MouseEvent).offsetY }))
 		);
 	}

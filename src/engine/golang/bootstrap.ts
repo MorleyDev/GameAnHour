@@ -1,3 +1,5 @@
+import "@babel/polyfill";
+
 import { bootstrap } from "../../main/game-bootstrap";
 import { initialState } from "../../main/game-initial-state";
 import { GameAction, GameState } from "../../main/game.model";

@@ -16,7 +16,6 @@ const fullOptimisation = {
         ["@babel/stage-3", { loose: true }]
       ],
       plugins: [
-        "transform-typescript",
         "closure-elimination",
         "preval",
         "loop-optimizer",
@@ -24,7 +23,7 @@ const fullOptimisation = {
         "module:fast-async"
       ]
     }
-  }]
+  }, "ts-loader"]
 };
 
 // Standard will not remove .map and .forEach, so is safer, but less performant
@@ -38,14 +37,13 @@ const standardOptimisation = {
         ["@babel/stage-3", { loose: true }]
       ],
       plugins: [
-        "transform-typescript",
         "closure-elimination",
         "preval",
         "tailcall-optimization",
         "module:fast-async"
       ]
     }
-  }]
+  }, "ts-loader"]
 };
 const safeFullOptimisationDirectories = [
   resolve(__dirname, "src/engine"),
@@ -110,8 +108,8 @@ module.exports = {
           mathRandomSeed: Math.random(),
           speculate: true
         }
-      })//,
-      //new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })
+      }),
+      new ClosureCompilerPlugin({ jsCompiler: true, compiler: { warning_level: "QUIET" } })
     ]
     : [
       new webpack.HotModuleReplacementPlugin(),

@@ -1,3 +1,5 @@
+import "@babel/polyfill";
+
 import { postprocess, reducer } from "../../main/game-reducer";
 import { GameAction, GameState } from "../../main/game.model";
 import { AppDrivers } from "../../pauper/app-drivers";

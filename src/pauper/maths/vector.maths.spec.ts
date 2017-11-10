@@ -7,7 +7,7 @@ import { Unit } from "./vector.maths.values";
 
 /* tslint:disable */
 
-test("core/maths/vector.maths", test => {
+test("pauper/maths/vector.maths", test => {
 	const make = (x: number, y: number) => Vector2(x, y);
 
 	const within = (tap: typeof test, low: number, high: number) =>

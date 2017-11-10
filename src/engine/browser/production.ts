@@ -1,6 +1,3 @@
-import { render } from "../../main/game-render";
-import { postprocess, reducer } from "../../main/game-reducer";
-import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
@@ -8,21 +5,35 @@ import { auditTime, distinctUntilChanged, ignoreElements, reduce, retryWhen, sca
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
 
-import { epic } from "../../main/game-epic";
 import { bootstrap } from "../../main/game-bootstrap";
+import { epic } from "../../main/game-epic";
 import { initialState } from "../../main/game-initial-state";
+import { postprocess, reducer } from "../../main/game-reducer";
+import { render } from "../../main/game-render";
 import { GameAction, GameState } from "../../main/game.model";
 import { AppDrivers, getLogicalScheduler } from "../../pauper/app-drivers";
 import { WebAssetLoader } from "../../pauper/assets/web-asset-loader.service";
 import { WebAudioService } from "../../pauper/audio/web-audio.service";
 import { HtmlDocumentKeyboard } from "../../pauper/input/HtmlDocumentKeyboard";
 import { HtmlElementMouse } from "../../pauper/input/HtmlElementMouse";
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
 import { renderToCanvas } from "../../pauper/render/render-to-canvas.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
 
-const canvas = document.getElementById("render-target")! as HTMLCanvasElement;
-const context = canvas.getContext("2d")!;
-const element = document.getElementById("canvas-container")!;
+const canvas = document.getElementById("render-target") as HTMLCanvasElement | null;
+if (canvas == null) {
+	throw new Error("Could not find #render-target");
+
+}
+const context = canvas.getContext("2d");
+if (context == null) {
+	throw new Error("Could not acquire 2d rendering context");
+}
+const element = document.getElementById("canvas-container");
+if (element == null) {
+	throw new Error("Could not find #canvas-container");
+}
+
 const drivers = {
 	keyboard: new HtmlDocumentKeyboard(document),
 	mouse: new HtmlElementMouse(canvas),

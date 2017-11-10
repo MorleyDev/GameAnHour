@@ -2,7 +2,7 @@ import { linearInterpolation, cosineInterpolation, exponentialInterpolation } fr
 import { test } from "tap";
 
 /* tslint:disable */
-test("core/maths/interpolation.maths", test => {
+test("pauper/maths/interpolation.maths", test => {
 	test.test("linearInterpolation :: (Number, Number) -> Number -> Number", test => {
 		const within = (low: number, high: number) =>
 			(value: number) => test.is(
