@@ -1,40 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0, maximum-scale=1, minimum-scale=1">
+		<!--<base href="/" />-->
+		<meta charset="UTF-8">
+		<title>Document</title>
+		<style>
+			body {
+				margin: 0;
+			}
 
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0, maximum-scale=1, minimum-scale=1">
-    <!--<base href="/" />-->
-    <meta charset="UTF-8">
-    <title>Document</title>
-    <style>
-        body {
-            margin: 0;
-        }
+			#canvas-container {
+				overflow: hidden;
+				text-align: center;
+				margin-top: 1em;
 
-        #canvas-container {
-            overflow: hidden;
-            text-align: center;
-            margin-top: 1em;
-
-            position: absolute;
-            left: 0;
-            top: 0;
-            right: 0;
-            bottom: 0;
-        }
-        #render-target {
-            width: 100%;
-            max-width: 512px;
-            max-height: 512px;
-        }
-    </style>
-</head>
-
-<body>
-    <div id="canvas-container">
-        <canvas id="render-target" width="512" height="512"></canvas>
-    </div>
-    <script src="./dist/index.js"></script>
-</body>
-
+				position: absolute;
+				left: 0;
+				top: 0;
+				right: 0;
+				bottom: 0;
+			}
+			#render-target {
+				width: 100%;
+				max-width: 512px;
+				max-height: 512px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="canvas-container">
+			<canvas id="render-target" width="512" height="512"></canvas>
+		</div>
+		<script src="./dist/index.js"></script>
+	</body>
 </html>

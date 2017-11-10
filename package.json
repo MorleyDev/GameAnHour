@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "tsc -p . --noEmit",
     "compile:dev": "webpack --progress",
-    "compile:prod": "webpack --env.prod --define process.env.NODE_ENV=\"'production'\" --progress",
+    "compile:prod": "webpack -p --env.prod --define process.env.NODE_ENV=\"'production'\" --progress",
     "serve": "webpack-dev-server",
     "lint": "tslint --project .",
     "test": "ts-node ./src/test.ts",
@@ -27,7 +27,6 @@
     "babel-plugin-preval": "1.6.2",
     "babel-plugin-tailcall-optimization": "1.0.11",
     "fast-async": "6.3.0",
-    "prepack-webpack-plugin": "1.1.0",
     "tap": "10.7.3",
     "tap-dot": "1.0.5",
     "ts-loader": "3.1.1",
@@ -36,7 +35,6 @@
     "tslint-immutable": "4.4.0",
     "typescript": "2.6.1",
     "webpack": "3.8.1",
-    "webpack-closure-compiler": "2.1.5",
     "webpack-dev-server": "2.9.4"
   },
   "dependencies": {
