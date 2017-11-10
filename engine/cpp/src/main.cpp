@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "Javascript/JavascriptEngine.hpp"
+#include "Javascript/DukJavascriptEngine.hpp"
 #include "Javascript/TimerExtensions.hpp"
 #include "Javascript/SfmlExtensions.hpp"
 #include "Javascript/Box2dExtensions.hpp"
@@ -26,7 +27,7 @@ int main() {
 		Box2d box2d;
 		Redux redux;
 
-		JavascriptEngine engine(profiler);
+		DukJavascriptEngine engine(profiler);
 		attachTimers(engine);
 		attachSfml(engine, window, stack);
 		attachBox2d(engine, box2d);

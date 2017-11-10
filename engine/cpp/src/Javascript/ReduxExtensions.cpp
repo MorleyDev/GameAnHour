@@ -7,11 +7,11 @@
 
 void attachRedux(JavascriptEngine &engine, Redux& redux) {
 	engine.setGlobalFunction("REDUX_SetState", [&redux](JavascriptEngine* engine) {
-		redux.stateJson = engine->getString(-1);
+		redux.stateJson = engine->getargstr(0);
 		return false;
 	}, 1);
 	engine.setGlobalFunction("REDUX_SendAction", [&redux](JavascriptEngine* engine) {
-		std::string value(engine->getString(-1));
+		std::string value(engine->getargstr(0));
 		redux.actionQueue.push_back(value);
 		return false;
 	}, 1);

@@ -1,5 +1,3 @@
-import "babel-polyfill";
-
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";

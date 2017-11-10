@@ -2,6 +2,8 @@
 #define DUKSFML_REDUXEXTENSIONS_HPP
 
 #include "JavascriptEngine.hpp"
+#include <string>
+#include <vector>
 
 struct Redux {
 	std::string stateJson = "{}";

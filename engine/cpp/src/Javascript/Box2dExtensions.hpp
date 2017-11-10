@@ -3,8 +3,10 @@
 
 #include <Box2D/Common/b2Math.h>
 #include <Box2D/Dynamics/b2World.h>
-#include <unordered_map>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
+
+#include <unordered_map>
+#include <memory>
 
 #include "JavascriptEngine.hpp"
 

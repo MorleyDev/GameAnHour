@@ -1,5 +1,3 @@
-import "babel-polyfill";
-
 import { isBrowser } from "./pauper/utility/is-browser";
 import { isProduction } from "./pauper/utility/is-production";
 

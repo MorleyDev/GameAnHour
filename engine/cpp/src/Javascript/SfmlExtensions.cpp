@@ -162,20 +162,20 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return 0;
 	});
 	engine.setGlobalFunction("SFML_Clear", [&window](JavascriptEngine* ctx) {
-		auto b = ctx->getFloat(-1);
-		auto g = ctx->getFloat(-2);
-		auto r = ctx->getFloat(-3);
+		const auto r = ctx->getargf(0);
+		const auto g = ctx->getargf(1);
+		const auto b = ctx->getargf(2);
 		window.clear(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b)));
 		return 0;
 	}, 3);
 	engine.setGlobalFunction("SFML_Stroke_Circle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getFloat(-1);
-		auto b = ctx->getFloat(-2);
-		auto g = ctx->getFloat(-3);
-		auto r = ctx->getFloat(-4);
-		auto radius = ctx->getFloat(-5);
-		auto y = ctx->getFloat(-6);
-		auto x = ctx->getFloat(-7);
+		const auto x = ctx->getargf(0);
+		const auto y = ctx->getargf(1);
+		const auto radius = ctx->getargf(2);
+		const auto r = ctx->getargf(3);
+		const auto g = ctx->getargf(4);
+		const auto b = ctx->getargf(5);
+		const auto a = ctx->getargf(6);
 
 		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255));
 		sf::CircleShape circleShape(static_cast<float>(radius));
@@ -188,14 +188,14 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return 0;
 	}, 7);
 	engine.setGlobalFunction("SFML_Stroke_Rectangle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getFloat(-1);
-		auto b = ctx->getFloat(-2);
-		auto g = ctx->getFloat(-3);
-		auto r = ctx->getFloat(-4);
-		auto height = ctx->getFloat(-5);
-		auto width = ctx->getFloat(-6);
-		auto y = ctx->getFloat(-7);
-		auto x = ctx->getFloat(-8);
+		const auto x = ctx->getargf(0);
+		const auto y = ctx->getargf(1);
+		const auto width = ctx->getargf(2);
+		const auto height = ctx->getargf(3);
+		const auto r = ctx->getargf(4);
+		const auto g = ctx->getargf(5);
+		const auto b = ctx->getargf(6);
+		const auto a = ctx->getargf(7);
 
 		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0));
 		sf::RectangleShape rectShape(sf::Vector2f(static_cast<float>(width), static_cast<float>(height)));
@@ -207,16 +207,16 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return 0;
 	}, 8);
 	engine.setGlobalFunction("SFML_Stroke_Triangle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getFloat(-1);
-		auto b = ctx->getFloat(-2);
-		auto g = ctx->getFloat(-3);
-		auto r = ctx->getFloat(-4);
-		auto y3 = ctx->getFloat(-5);
-		auto x3 = ctx->getFloat(-6);
-		auto y2 = ctx->getFloat(-7);
-		auto x2 = ctx->getFloat(-8);
-		auto y1 = ctx->getFloat(-9);
-		auto x1 = ctx->getFloat(-10);
+		const auto x1 = ctx->getargf(0);
+		const auto y1 = ctx->getargf(1);
+		const auto x2 = ctx->getargf(2);
+		const auto y2 = ctx->getargf(3);
+		const auto x3 = ctx->getargf(4);
+		const auto y3 = ctx->getargf(5);
+		const auto r = ctx->getargf(6);
+		const auto g = ctx->getargf(7);
+		const auto b = ctx->getargf(8);
+		const auto a = ctx->getargf(9);
 
 		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0));
 		sf::VertexArray array(sf::PrimitiveType::LineStrip, 4);
@@ -228,13 +228,13 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return 0;
 	}, 10);
 	engine.setGlobalFunction("SFML_Fill_Circle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getFloat(-1);
-		auto b = ctx->getFloat(-2);
-		auto g = ctx->getFloat(-3);
-		auto r = ctx->getFloat(-4);
-		auto radius = ctx->getFloat(-5);
-		auto y = ctx->getFloat(-6);
-		auto x = ctx->getFloat(-7);
+		const auto x = ctx->getargf(0);
+		const auto y = ctx->getargf(1);
+		const auto radius = ctx->getargf(2);
+		const auto r = ctx->getargf(3);
+		const auto g = ctx->getargf(4);
+		const auto b = ctx->getargf(5);
+		const auto a = ctx->getargf(6);
 
 		sf::CircleShape circleShape(static_cast<float>(radius));
 		circleShape.setOrigin(static_cast<float>(radius), static_cast<float>(radius));
@@ -244,14 +244,14 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return 0;
 	}, 7);
 	engine.setGlobalFunction("SFML_Fill_Rectangle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getFloat(-1);
-		auto b = ctx->getFloat(-2);
-		auto g = ctx->getFloat(-3);
-		auto r = ctx->getFloat(-4);
-		auto height = ctx->getFloat(-5);
-		auto width = ctx->getFloat(-6);
-		auto y = ctx->getFloat(-7);
-		auto x = ctx->getFloat(-8);
+		auto a = ctx->getargf(-1);
+		auto b = ctx->getargf(-2);
+		auto g = ctx->getargf(-3);
+		auto r = ctx->getargf(-4);
+		auto height = ctx->getargf(-5);
+		auto width = ctx->getargf(-6);
+		auto y = ctx->getargf(-7);
+		auto x = ctx->getargf(-8);
 
 		sf::RectangleShape rectShape(sf::Vector2f(static_cast<float>(width), static_cast<float>(height)));
 		rectShape.setPosition(static_cast<float>(x), static_cast<float>(y));
@@ -260,16 +260,16 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return 0;
 	}, 8);
 	engine.setGlobalFunction("SFML_Fill_Triangle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getFloat(-1);
-		auto b = ctx->getFloat(-2);
-		auto g = ctx->getFloat(-3);
-		auto r = ctx->getFloat(-4);
-		auto y3 = ctx->getFloat(-5);
-		auto x3 = ctx->getFloat(-6);
-		auto y2 = ctx->getFloat(-7);
-		auto x2 = ctx->getFloat(-8);
-		auto y1 = ctx->getFloat(-9);
-		auto x1 = ctx->getFloat(-10);
+		auto a = ctx->getargf(9);
+		auto b = ctx->getargf(8);
+		auto g = ctx->getargf(7);
+		auto r = ctx->getargf(6);
+		auto y3 = ctx->getargf(5);
+		auto x3 = ctx->getargf(4);
+		auto y2 = ctx->getargf(3);
+		auto x2 = ctx->getargf(2);
+		auto y1 = ctx->getargf(1);
+		auto x1 = ctx->getargf(0);
 
 		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0));
 		sf::VertexArray array(sf::PrimitiveType::Triangles, 3);
@@ -280,14 +280,14 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return 0;
 	}, 10);
 	engine.setGlobalFunction("SFML_Draw_Line", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getFloat(-1);
-		auto b = ctx->getFloat(-2);
-		auto g = ctx->getFloat(-3);
-		auto r = ctx->getFloat(-4);
-		auto y2 = ctx->getFloat(-5);
-		auto x2 = ctx->getFloat(-6);
-		auto y1 = ctx->getFloat(-7);
-		auto x1 = ctx->getFloat(-8);
+		auto a = ctx->getargf(7);
+		auto b = ctx->getargf(6);
+		auto g = ctx->getargf(5);
+		auto r = ctx->getargf(4);
+		auto y2 = ctx->getargf(3);
+		auto x2 = ctx->getargf(2);
+		auto y1 = ctx->getargf(1);
+		auto x1 = ctx->getargf(0);
 
 		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0f));
 		sf::VertexArray array(sf::PrimitiveType::Lines, 2);
@@ -301,23 +301,23 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 	});
 
 	engine.setGlobalFunction("SFML_Push_Translate", [&stack](JavascriptEngine* ctx) {
-		auto y = ctx->getFloat(-1);
-		auto x = ctx->getFloat(-2);
+		auto y = ctx->getargf(1);
+		auto x = ctx->getargf(0);
 		auto m = sf::Transform(stack.back());
 		m.translate(static_cast<float>(x), static_cast<float>(y));
 		stack.push_back(m);
 		return 0;
 	}, 2);
 	engine.setGlobalFunction("SFML_Push_Scale", [&stack](JavascriptEngine* ctx) {
-		auto y = ctx->getFloat(-1);
-		auto x = ctx->getFloat(-2);
+		auto y = ctx->getargf(1);
+		auto x = ctx->getargf(0);
 		auto m = sf::Transform(stack.back());
 		m.scale(static_cast<float>(x), static_cast<float>(y));
 		stack.push_back(m);
 		return 0;
 	}, 2);
 	engine.setGlobalFunction("SFML_Push_Rotate", [&stack](JavascriptEngine* ctx) {
-		auto radians = ctx->getFloat(-1);
+		auto radians = ctx->getargf(0);
 		auto m = sf::Transform(stack.back());
 		m.rotate(static_cast<float>(radians * 57.2958));
 		stack.push_back(m);

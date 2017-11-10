@@ -1,5 +1,3 @@
-import "babel-polyfill";
-
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
 import { test } from "tap";

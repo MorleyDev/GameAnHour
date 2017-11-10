@@ -11,10 +11,10 @@ const fullOptimisation = {
   use: [{
     loader: "babel-loader",
     options: {
-      presets: [["@babel/preset-env", { loose: true }]],
-      plugins: ["closure-elimination", "preval", "loop-optimizer", "tailcall-optimization", "module:fast-async"]
+      presets: [["@babel/preset-env", { loose: true, useBuiltIns: "usage" }]],
+      plugins: ["transform-typescript", "closure-elimination", "preval", "loop-optimizer", "tailcall-optimization", "module:fast-async"]
     }
-  }, "ts-loader"]
+  }]
 };
 
 // Standard will not remove .map and .forEach, so is safer, but less performant
@@ -23,10 +23,10 @@ const standardOptimisation = {
   use: [{
     loader: "babel-loader",
     options: {
-      presets: [["@babel/preset-env", { loose: true }]],
-      plugins: ["closure-elimination", "preval", "tailcall-optimization", "module:fast-async"]
+      presets: [["@babel/preset-env", { loose: true, useBuiltIns: "usage" }]],
+      plugins: ["transform-typescript", "closure-elimination", "preval", "tailcall-optimization", "module:fast-async"]
     }
-  }, "ts-loader"]
+  }]
 };
 const safeFullOptimisationDirectories = [
   resolve(__dirname, "src/engine"),
