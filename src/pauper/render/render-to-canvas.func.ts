@@ -8,9 +8,7 @@ export function renderToCanvas({ canvas, context }: { readonly canvas: HTMLCanva
 
 function RenderCommand({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Frame): void {
 	const commandType = command[0];
-	if (Array.isArray(commandType)) {
-		return renderToCanvas({ canvas, context }, command as FrameCollection);
-	} else {
+	if (!Array.isArray(commandType)) {
 		switch (commandType) {
 			case FrameCommandType.Clear:
 				return renderClear({ canvas, context }, command as Clear);
@@ -36,6 +34,8 @@ function RenderCommand({ canvas, context }: { readonly canvas: HTMLCanvasElement
 			case FrameCommandType.Blit:
 				return renderBlit({ canvas, context }, command as Blit);
 		}
+	} else  {
+		return (command as FrameCollection).forEach(c => RenderCommand({canvas, context}, c));
 	}
 }
 

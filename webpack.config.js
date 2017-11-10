@@ -11,8 +11,18 @@ const fullOptimisation = {
   use: [{
     loader: "babel-loader",
     options: {
-      presets: [["@babel/preset-env", { loose: true, useBuiltIns: "usage" }]],
-      plugins: ["transform-typescript", "closure-elimination", "preval", "loop-optimizer", "tailcall-optimization", "module:fast-async"]
+      presets: [
+        ["@babel/preset-env", { loose: true }],
+        ["@babel/stage-3", { loose: true }]
+      ],
+      plugins: [
+        "transform-typescript",
+        "closure-elimination",
+        "preval",
+        "loop-optimizer",
+        "tailcall-optimization",
+        "module:fast-async"
+      ]
     }
   }]
 };
@@ -23,8 +33,17 @@ const standardOptimisation = {
   use: [{
     loader: "babel-loader",
     options: {
-      presets: [["@babel/preset-env", { loose: true, useBuiltIns: "usage" }]],
-      plugins: ["transform-typescript", "closure-elimination", "preval", "tailcall-optimization", "module:fast-async"]
+      presets: [
+        ["@babel/preset-env", { loose: true }],
+        ["@babel/stage-3", { loose: true }]
+      ],
+      plugins: [
+        "transform-typescript",
+        "closure-elimination",
+        "preval",
+        "tailcall-optimization",
+        "module:fast-async"
+      ]
     }
   }]
 };

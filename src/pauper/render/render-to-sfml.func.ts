@@ -2,16 +2,13 @@ import { Colour } from "../models/colour.model";
 import { Circle, Rectangle, Text2 } from "../models/shapes.model";
 import { Blit, Clear, Fill, Frame, FrameCollection, FrameCommandType, Origin, RenderTarget, Rotate, Scale, Stroke } from "./render-frame.model";
 
-
 export function renderToSfml(frame: FrameCollection): void {
-	frame.forEach((command: Frame) => RenderCommand(command));
+	frame.forEach(RenderCommand);
 }
 
 function RenderCommand(command: Frame): void {
 	const commandType = command[0];
-	if (Array.isArray(commandType)) {
-		return renderToSfml(command as FrameCollection);
-	} else {
+	if (!Array.isArray(commandType)) {
 		switch (commandType) {
 			case FrameCommandType.Clear:
 				return renderClear(command as Clear);
@@ -37,6 +34,8 @@ function RenderCommand(command: Frame): void {
 			case FrameCommandType.Blit:
 				return renderBlit(command as Blit);
 		}
+	} else {
+		return (command as FrameCollection).forEach(RenderCommand);
 	}
 }
 
