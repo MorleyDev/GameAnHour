@@ -26,9 +26,9 @@ void attachRedux(JavascriptEngine &engine, Redux& redux) {
 			redux.actionQueue.pop_back();
 			return true;
 		}
-	});
+	}, 0);
 	engine.setGlobalFunction("REDUX_GetState", [&redux](JavascriptEngine* engine) {
 		engine->push(redux.stateJson);
 		return true;
-	});
+	}, 0);
 }

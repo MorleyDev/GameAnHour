@@ -1,15 +1,14 @@
 #include <Box2D/Dynamics/b2Body.h>
 #include <Box2D/Dynamics/b2Fixture.h>
 #include <Box2D/Collision/Shapes/b2CircleShape.h>
-#include <iostream>
 #include "Box2dExtensions.hpp"
 
 constexpr auto Box2dScaleFactory = 1.0 / 100.0;
 
 void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 	engine.setGlobalFunction("BOX2D_SetGravity", [&box2d](JavascriptEngine* ctx) {
-		const auto x = ctx->getargf(-2) * Box2dScaleFactory;
-		const auto y = ctx->getargf(-1) * Box2dScaleFactory;
+		const auto x = ctx->getargf(0) * Box2dScaleFactory;
+		const auto y = ctx->getargf(1) * Box2dScaleFactory;
 		box2d.world.SetGravity(b2Vec2(static_cast<float>(x), static_cast<float>(y)));
 		return false;
 	}, 2);

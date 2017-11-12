@@ -45,7 +45,7 @@ void Profiler::printdump() {
 		auto max = stat.second.max;
 		std::cout << "Engine#" << stat.first << " | " << avg << " | ~" << std::floor((stat.second.total / totalTime) * 100) << "% | (" << min << " - " << max << ") | x" << stat.second.count << std::endl;
 	}
-	std::cout << "Cpp#Unknown" << " | " << unaccountedTime << " | ~" << std::floor((unaccountedTime / totalTime) * 100) << "% | (" << unaccountedTime << " - " << unaccountedTime << ")" << std::endl;
+	std::cout << "Engine#Unknown" << " | " << unaccountedTime << " | ~" << std::floor((unaccountedTime / totalTime) * 100) << "% | (" << unaccountedTime << " - " << unaccountedTime << ")" << std::endl;
 }
 
 std::chrono::duration<double> Profiler::getProfiledTimed() {

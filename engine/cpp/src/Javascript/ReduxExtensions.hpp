@@ -10,6 +10,6 @@ struct Redux {
 	std::vector<std::string> actionQueue;
 };
 
-void attachRedux(JavascriptEngine &engine, Redux &redux);
+extern void attachRedux(JavascriptEngine &engine, Redux &redux);
 
 #endif //DUKSFML_REDUXEXTENSIONS_HPP

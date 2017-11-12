@@ -8,48 +8,69 @@
 #include <string>
 
 #include "../Profile/Profiler.hpp"
-#include "JavascriptEngine.hpp"
 
-class DukJavascriptEngine : public JavascriptEngine
+class DukJavascriptEngine
 {
 public:
 	static std::vector<std::function<duk_ret_t(duk_context*)>> globalFunctions;
 
 private:
-	std::vector<std::size_t> argCountStack;
+	std::vector<duk_int_t> argCountStack;
 	duk_context *context;
 	Profiler* profiler;
 
-protected:
-	virtual void getPropString(int index, std::string name);
-	virtual void call(std::size_t nargs);
+	void getPropString(int index, std::string name) { duk_get_prop_string(context, index, name.c_str()); }
+	void call(std::size_t nargs) {
+		if (duk_pcall(context, static_cast<duk_idx_t>(nargs)) != 0) {
+			const auto result = std::string(duk_safe_to_string(context, -1));
+			pop();
+			throw std::runtime_error(result);
+		}
+	}
 
 public:
 	explicit DukJavascriptEngine(Profiler& profiler);
 	~DukJavascriptEngine();
 
-	virtual void pushGlobal();
-	virtual void pushObject();
-	virtual void pushUndefined();
-	virtual void push();
-	virtual void push(const char *value);
-	virtual void push(std::string value);
-	virtual void push(double value);
-	virtual void push(int value);
-	virtual void push(unsigned int value);
-	virtual void push(bool value);
-	virtual void pop();
+	void pushGlobal() { duk_push_global_object(context); }
+	void pushObject() { duk_push_bare_object(context); }
+	void pushUndefined() { duk_push_undefined(context); }
+	void push() { }
+	void push(const char *value) { duk_push_string(context, value); }
+	void push(std::string value) { duk_push_string(context, value.c_str()); }
+	void push(double value) { duk_push_number(context, value); }
+	void push(int value) { duk_push_number(context, value); }
+	void push(unsigned int value) { duk_push_number(context, value); }
+	void push(bool value) { duk_push_boolean(context, value ? 1 : 0); }
+	void pop() { duk_pop(context); }
 
-	virtual void putProp(int index, const char *name);
+	void putProp(int index, const char *name) { duk_put_prop_string(context, index, name); }
 
-	virtual double getargf(int index);
-	virtual bool getargb(int index);
-	virtual int getargn(int index);
-	virtual std::string getargstr(int index);
+	double getargf(int index) { return duk_get_number(context, index - argCountStack.back()); }
+	bool getargb(int index) { return duk_get_boolean(context, index - argCountStack.back()) != 0; }
+	int getargn(int index) { return duk_get_int(context, index - argCountStack.back()); }
+	std::string getargstr(int index) { return duk_get_string(context, index - argCountStack.back()); }
 
-	virtual void add(std::string name, std::string script);
-	virtual void load(std::string filepath);
-	virtual void setGlobalFunction(const char* name, std::function<bool(JavascriptEngine*)> function, int nargs);
+	void add(std::string name, std::string script);
+	void load(std::string filepath);
+	void setGlobalFunction(const char* name, std::function<bool(DukJavascriptEngine*)> function, int nargs);
+
+	void idle() {  }
+
+	template <typename T, typename U, typename... NARGS> void push(T value, U next, NARGS... rest) {
+		push(value);
+		push(next, rest...);
+	}
+	template <typename... ARGS>
+	void trigger(std::string globalFunctionName, ARGS... args)
+	{
+		pushGlobal();
+		getPropString(-1, globalFunctionName);
+		push(args...);
+		call(sizeof...(ARGS));
+		pop();
+		pop();
+	}
 };
 
 #endif // DUKSFML_DUKJAVASCRIPTENGINE_HPP

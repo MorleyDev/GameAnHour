@@ -22,6 +22,7 @@ import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics
 import { profile, stats } from "../../pauper/profiler";
 import { renderToSfml } from "../../pauper/render/render-to-sfml.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
+import { FrameCollection } from "../../pauper/render/render-frame.model";
 
 const drivers = {
 	keyboard: new SubjectKeyboard(),
@@ -86,12 +87,14 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 		.reduce(applyAction, newState);
 };
 
+let prevState: GameState | null = null;
+let nextState: GameState = initialState;
 const app$ = bootstrap.pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 		fastScan(applyAction, initialState),
 		auditTime(drivers.framerates.logicalRender, getLogicalScheduler(drivers as AppDrivers)),
-		tap(currentState => REDUX_SetState(JSON.stringify(currentState))),
+		tap(currentState => nextState = currentState),
 	))
 );
 const sub = app$.subscribe(
@@ -112,12 +115,16 @@ function statDump(): void {
 		.forEach(statKey => {
 			const stat = stats[statKey];
 			const averageTime = stat.total / stat.count;
-			console.log(`Javascript#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.total}`);
+			console.log(`Javascript#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.count}`);
 		});
 }
 
+let nextFrame: FrameCollection = [];
 requestAnimationFrame(function doRender() {
-	const nextFrame = profile("Render::State->Frame", () => render(JSON.parse(REDUX_GetState())));
+	if (prevState !== nextState) {
+		prevState = nextState;
+		nextFrame = profile("Render::State->Frame", () => render(nextState));
+	}
 	profile("Render::Frame->Eff(SFML)", () => renderToSfml(nextFrame));
 	requestAnimationFrame(doRender);
 });

@@ -9,7 +9,6 @@
 
 const char* sfmlScript =
 "(function () {"
-"    HTMLElement = function() { };"
 "    var eventsReceived = [];"
 "    SFML_OnEvent = function (type) {"
 "        var args = []; for (var i = 1; i < arguments.length; ++i) args.push(arguments[i]);"
@@ -160,7 +159,7 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 	engine.setGlobalFunction("SFML_Close", [&window](JavascriptEngine* ctx) {
 		window.close();
 		return 0;
-	});
+	}, 0);
 	engine.setGlobalFunction("SFML_Clear", [&window](JavascriptEngine* ctx) {
 		const auto r = ctx->getargf(0);
 		const auto g = ctx->getargf(1);
@@ -298,7 +297,7 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 	}, 8);
 	engine.setGlobalFunction("SFML_Draw_Text", [&window, &stack](JavascriptEngine* ctx) {
 		return 0;
-	});
+	}, 0);
 
 	engine.setGlobalFunction("SFML_Push_Translate", [&stack](JavascriptEngine* ctx) {
 		auto y = ctx->getargf(1);
@@ -326,16 +325,13 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 	engine.setGlobalFunction("SFML_Pop", [&stack](JavascriptEngine* ctx) {
 		stack.pop_back();
 		return 0;
-	});
+	}, 0);
 }
 
 void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window) {
-
 	sf::Event event = {};
-	while (window.pollEvent(event))
-	{
-		switch (event.type)
-		{
+	while (window.pollEvent(event)) {
+		switch (event.type)	{
 		case sf::Event::Resized: {
 			engine.trigger("SFML_OnEvent", static_cast<int>(event.type), event.size.width, event.size.height);
 			break;

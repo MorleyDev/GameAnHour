@@ -97,17 +97,17 @@ const char* animationFrameScript =
 "    };"
 "})();";
 
-void attachTimers(JavascriptEngine &engine) {
+void attachTimers(DukJavascriptEngine &engine) {
 	engine.add("timeout", timeoutScript);
 	engine.add("interval", intervalsScript);
 	engine.add("animationFrame", animationFrameScript);
 }
 
-void animate(JavascriptEngine &engine) {
+void animate(DukJavascriptEngine &engine) {
 	engine.trigger("flushAnimationFrames");
 }
 
-void tick(JavascriptEngine &engine, double ms) {
+void tick(DukJavascriptEngine &engine, double ms) {
 	engine.trigger("tickTimeouts", ms);
 	engine.trigger("tickIntervals", ms);
 	engine.trigger("flushTimeouts");

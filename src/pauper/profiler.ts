@@ -9,12 +9,14 @@ if (isBrowser) {
 	(window as any).stats = stats;
 }
 
+const now = typeof performance !== "undefined" ? () => performance.now() : () => Date.now();
+
 export const profile = isProduction
 	? <T>(name: string, func: () => T) => func()
 	: <T>(name: string, func: () => T) => {
-		const startTime = performance.now();
+		const startTime = now();
 		const result = func();
-		const takenTime = (performance.now() - startTime) / 1000;
+		const takenTime = (now() - startTime) / 1000;
 		const prevStats = stats[name] || { count: 0, max: takenTime, min: takenTime, total: 0 };
 		stats[name] = {
 			count: prevStats.count + 1,
@@ -29,11 +31,11 @@ export const profile$ = (name: string): <T>(observable: Observable<T>) => Observ
 	isProduction
 		? o$ => o$
 		: o$ => using(() => {
-			const startTime = performance.now();
+			const startTime = now();
 
 			return {
 				unsubscribe() {
-					const takenTime = performance.now() - startTime;
+					const takenTime = now() - startTime;
 					const prevStats = stats[name] || { count: 0, max: takenTime, min: takenTime, total: 0 };
 					stats[name] = {
 						count: prevStats.count + 1,

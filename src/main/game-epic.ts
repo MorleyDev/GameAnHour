@@ -21,7 +21,12 @@ export const epic =
 		(action$: Observable<GameAction>) =>
 			merge<GameAction>(
 				fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
-				tabAwareInterval(20 * Millisecond, drivers).pipe(mergeMap(() => [({ type: "@@TICK", deltaTime: 20 * Millisecond }), ({ type: "@@ADVANCE_PHYSICS", deltaTime: 20 * Millisecond })])),
+				tabAwareInterval(20 * Millisecond, drivers)
+					.pipe(
+						mergeMap(() => [
+							({ type: "@@TICK", deltaTime: 20 * Millisecond }),
+							({ type: "@@ADVANCE_PHYSICS", deltaTime: 20 * Millisecond })
+						])),
 				drivers.mouse!.mouseUp().pipe(
 					mergeMap(() => {
 						const id = EntityId();

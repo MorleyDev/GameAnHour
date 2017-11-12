@@ -1,7 +1,4 @@
 const webpack = require("webpack");
-const ClosureCompilerPlugin = require("webpack-closure-compiler");
-const PrepackWebpackPlugin = require("prepack-webpack-plugin")["default"];
-
 const isProd = process.argv.indexOf("--env.prod") >= 0;
 const { resolve } = require("path");
 

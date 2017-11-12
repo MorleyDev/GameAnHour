@@ -22,6 +22,6 @@ struct Box2d {
 	std::size_t nextBodyId;
 };
 
-void attachBox2d(JavascriptEngine &engine, Box2d &box2d);
+extern void attachBox2d(JavascriptEngine &engine, Box2d &box2d);
 
 #endif //DUKSFML_BOX2DEXTENSIONS_HPP
