@@ -33,6 +33,7 @@ add_executable(GameAnHour
     src/Javascript/Box2dExtensions.cpp
     src/Javascript/ReduxExtensions.cpp
     src/Profile/Profiler.cpp
+	src/Sfml/SfmlAssetStore.cpp
 	${CHAKRA_CPP_FILES})
 set_property(TARGET GameAnHour PROPERTY CXX_STANDARD 17)
 

@@ -9,6 +9,7 @@ import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
+import { Vector2 } from "../pauper/maths/vector.maths";
 
 const deadPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.position.y > 1000);
 const restingPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.restingTime >= 2);
@@ -66,7 +67,7 @@ export const reducer = (drivers: AppDrivers) => {
 					effects: state.effects.concat([
 						DestroyEntityAction(action.ball),
 						CreateEntityAction(entityId),
-						AttachComponentAction(entityId, FloatingScoreComponent(bucketValue, ballHardBodyComponent.position, state.runtime))
+						AttachComponentAction(entityId, FloatingScoreComponent(bucketValue, Vector2.subtract(ballHardBodyComponent.position, Vector2(5, 30)), state.runtime))
 					])
 				};
 

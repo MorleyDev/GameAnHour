@@ -20,6 +20,7 @@ int main() {
 		Profiler profiler;
 		sf::RenderWindow window(sf::VideoMode(512, 512), "GAM");
 
+		SfmlAssetStore assetStore;
 		std::vector<sf::Transform> stack;
 		stack.push_back(sf::Transform::Identity);
 
@@ -29,7 +30,7 @@ int main() {
 		JavascriptEngine engine(profiler);
 		attachConsole(engine);
 		attachTimers(engine);
-		attachSfml(engine, window, stack);
+		attachSfml(engine, window, stack, assetStore);
 		attachBox2d(engine, box2d);
 		attachRedux(engine, redux);
 
@@ -48,9 +49,7 @@ int main() {
 				profiler.profile("Tick", [&]() { tick(engine, diffMilliseconds); });
 				profiler.profile("PollEvents", [&]() { pollEvents(engine, window); });
 			} else {
-				profiler.profile("Idle", [&]() {
-					engine.idle();
-				});
+				profiler.profile("Idle", [&]() { engine.idle(); });
 			}
 			profiler.profile("Animate", [&]() {
 				animate(engine);
@@ -62,6 +61,7 @@ int main() {
 				window.setTitle(std::string("FPS: ") + std::to_string(fps / std::chrono::duration<double>(currentTime - previousFrame).count()));
 				fps = 0;
 				previousFrame = currentTime;
+				profiler.profile("Idle", [&]() { engine.idle(); });
 			};
 		}
 		profiler.printdump();

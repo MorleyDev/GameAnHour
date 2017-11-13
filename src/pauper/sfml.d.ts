@@ -6,7 +6,13 @@ type SfmlEvent
 	| { type: 11; parameters: [number /*x*/, number /*y*/] };
 
 declare function SFML_Close(): void;
-declare function SFML_SetRenderer(renderer: () => void): void;
+declare function SFML_SetVSync(enabled: boolean): void;
+
+declare function SFML_LoadFont(name: string, src: string): { readonly name: string; readonly src: string };
+declare function SFML_LoadImage(name: string, src: string): { readonly width: number; readonly height: number; readonly src: string };
+declare function SFML_LoadMusic(name: string, src: string): { readonly name: string; readonly src: string };
+declare function SFML_LoadSound(name: string, src: string): { readonly name: string; readonly src: string };
+
 declare function SFML_FlushEvents(handler: (event: SfmlEvent) => void): void;
 
 declare function SFML_Clear(r: number, g: number, b: number): void;
@@ -17,6 +23,11 @@ declare function SFML_Stroke_Circle(x: number, y: number, radius: number, r: num
 declare function SFML_Stroke_Rectangle(x: number, y: number, width: number, height: number, r: number, g: number, b: number, a: number): void;
 declare function SFML_Stroke_Triangle(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, r: number, g: number, b: number, a: number): void;
 declare function SFML_Draw_Line(x1: number, y1: number, x2: number, y2: number, r: number, g: number, b: number, a: number): void;
+
+declare function SFML_Stroke_Text(name: string, text: string, size: number, x: number, y: number, r: number, g: number, b: number, a: number): void;
+declare function SFML_Fill_Text(name: string, text: string, size: number, x: number, y: number, r: number, g: number, b: number, a: number): void;
+
+declare function SFML_Blit(name: string, srcX: number, srcY: number, srcWidth: number, srcHeight: number, dstX: number, dstY: number, dstWidth: number, dstHeight: number): void;
 
 declare function SFML_Push_Translate(x: number, y: number): void;
 declare function SFML_Push_Scale(x: number, y: number): void;

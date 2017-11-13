@@ -89,8 +89,9 @@ function renderFill({ canvas, context }: { readonly canvas: HTMLCanvasElement; r
 		}
 		context.fill();
 	} else if (Text2.is(shape)) {
-		context.font = `${shape.fontSize || "10px"} ${shape.fontFamily || "serif"}`;
-		context.fillText(shape.text, shape.x | 0, shape.y | 0, shape.width);
+		const size = shape.fontSize || 10;
+		context.font = `${size}px ${shape.fontFamily || "serif"}`;
+		context.fillText(shape.text, shape.x | 0, (shape.y + (size)) | 0);
 	} else if (Rectangle.is(shape)) {
 		context.fillRect(shape.x | 0, shape.y | 0, shape.width | 0, shape.height | 0);
 	} else if (Circle.is(shape)) {
@@ -112,8 +113,9 @@ function renderStroke({ canvas, context }: { readonly canvas: HTMLCanvasElement;
 		}
 		context.stroke();
 	} else if (Text2.is(shape)) {
-		context.font = `${shape.fontSize || "10px"} ${shape.fontFamily || "serif"}`;
-		context.strokeText(shape.text, shape.x | 0, shape.y | 0, shape.width);
+		const size = shape.fontSize || 10;
+		context.font = `${size}px ${shape.fontFamily || "serif"}`;
+		context.strokeText(shape.text, shape.x | 0, (shape.y + (size / 2)) | 0);
 	} else if (Rectangle.is(shape)) {
 		context.strokeRect(shape.x | 0, shape.y | 0, shape.width | 0, shape.height | 0);
 	} else if (Circle.is(shape)) {

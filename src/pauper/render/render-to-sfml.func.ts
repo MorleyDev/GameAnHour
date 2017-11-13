@@ -90,7 +90,7 @@ function renderFill(fill: Fill): void {
 			SFML_Draw_Line(shape[0].x, shape[0].y, shape[1].x, shape[1].y, colour.r, colour.g, colour.b, colour.a);
 		}
 	} else if (Text2.is(shape)) {
-		// TODO
+		SFML_Fill_Text(shape.fontFamily || "default", shape.text, shape.fontSize || 30, shape.x, shape.y, colour.r, colour.g, colour.b, colour.a);
 	} else if (Rectangle.is(shape)) {
 		SFML_Fill_Rectangle(shape.x, shape.y, shape.width, shape.height, colour.r, colour.g, colour.b, colour.a);
 	} else if (Circle.is(shape)) {
@@ -109,7 +109,7 @@ function renderStroke(fill: Stroke): void {
 			SFML_Draw_Line(shape[0].x, shape[0].y, shape[1].x, shape[1].y, colour.r, colour.g, colour.b, colour.a);
 		}
 	} else if (Text2.is(shape)) {
-		// TODO
+		SFML_Stroke_Text(shape.fontFamily || "default", shape.text, shape.fontSize || 30, shape.x, shape.y, colour.r, colour.g, colour.b, colour.a);
 	} else if (Rectangle.is(shape)) {
 		SFML_Stroke_Rectangle(shape.x, shape.y, shape.width, shape.height, colour.r, colour.g, colour.b, colour.a);
 	} else if (Circle.is(shape)) {

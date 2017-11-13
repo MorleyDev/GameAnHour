@@ -4,6 +4,7 @@
 
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/Text.hpp>
 #include <SFML/Window/Event.hpp>
 #include "SfmlExtensions.hpp"
 
@@ -154,18 +155,18 @@ const char* sfmlScript =
 "    };"
 "})();";
 
-void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform> &stack) {
+void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform> &stack, SfmlAssetStore &assetStore) {
 	engine.add("sfml", sfmlScript);
 	engine.setGlobalFunction("SFML_Close", [&window](JavascriptEngine* ctx) {
 		window.close();
-		return 0;
+		return false;
 	}, 0);
 	engine.setGlobalFunction("SFML_Clear", [&window](JavascriptEngine* ctx) {
 		const auto r = ctx->getargf(0);
 		const auto g = ctx->getargf(1);
 		const auto b = ctx->getargf(2);
 		window.clear(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b)));
-		return 0;
+		return false;
 	}, 3);
 	engine.setGlobalFunction("SFML_Stroke_Circle", [&window, &stack](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
@@ -176,15 +177,15 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		const auto b = ctx->getargf(5);
 		const auto a = ctx->getargf(6);
 
-		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255));
+		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0)));
 		sf::CircleShape circleShape(static_cast<float>(radius));
 		circleShape.setOrigin(static_cast<float>(radius), static_cast<float>(radius));
 		circleShape.setPosition(static_cast<float>(x), static_cast<float>(y));
-		circleShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0)));
+		circleShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
 		circleShape.setOutlineThickness(1.0f);
 		circleShape.setOutlineColor(color);
 		window.draw(circleShape, sf::RenderStates(stack.back()));
-		return 0;
+		return false;
 	}, 7);
 	engine.setGlobalFunction("SFML_Stroke_Rectangle", [&window, &stack](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
@@ -196,14 +197,14 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		const auto b = ctx->getargf(6);
 		const auto a = ctx->getargf(7);
 
-		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0));
+		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0)));
 		sf::RectangleShape rectShape(sf::Vector2f(static_cast<float>(width), static_cast<float>(height)));
 		rectShape.setPosition(static_cast<float>(x), static_cast<float>(y));
 		rectShape.setFillColor(sf::Color::Transparent);
 		rectShape.setOutlineThickness(1.0f);
 		rectShape.setOutlineColor(color);
 		window.draw(rectShape, sf::RenderStates(stack.back()));
-		return 0;
+		return false;
 	}, 8);
 	engine.setGlobalFunction("SFML_Stroke_Triangle", [&window, &stack](JavascriptEngine* ctx) {
 		const auto x1 = ctx->getargf(0);
@@ -217,14 +218,14 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		const auto b = ctx->getargf(8);
 		const auto a = ctx->getargf(9);
 
-		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0));
+		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0)));
 		sf::VertexArray array(sf::PrimitiveType::LineStrip, 4);
 		array[0] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
 		array[1] = sf::Vertex(sf::Vector2f(static_cast<float>(x2), static_cast<float>(y2)), color);
 		array[2] = sf::Vertex(sf::Vector2f(static_cast<float>(x3), static_cast<float>(y3)), color);
 		array[4] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
 		window.draw(array, sf::RenderStates(stack.back()));
-		return 0;
+		return false;
 	}, 10);
 	engine.setGlobalFunction("SFML_Fill_Circle", [&window, &stack](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
@@ -238,94 +239,187 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		sf::CircleShape circleShape(static_cast<float>(radius));
 		circleShape.setOrigin(static_cast<float>(radius), static_cast<float>(radius));
 		circleShape.setPosition(static_cast<float>(x), static_cast<float>(y));
-		circleShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0)));
+		circleShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
 		window.draw(circleShape, sf::RenderStates(stack.back()));
-		return 0;
+		return false;
 	}, 7);
 	engine.setGlobalFunction("SFML_Fill_Rectangle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getargf(-1);
-		auto b = ctx->getargf(-2);
-		auto g = ctx->getargf(-3);
-		auto r = ctx->getargf(-4);
-		auto height = ctx->getargf(-5);
-		auto width = ctx->getargf(-6);
-		auto y = ctx->getargf(-7);
-		auto x = ctx->getargf(-8);
+		const auto x = ctx->getargf(0);
+		const auto y = ctx->getargf(1);
+		const auto width = ctx->getargf(2);
+		const auto height = ctx->getargf(3);
+		const auto r = ctx->getargf(4);
+		const auto g = ctx->getargf(5);
+		const auto b = ctx->getargf(6);
+		const auto a = ctx->getargf(7);
 
 		sf::RectangleShape rectShape(sf::Vector2f(static_cast<float>(width), static_cast<float>(height)));
 		rectShape.setPosition(static_cast<float>(x), static_cast<float>(y));
-		rectShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0)));
+		rectShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
 		window.draw(rectShape, sf::RenderStates(stack.back()));
-		return 0;
+		return false;
 	}, 8);
 	engine.setGlobalFunction("SFML_Fill_Triangle", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getargf(9);
-		auto b = ctx->getargf(8);
-		auto g = ctx->getargf(7);
-		auto r = ctx->getargf(6);
-		auto y3 = ctx->getargf(5);
-		auto x3 = ctx->getargf(4);
-		auto y2 = ctx->getargf(3);
-		auto x2 = ctx->getargf(2);
-		auto y1 = ctx->getargf(1);
-		auto x1 = ctx->getargf(0);
-
-		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0));
+		const auto x1 = ctx->getargf(0);
+		const auto y1 = ctx->getargf(1);
+		const auto x2 = ctx->getargf(2);
+		const auto y2 = ctx->getargf(3);
+		const auto x3 = ctx->getargf(4);
+		const auto y3 = ctx->getargf(5);
+		const auto r = ctx->getargf(6);
+		const auto g = ctx->getargf(7);
+		const auto b = ctx->getargf(8);
+		const auto a = ctx->getargf(9);
+		
+		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0)));
 		sf::VertexArray array(sf::PrimitiveType::Triangles, 3);
 		array[0] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
 		array[1] = sf::Vertex(sf::Vector2f(static_cast<float>(x2), static_cast<float>(y2)), color);
 		array[2] = sf::Vertex(sf::Vector2f(static_cast<float>(x3), static_cast<float>(y3)), color);
 		window.draw(array, sf::RenderStates(stack.back()));
-		return 0;
+		return false;
 	}, 10);
 	engine.setGlobalFunction("SFML_Draw_Line", [&window, &stack](JavascriptEngine* ctx) {
-		auto a = ctx->getargf(7);
-		auto b = ctx->getargf(6);
-		auto g = ctx->getargf(5);
-		auto r = ctx->getargf(4);
-		auto y2 = ctx->getargf(3);
-		auto x2 = ctx->getargf(2);
-		auto y1 = ctx->getargf(1);
-		auto x1 = ctx->getargf(0);
+		const auto x1 = ctx->getargf(0);
+		const auto y1 = ctx->getargf(1);
+		const auto x2 = ctx->getargf(2);
+		const auto y2 = ctx->getargf(3);
+		const auto r = ctx->getargf(4);
+		const auto g = ctx->getargf(5);
+		const auto b = ctx->getargf(6);
+		const auto a = ctx->getargf(7);
 
-		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(a * 255.0f));
+		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0f)));
 		sf::VertexArray array(sf::PrimitiveType::Lines, 2);
 		array[0] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
 		array[1] = sf::Vertex(sf::Vector2f(static_cast<float>(x2), static_cast<float>(y2)), color);
 		window.draw(array, sf::RenderStates(stack.back()));
-		return 0;
+		return false;
 	}, 8);
-	engine.setGlobalFunction("SFML_Draw_Text", [&window, &stack](JavascriptEngine* ctx) {
-		return 0;
-	}, 0);
+	engine.setGlobalFunction("SFML_Fill_Text", [&window, &stack, &assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto text = ctx->getargstr(1);
+		const auto size = ctx->getargn(2);
+		const auto x = ctx->getargf(3);
+		const auto y = ctx->getargf(4);
+		const auto r = ctx->getargf(5);
+		const auto g = ctx->getargf(6);
+		const auto b = ctx->getargf(7);
+		const auto a = ctx->getargf(8);
+		const auto font = assetStore.font(name, "./assets/fonts/" + name + ".ttf");
+
+		sf::Text t(text, *font, size);
+		t.setPosition(static_cast<float>(x), static_cast<float>(y));
+		t.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
+		window.draw(t, sf::RenderStates(stack.back()));
+		return false;
+	}, 9);
+	engine.setGlobalFunction("SFML_Stroke_Text", [&window, &stack, &assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto text = ctx->getargstr(1);
+		const auto size = ctx->getargn(2);
+		const auto x = ctx->getargf(3);
+		const auto y = ctx->getargf(4);
+		const auto r = ctx->getargf(5);
+		const auto g = ctx->getargf(6);
+		const auto b = ctx->getargf(7);
+		const auto a = ctx->getargf(8);
+		const auto font = assetStore.font(name, "./assets/fonts/" + name + ".ttf");
+
+		sf::Text t(text, *font, size);
+		t.setPosition(static_cast<float>(x), static_cast<float>(y));
+		t.setFillColor(sf::Color::Transparent);
+		t.setOutlineColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
+		window.draw(t, sf::RenderStates(stack.back()));
+		return false;
+	}, 9);
 
 	engine.setGlobalFunction("SFML_Push_Translate", [&stack](JavascriptEngine* ctx) {
-		auto y = ctx->getargf(1);
-		auto x = ctx->getargf(0);
+		const auto x = ctx->getargf(0);
+		const auto y = ctx->getargf(1);
+
 		auto m = sf::Transform(stack.back());
 		m.translate(static_cast<float>(x), static_cast<float>(y));
 		stack.push_back(m);
-		return 0;
+		return false;
 	}, 2);
 	engine.setGlobalFunction("SFML_Push_Scale", [&stack](JavascriptEngine* ctx) {
-		auto y = ctx->getargf(1);
-		auto x = ctx->getargf(0);
+		const auto x = ctx->getargf(0);
+		const auto y = ctx->getargf(1);
+		
 		auto m = sf::Transform(stack.back());
 		m.scale(static_cast<float>(x), static_cast<float>(y));
 		stack.push_back(m);
-		return 0;
+		return false;
 	}, 2);
 	engine.setGlobalFunction("SFML_Push_Rotate", [&stack](JavascriptEngine* ctx) {
-		auto radians = ctx->getargf(0);
+		const auto radians = ctx->getargf(0);
+		
 		auto m = sf::Transform(stack.back());
 		m.rotate(static_cast<float>(radians * 57.2958));
 		stack.push_back(m);
-		return 0;
+		return false;
 	}, 1);
 	engine.setGlobalFunction("SFML_Pop", [&stack](JavascriptEngine* ctx) {
 		stack.pop_back();
-		return 0;
+		return false;
 	}, 0);
+	engine.setGlobalFunction("SFML_SetVSync", [&window](JavascriptEngine* ctx) {
+		const auto enabled = ctx->getargb(0);
+
+		window.setVerticalSyncEnabled(enabled);
+		return false;
+	}, 1);
+	engine.setGlobalFunction("SFML_LoadImage", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto src = ctx->getargstr(1);
+
+		const auto img = assetStore.image(name, src);
+		ctx->pushObject();
+		ctx->push(img->getSize().x);
+		ctx->putProp(-2, "width");
+		ctx->push(img->getSize().y);
+		ctx->putProp(-2, "height");
+		ctx->push(src);
+		ctx->putProp(-2, "src");
+		return true;
+	}, 2);
+	engine.setGlobalFunction("SFML_LoadFont", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto src = ctx->getargstr(1);
+
+		const auto font = assetStore.font(name, src);
+		ctx->pushObject();
+		ctx->push(name);
+		ctx->putProp(-2, "name");
+		ctx->push(src);
+		ctx->putProp(-2, "src");
+		return true;
+	}, 2);
+	engine.setGlobalFunction("SFML_LoadMusic", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+
+		const auto src = ctx->getargstr(1);
+		const auto music = assetStore.music(name, src);
+		ctx->pushObject();
+		ctx->push(name);
+		ctx->putProp(-2, "name");
+		ctx->push(src);
+		ctx->putProp(-2, "src");
+		return true;
+	}, 2);
+	engine.setGlobalFunction("SFML_LoadSound", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto src = ctx->getargstr(1);
+
+		const auto sound = assetStore.sound(name, src);
+		ctx->pushObject();
+		ctx->push(name);
+		ctx->putProp(-2, "name");
+		ctx->push(src);
+		ctx->putProp(-2, "src");
+		return true;
+	}, 2);
 }
 
 void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window) {

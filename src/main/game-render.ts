@@ -27,11 +27,11 @@ const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "Stati
 });
 
 const scoreTextRenderer = createEntitiesStateMap(["FloatingScoreComponent"], (id: string, physics: FloatingScoreComponent, runtime: Seconds) => {
-	const interpolateTo = (runtime - physics.startingTick) / physics.lifespan;
+	const interpolateTo = Math.max(0, Math.min(1, (runtime - physics.startingTick) / physics.lifespan));
 	const position = Vector2.linearInterpolation(physics.startPosition, physics.endPosition)(interpolateTo);
 
 	return [
-		Fill(Text2(`${physics.score}`, position.x, position.y, "24px", "sans-serif"), Colour(255, 255, 255, exponentialInterpolation(Math.E)(1, 0)(interpolateTo)))
+		Fill(Text2(`${physics.score}`, position.x, position.y, 24, "sans-serif"), Colour(255, 255, 255, exponentialInterpolation(Math.E)(1, 0)(interpolateTo)))
 	];
 });
 
@@ -42,6 +42,6 @@ export const render = (state: GameState) => [
 	profile("Render::(RenderedComponent, HardBodyComponent)->Frame", () => Array.from(entityRenderer(state))),
 	profile("Render::(FloatingScoreComponent)->Frame", () => Array.from(scoreTextRenderer(state, state.runtime))),
 
-	Fill(Text2(`Score: ${state.score}`, 30, 30, "24px", "sans-serif"), Colour(255, 0, 0)),
-	Fill(Text2(`Runtime: ${state.runtime}`, 30, 60, "16px", "sans-serif"), Colour(255, 0, 0))
+	Fill(Text2(`Score: ${state.score}`, 0, 0, 24, "sans-serif"), Colour(255, 0, 0)),
+	Fill(Text2(`Runtime: ${state.runtime}`, 30, 60, 16, "sans-serif"), Colour(255, 0, 0))
 ];
