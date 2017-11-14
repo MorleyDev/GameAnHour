@@ -6,8 +6,8 @@ pushd src
 popd
 
 pushd build
-	mkdir debug-mingw32
-	pushd debug-mingw32
+	mkdir debug-mingw32x64
+	pushd debug-mingw32x64
 		mkdir Box2D
 		pushd Box2D
 			cmake ..\..\..\src\box2d\Box2D -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DBOX2D_BUILD_EXAMPLES=OFF
@@ -15,8 +15,8 @@ pushd build
 		popd
 	popd
 
-	mkdir release-mingw32
-	pushd release-mingw32
+	mkdir release-mingw32x64
+	pushd release-mingw32x64
 		mkdir Box2D
 		pushd Box2D
 			cmake ..\..\..\src\box2d\Box2D -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBOX2D_BUILD_EXAMPLES=OFF
@@ -27,8 +27,7 @@ popd
 
 xcopy src\Box2D\Box2D\Box2D\*.h .\include\Box2D\ /S /Y
 
-xcopy build\debug-mingw32\Box2D\Box2D\Debug\*.lib .\lib\debug-mingw32\ /S /Y
-xcopy build\debug-mingw32\Box2D\Box2D\Debug\*.pdb .\lib\debug-mingw32\ /S /Y
-xcopy build\debug-mingw32\Box2D\Box2D\Debug\*.dll .\bin\debug-mingw32\ /S /Y
-xcopy build\release-mingw32\Box2D\Box2D\Release\*.lib .\lib\release-mingw32\ /S /Y
-xcopy build\release-mingw32\Box2D\Box2D\Release\*.dll .\bin\release-mingw32\ /S /Y
+xcopy build\debug-mingw32x64\Box2D\Box2D\*.a .\lib\debug-mingw32x64\ /S /Y
+xcopy build\debug-mingw32x64\Box2D\Box2D\*.dll .\bin\debug-mingw32x64\ /S /Y
+xcopy build\release-mingw32x64\Box2D\Box2D\*.a .\lib\release-mingw32x64\ /S /Y
+xcopy build\release-mingw32x64\Box2D\Box2D\*.dll .\bin\release-mingw32x64\ /S /Y

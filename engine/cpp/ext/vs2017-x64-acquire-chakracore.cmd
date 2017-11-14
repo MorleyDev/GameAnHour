@@ -11,7 +11,7 @@ xcopy src\ChakraCore\lib\Jsrt\ChakraCore.h .\include\ /S /Y
 xcopy src\ChakraCore\lib\Jsrt\ChakraCommon.h .\include\ /S /Y
 xcopy src\ChakraCore\lib\Jsrt\ChakraCommonWindows.h .\include\ /S /Y
 xcopy src\ChakraCore\lib\Jsrt\ChakraDebug.h .\include\ /S /Y
-xcopy src\ChakraCore\Build\VcBuild\bin\x64_debug\ChakraCore.lib .\lib\debug-vs2017\ /S /Y
-xcopy src\ChakraCore\Build\VcBuild\bin\x64_debug\ChakraCore.dll .\bin\debug-vs2017\ /S /Y
-xcopy src\ChakraCore\Build\VcBuild\bin\x64_release\ChakraCore.lib .\lib\release-vs2017\ /S /Y
-xcopy src\ChakraCore\Build\VcBuild\bin\x64_release\ChakraCore.dll .\bin\release-vs2017\ /S /Y
+xcopy src\ChakraCore\Build\VcBuild\bin\x64_debug\ChakraCore.lib .\lib\debug-vs2017x64\ /S /Y
+xcopy src\ChakraCore\Build\VcBuild\bin\x64_debug\ChakraCore.dll .\bin\debug-vs2017x64\ /S /Y
+xcopy src\ChakraCore\Build\VcBuild\bin\x64_release\ChakraCore.lib .\lib\release-vs2017x64\ /S /Y
+xcopy src\ChakraCore\Build\VcBuild\bin\x64_release\ChakraCore.dll .\bin\release-vs2017x64\ /S /Y

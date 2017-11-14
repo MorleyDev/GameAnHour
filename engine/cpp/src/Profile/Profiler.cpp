@@ -1,9 +1,7 @@
-//
-// Created by jasonm on 06/11/2017.
-//
-
 #include "Profiler.hpp"
+
 #include <iostream>
+#include <cmath>
 
 Profiler::Profiler()
 	: stats(), startTime(std::chrono::system_clock::now()) {

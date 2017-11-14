@@ -42,7 +42,7 @@ export const epic =
 					filter(action => action.type === "PlaySoundEffect"),
 					map(action => (action as ({ readonly type: "PlaySoundEffect"; readonly sound: string })).sound),
 					map(sound => drivers.loader!.getSoundEffect(sound)),
-					map(sound => drivers.audio!.play(sound)),
+					map(sound => drivers.audio!.playSoundEffect(sound)),
 					ignoreElements()
 				)
 			);

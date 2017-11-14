@@ -1,11 +1,13 @@
-import { Howl } from "howler";
-
 import { AssetLoader } from "./asset-loader.service";
-import { SoundEffectAsset, ImageAsset } from "./asset.model";
+import { ImageAsset, SoundEffectAsset } from "./asset.model";
 
 export class NoOpAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
 	private audio: { [id: string]: SoundEffectAsset | undefined } = {};
+
+	public loadFont(id: string, path?: string): Promise<void> {
+		return Promise.resolve();
+	}
 
 	public getSoundEffect(id: string, path?: string): SoundEffectAsset {
 		return { } as any;

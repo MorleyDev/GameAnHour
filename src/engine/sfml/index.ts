@@ -13,22 +13,22 @@ import { postprocess, reducer } from "../../main/game-reducer";
 import { render } from "../../main/game-render";
 import { GameAction, GameState } from "../../main/game.model";
 import { AppDrivers, getLogicalScheduler } from "../../pauper/app-drivers";
-import { NoOpAssetLoader } from "../../pauper/assets/noop-asset-loader.service";
-import { NoOpAudioService } from "../../pauper/audio/noop-audio.service";
+import { SfmlAssetLoader } from "../../pauper/assets/sfml-asset-loader.service";
+import { SfmlAudioService } from "../../pauper/audio/sfml-audio.service";
 import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
 import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { Key } from "../../pauper/models/keys.model";
 import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
 import { profile, stats } from "../../pauper/profiler";
+import { FrameCollection } from "../../pauper/render/render-frame.model";
 import { renderToSfml } from "../../pauper/render/render-to-sfml.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
-import { FrameCollection } from "../../pauper/render/render-frame.model";
 
 const drivers = {
 	keyboard: new SubjectKeyboard(),
 	mouse: new SubjectMouse(),
-	audio: new NoOpAudioService(),
-	loader: new NoOpAssetLoader(),
+	audio: new SfmlAudioService(),
+	loader: new SfmlAssetLoader(),
 	framerates: {
 		logicalRender: 20,
 		logicalTick: 20

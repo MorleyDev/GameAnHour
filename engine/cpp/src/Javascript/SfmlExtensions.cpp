@@ -1,12 +1,16 @@
-#include <unordered_map>
-#include <functional>
-#include <iostream>
+#include "SfmlExtensions.hpp"
 
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
+#include <SFML/Audio/Sound.hpp>
 #include <SFML/Window/Event.hpp>
-#include "SfmlExtensions.hpp"
+
+#include <unordered_map>
+#include <functional>
+#include <iostream>
+#include <cmath>
 
 const char* sfmlScript =
 "(function () {"
@@ -155,7 +159,7 @@ const char* sfmlScript =
 "    };"
 "})();";
 
-void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform> &stack, SfmlAssetStore &assetStore) {
+void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform> &stack, SfmlAssetStore &assetStore, std::vector<std::unique_ptr<sf::Sound>> &activeSoundEffects) {
 	engine.add("sfml", sfmlScript);
 	engine.setGlobalFunction("SFML_Close", [&window](JavascriptEngine* ctx) {
 		window.close();
@@ -334,6 +338,25 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		return false;
 	}, 9);
 
+	engine.setGlobalFunction("SFML_Blit", [&window, &stack, &assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto srcX = ctx->getargn(1);
+		const auto srcY = ctx->getargn(2);
+		const auto srcWidth = ctx->getargn(3);
+		const auto srcHeight = ctx->getargn(4);
+		const auto dstX = ctx->getargf(5);
+		const auto dstY = ctx->getargf(6);
+		const auto dstWidth = ctx->getargf(7);
+		const auto dstHeight = ctx->getargf(8);
+
+		const auto img = assetStore.image(name, "./assets/images/" + name + ".png");
+		sf::Sprite spr(*img, sf::IntRect(srcX, srcY, srcWidth, srcHeight));
+		spr.setPosition(static_cast<float>(dstX), static_cast<float>(dstY));
+		spr.setScale(static_cast<float>(dstWidth / srcWidth), static_cast<float>(dstHeight / srcHeight));
+		window.draw(spr, sf::RenderStates(stack.back()));
+		return false;
+	}, 9);
+
 	engine.setGlobalFunction("SFML_Push_Translate", [&stack](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
@@ -382,6 +405,8 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		ctx->putProp(-2, "height");
 		ctx->push(src);
 		ctx->putProp(-2, "src");
+		ctx->push(name);
+		ctx->putProp(-2, "name");
 		return true;
 	}, 2);
 	engine.setGlobalFunction("SFML_LoadFont", [&assetStore](JavascriptEngine* ctx) {
@@ -420,6 +445,16 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		ctx->putProp(-2, "src");
 		return true;
 	}, 2);
+	engine.setGlobalFunction("SFML_PlaySound", [&assetStore, &activeSoundEffects](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+
+		const auto sound = assetStore.sound(name, "./assets/sound/" + name + ".ogg");
+		auto soundEffect = std::make_unique<sf::Sound>();
+		soundEffect->setBuffer(*sound);
+		soundEffect->play();
+		activeSoundEffects.push_back(std::move(soundEffect));
+		return false;
+	}, 1);
 }
 
 void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window) {

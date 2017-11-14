@@ -1,8 +1,3 @@
-#include <string>
-#include <iostream>
-#include <chrono>
-#include <unordered_map>
-
 #include <SFML/Graphics.hpp>
 
 #include "Javascript/JavascriptEngine.hpp"
@@ -12,6 +7,13 @@
 #include "Javascript/Box2dExtensions.hpp"
 #include "Javascript/ReduxExtensions.hpp"
 #include "Profile/Profiler.hpp"
+#include <SFML/Audio/Sound.hpp>
+
+#include <string>
+#include <iostream>
+#include <chrono>
+#include <unordered_map>
+#include <vector>
 
 int main() {
 	try {
@@ -24,13 +26,15 @@ int main() {
 		std::vector<sf::Transform> stack;
 		stack.push_back(sf::Transform::Identity);
 
+		std::vector<std::unique_ptr<sf::Sound>> activeSoundEffects;
+
 		Box2d box2d;
 		Redux redux;
 
 		JavascriptEngine engine(profiler);
 		attachConsole(engine);
 		attachTimers(engine);
-		attachSfml(engine, window, stack, assetStore);
+		attachSfml(engine, window, stack, assetStore, activeSoundEffects);
 		attachBox2d(engine, box2d);
 		attachRedux(engine, redux);
 
@@ -63,6 +67,11 @@ int main() {
 				previousFrame = currentTime;
 				profiler.profile("Idle", [&]() { engine.idle(); });
 			};
+
+			const auto stoppedSound = std::find_if(activeSoundEffects.begin(), activeSoundEffects.end(), [](const std::unique_ptr<sf::Sound>& sound) { return sound->getStatus() == sf::SoundSource::Stopped; });
+			if (stoppedSound != activeSoundEffects.end()) {
+				activeSoundEffects.erase(stoppedSound);
+			}
 		}
 		profiler.printdump();
 	}

@@ -6,8 +6,8 @@ pushd src
 popd
 
 pushd build
-	mkdir debug-vs2017
-	pushd debug-vs2017
+	mkdir debug-vs2017x64
+	pushd debug-vs2017x64
 		mkdir duktape
 		pushd duktape
 			cl /c /Z7 ..\..\..\src\duktape\src\duktape.c
@@ -15,8 +15,8 @@ pushd build
 		popd
 	popd
 
-	mkdir release-vs2017
-	pushd release-vs2017
+	mkdir release-vs2017x64
+	pushd release-vs2017x64
 		mkdir duktape
 		pushd duktape
 			cl /c /O2 ..\..\..\src\duktape\src\duktape.c
@@ -27,5 +27,5 @@ popd
 
 xcopy src\duktape\src\*.h .\include\ /S /Y
 xcopy src\duktape\src\*.json .\include\ /S /Y
-xcopy build\debug-vs2017\duktape\*.lib .\lib\debug-vs2017\ /S /Y
-xcopy build\release-vs2017\duktape\*.lib .\lib\release-vs2017\ /S /Y
+xcopy build\debug-vs2017x64\duktape\*.lib .\lib\debug-vs2017x64\ /S /Y
+xcopy build\release-vs2017x64\duktape\*.lib .\lib\release-vs2017x64\ /S /Y

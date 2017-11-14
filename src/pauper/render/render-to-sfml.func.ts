@@ -64,18 +64,18 @@ function renderScale(command: Scale): void {
 }
 
 function renderBlit(command: Blit): void {
-	const image = command[1];
+	const image = command[1] as { readonly width: number; readonly height: number; readonly name: string  };
 	const dst = command[2];
 	const src = command[3] as Rectangle | undefined;
 
 	if (Rectangle.is(dst)) {
 		if (src != null) {
-// TODO context.drawImage(image, src.x | 0, src.y | 0, src.width | 0, src.height | 0, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
+			SFML_Blit(image.name, src.x | 0, src.y | 0, src.width | 0, src.height | 0, dst.x, dst.y, dst.width, dst.height);
 		} else {
-// TODO context.drawImage(image, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
+			SFML_Blit(image.name, 0, 0, image.width, image.height, dst.x, dst.y, dst.width, dst.height);
 		}
 	} else {
-// TODO context.drawImage(image, dst.x | 0, dst.y | 0);
+		SFML_Blit(image.name, 0, 0, image.width, image.height, dst.x, dst.y, image.width, image.height);
 	}
 }
 

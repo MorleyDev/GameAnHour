@@ -8,3 +8,9 @@ declare function BOX2D_GetBody(id: number): { positionX: number; positionY: numb
 declare function BOX2D_DestroyBody(id: number): void;
 
 declare function BOX2D_Advance(deltaTime: number): void;
+
+declare function BOX2D_PullCollisionStart(): number | undefined;
+declare function BOX2D_PullCollisionEnd(): number | undefined;
+
+declare function BOX2D_GetCollisionStartCount(): number;
+declare function BOX2D_GetCollisionEndCount(): number;

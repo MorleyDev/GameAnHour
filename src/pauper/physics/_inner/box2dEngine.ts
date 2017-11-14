@@ -7,6 +7,7 @@ import { StaticBodyComponent } from "../component/StaticBodyComponent";
 import { createPhysicsEcsEvents } from "../reducer/ecs-events.func";
 import { createPhysicsReducer } from "../reducer/physics-body.reducer";
 import { PhysicsUpdateResult } from "../update.model";
+import { Collision } from "../collision.model";
 
 const applyForce = (component: HardBodyComponent): HardBodyComponent => {
 	if (component.pendingForces.length === 0) {
@@ -97,10 +98,17 @@ export const box2dPhysicsEcsEvents: EntityComponentReducerEvents = createPhysics
 
 export const box2dAdvancePhysicsEngine = (deltaTime: Seconds): PhysicsUpdateResult => {
 	BOX2D_Advance(deltaTime);
-	return {
-		collisionStarts: [],
-		collisionEnds: []
-	};
+
+	const collisionStarts: Collision[] = Array( BOX2D_GetCollisionStartCount() );
+	for (let i = 0; i < collisionStarts.length; ++i) {
+		collisionStarts[i] = BOX2D_PullCollisionStart();
+	}
+
+	const collisionEnds: Collision[] = Array( BOX2D_GetCollisionEndCount() );
+	for (let i = 0; i < collisionEnds.length; ++i) {
+		collisionEnds[i] = BOX2D_PullCollisionEnd();
+	}
+	return { collisionStarts, collisionEnds };
 };
 
 export const box2dPhysicsReducer = createPhysicsReducer(box2dAdvancePhysicsEngine, syncComponent, applyForce);

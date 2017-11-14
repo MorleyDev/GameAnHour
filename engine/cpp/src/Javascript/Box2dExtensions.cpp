@@ -32,6 +32,7 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		shape.SetAsBox(static_cast<float>(width / 2.0f), static_cast<float>(height / 2.0f));
 
 		entity->body = box2d.world.CreateBody(&definition);
+		entity->body->SetUserData(reinterpret_cast<void*>(id));
 		auto fixture = entity->body->CreateFixture(&shape, static_cast<float>(density));
 		fixture->SetRestitution(static_cast<float>(restitution));
 		fixture->SetFriction(static_cast<float>(friction));
@@ -60,6 +61,7 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		shape.m_radius = static_cast<float>(radius);
 
 		entity->body = box2d.world.CreateBody(&definition);
+		entity->body->SetUserData(reinterpret_cast<void*>(id));
 		auto fixture = entity->body->CreateFixture(&shape, static_cast<float>(density));
 		fixture->SetRestitution(static_cast<float>(restitution));
 		fixture->SetFriction(static_cast<float>(friction));
@@ -97,6 +99,7 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		shape.Set(vertices, 3);
 
 		entity->body = box2d.world.CreateBody(&definition);
+		entity->body->SetUserData(reinterpret_cast<void*>(id));
 		auto fixture = entity->body->CreateFixture(&shape, static_cast<float>(density));
 		fixture->SetRestitution(static_cast<float>(restitution));
 		fixture->SetFriction(static_cast<float>(friction));
@@ -154,4 +157,30 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		}
 		return false;
 	}, 1);
+	engine.setGlobalFunction("BOX2D_GetCollisionStartCount", [&box2d](JavascriptEngine* ctx) {
+		ctx->push( static_cast<unsigned int>(box2d.collisions.beginContacts.size()) );
+		return true;
+	}, 0);
+	engine.setGlobalFunction("BOX2D_GetCollisionEndCount", [&box2d](JavascriptEngine* ctx) {
+		ctx->push( static_cast<unsigned int>(box2d.collisions.beginContacts.size()) );
+		return true;
+	}, 0);
+	engine.setGlobalFunction("BOX2D_PullCollisionStart", [&box2d](JavascriptEngine* ctx) {
+		if (box2d.collisions.endContacts.empty()) {
+			return false;
+		}
+		auto col = box2d.collisions.endContacts.back();
+		box2d.collisions.endContacts.pop_back();
+		ctx->push(static_cast<unsigned int>(col));
+		return true;
+	}, 0);
+	engine.setGlobalFunction("BOX2D_PullCollisionEnd", [&box2d](JavascriptEngine* ctx) {
+		if (box2d.collisions.endContacts.empty()) {
+			return false;
+		}
+		auto col = box2d.collisions.endContacts.back();
+		box2d.collisions.beginContacts.pop_back();
+		ctx->push(static_cast<unsigned int>(col));
+		return true;
+	}, 0);
 }

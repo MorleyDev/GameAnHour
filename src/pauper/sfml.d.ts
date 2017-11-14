@@ -9,7 +9,7 @@ declare function SFML_Close(): void;
 declare function SFML_SetVSync(enabled: boolean): void;
 
 declare function SFML_LoadFont(name: string, src: string): { readonly name: string; readonly src: string };
-declare function SFML_LoadImage(name: string, src: string): { readonly width: number; readonly height: number; readonly src: string };
+declare function SFML_LoadImage(name: string, src: string): { readonly width: number; readonly height: number; readonly src: string; readonly name: string };
 declare function SFML_LoadMusic(name: string, src: string): { readonly name: string; readonly src: string };
 declare function SFML_LoadSound(name: string, src: string): { readonly name: string; readonly src: string };
 
@@ -33,6 +33,8 @@ declare function SFML_Push_Translate(x: number, y: number): void;
 declare function SFML_Push_Scale(x: number, y: number): void;
 declare function SFML_Push_Rotate(radians: number): void;
 declare function SFML_Pop(): void;
+
+declare function SFML_PlaySound(name: string): void;
 
 declare const SFML_Events: {
 	Closed: 0,

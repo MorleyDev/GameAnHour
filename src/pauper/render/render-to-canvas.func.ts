@@ -61,7 +61,7 @@ function renderScale({ canvas, context }: { readonly canvas: HTMLCanvasElement; 
 }
 
 function renderBlit({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Blit): void {
-	const image = command[1];
+	const image = command[1] as HTMLImageElement | HTMLVideoElement;
 	const dst = command[2];
 	const src = command[3] as Rectangle | undefined;
 

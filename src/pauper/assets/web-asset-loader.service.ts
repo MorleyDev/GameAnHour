@@ -7,6 +7,10 @@ export class WebAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
 	private audio: { [id: string]: SoundEffectAsset | undefined } = {};
 
+	public loadFont(id: string, path?: string): Promise<void> {
+		return Promise.resolve();
+	}
+
 	public getSoundEffect(id: string, path?: string): SoundEffectAsset {
 		const audio = this.audio[id];
 		if (audio) {
