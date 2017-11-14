@@ -1,8 +1,8 @@
 pushd src
 	git clone https://github.com/SFML/SFML
-	pushd SFML
-		git checkout tags/2.4.2
-	popd
+REM	pushd SFML
+REM		git checkout tags/2.4.2
+REM	popd
 popd
 
 pushd build

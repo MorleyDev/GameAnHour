@@ -39,7 +39,6 @@ export const reducer = (drivers: AppDrivers) => {
 				};
 
 			case "@@COLLISION_START":
-				console.log("Collision", action.collision.a, action.collision.b);
 				if ((state.componentEntityLinks["HardBodyComponent"] || []).some(e => e === action.collision.a || e === action.collision.b)) {
 					return {
 						...state,
