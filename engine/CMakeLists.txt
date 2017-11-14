@@ -39,6 +39,7 @@ set_property(TARGET GameAnHour PROPERTY CXX_STANDARD 17)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     target_compile_definitions(GameAnHour PRIVATE GAM_CHAKRA_ENABLE=1)
+	add_definitions(/std:c++17)
     if (CMAKE_BUILD_TYPE MATCHES Release)
         add_definitions(/MT)
     endif()

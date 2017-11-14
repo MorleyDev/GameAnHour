@@ -1,5 +1,3 @@
-#include <SFML/Graphics.hpp>
-
 #include "Javascript/JavascriptEngine.hpp"
 #include "Javascript/TimerExtensions.hpp"
 #include "Javascript/ConsoleExtensions.hpp"
@@ -7,7 +5,10 @@
 #include "Javascript/Box2dExtensions.hpp"
 #include "Javascript/ReduxExtensions.hpp"
 #include "Profile/Profiler.hpp"
-#include <SFML/Audio/Sound.hpp>
+#include "Concurrent/TaskQueue.hpp"
+
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 #include <string>
 #include <iostream>
@@ -16,13 +17,18 @@
 #include <vector>
 
 int main() {
+	TaskQueue mainThreadTasks;
+	TaskQueue tasks;
+	std::atomic<bool> cancellationToken(false);
+	auto threads = tasks.spawnCores(cancellationToken);
+
 	try {
 		const auto startTime = std::chrono::system_clock::now();
 
 		Profiler profiler;
 		sf::RenderWindow window(sf::VideoMode(512, 512), "GAM");
 
-		SfmlAssetStore assetStore;
+		SfmlAssetStore assetStore(tasks, mainThreadTasks);
 		std::vector<sf::Transform> stack;
 		stack.push_back(sf::Transform::Identity);
 
@@ -72,12 +78,19 @@ int main() {
 			if (stoppedSound != activeSoundEffects.end()) {
 				activeSoundEffects.erase(stoppedSound);
 			}
+
+			mainThreadTasks.consume(100);
 		}
 		profiler.printdump();
+
+		cancellationToken.store(true);
+		std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 	}
 	catch (const std::exception &err)
 	{
-		std::cerr << err.what() << std::endl;
+		std::cerr << "UNHANDLED EXCEPTION: " << err.what() << std::endl;
+		cancellationToken.store(true);
+		std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 		return 1;
 	}
 }

@@ -157,6 +157,9 @@ const char* sfmlScript =
 "        F15: 98,"
 "        Pause: 99"
 "    };"
+"    SFML_OnLoadImage = function () { };"
+"    SFML_OnLoadFont = function () { };"
+"    SFML_OnLoadSound = function () { };"
 "})();";
 
 void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform> &stack, SfmlAssetStore &assetStore, std::vector<std::unique_ptr<sf::Sound>> &activeSoundEffects) {
@@ -274,7 +277,7 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		const auto g = ctx->getargf(7);
 		const auto b = ctx->getargf(8);
 		const auto a = ctx->getargf(9);
-		
+
 		sf::Color color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0)));
 		sf::VertexArray array(sf::PrimitiveType::Triangles, 3);
 		array[0] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
@@ -396,8 +399,11 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 	engine.setGlobalFunction("SFML_LoadImage", [&assetStore](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
+		const auto id = ctx->getargn(2);
 
-		const auto img = assetStore.image(name, src);
+		const auto img = assetStore.image(name, src, [id, ctx](std::shared_ptr<sf::Texture> texture) {
+			ctx->trigger("SFML_OnLoadImage", id, texture->getSize().x, texture->getSize().y);
+		});
 		ctx->pushObject();
 		ctx->push(img->getSize().x);
 		ctx->putProp(-2, "width");
@@ -408,36 +414,38 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		ctx->push(name);
 		ctx->putProp(-2, "name");
 		return true;
-	}, 2);
+	}, 3);
 	engine.setGlobalFunction("SFML_LoadFont", [&assetStore](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
+		const auto id = ctx->getargn(2);
 
-		const auto font = assetStore.font(name, src);
+		const auto font = assetStore.font(name, src, [id, ctx](std::shared_ptr<sf::Font>) { ctx->trigger("SFML_OnLoadFont", id); });
 		ctx->pushObject();
 		ctx->push(name);
 		ctx->putProp(-2, "name");
 		ctx->push(src);
 		ctx->putProp(-2, "src");
 		return true;
-	}, 2);
+	}, 3);
+	engine.setGlobalFunction("SFML_LoadSound", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto src = ctx->getargstr(1);
+		const auto id = ctx->getargn(2);
+
+		const auto sound = assetStore.sound(name, src, [id, ctx](std::shared_ptr<sf::SoundBuffer>) { ctx->trigger("SFML_OnLoadSound", id); });
+		ctx->pushObject();
+		ctx->push(name);
+		ctx->putProp(-2, "name");
+		ctx->push(src);
+		ctx->putProp(-2, "src");
+		return true;
+	}, 3);
 	engine.setGlobalFunction("SFML_LoadMusic", [&assetStore](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 
 		const auto src = ctx->getargstr(1);
 		const auto music = assetStore.music(name, src);
-		ctx->pushObject();
-		ctx->push(name);
-		ctx->putProp(-2, "name");
-		ctx->push(src);
-		ctx->putProp(-2, "src");
-		return true;
-	}, 2);
-	engine.setGlobalFunction("SFML_LoadSound", [&assetStore](JavascriptEngine* ctx) {
-		const auto name = ctx->getargstr(0);
-		const auto src = ctx->getargstr(1);
-
-		const auto sound = assetStore.sound(name, src);
 		ctx->pushObject();
 		ctx->push(name);
 		ctx->putProp(-2, "name");

@@ -8,10 +8,16 @@ type SfmlEvent
 declare function SFML_Close(): void;
 declare function SFML_SetVSync(enabled: boolean): void;
 
-declare function SFML_LoadFont(name: string, src: string): { readonly name: string; readonly src: string };
-declare function SFML_LoadImage(name: string, src: string): { readonly width: number; readonly height: number; readonly src: string; readonly name: string };
+declare function SFML_LoadFont(name: string, src: string, id: number): { readonly name: string; readonly src: string };
+declare let SFML_OnLoadFont: (id: number) => void;
+
+declare function SFML_LoadImage(name: string, src: string, id: number): { readonly width: number; readonly height: number; readonly src: string; readonly name: string };
+declare let SFML_OnLoadImage: (id: number, width: number, height: number) => void;
+
+declare function SFML_LoadSound(name: string, src: string, id: number): { readonly name: string; readonly src: string };
+declare let SFML_OnLoadSound: (id: number) => void;
+
 declare function SFML_LoadMusic(name: string, src: string): { readonly name: string; readonly src: string };
-declare function SFML_LoadSound(name: string, src: string): { readonly name: string; readonly src: string };
 
 declare function SFML_FlushEvents(handler: (event: SfmlEvent) => void): void;
 
@@ -38,6 +44,7 @@ declare function SFML_PlaySound(name: string): void;
 declare function SFML_PlayMusic(name: string, loop: boolean): void;
 declare function SFML_PauseMusic(name: string): void;
 declare function SFML_StopMusic(name: string): void;
+
 
 declare const SFML_Events: {
 	Closed: 0,

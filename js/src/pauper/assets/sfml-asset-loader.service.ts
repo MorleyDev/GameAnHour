@@ -5,56 +5,95 @@ export class SfmlAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
 	private soundeffects: { [id: string]: SoundEffectAsset | undefined } = {};
 	private music: { [id: string]: MusicAsset | undefined } = {};
+	private loaderId: number = 0;
+	private loaderCallback: { [id: number]: (() => void) | ((width: number, height: number) => void) | undefined } = {};
 
-	public loadFont(id: string, path?: string): Promise<void> {
-		SFML_LoadFont(id, path || `./assets/fonts/${id}.ttf`);
-		return Promise.resolve();
+	constructor() {
+		SFML_OnLoadImage = (id: number, width: number, height: number) => ((this.loaderCallback[id] as (width: number, height: number) => void) || ((w, h) => { }))(width, height);
+		SFML_OnLoadFont = (id: number) => (this.loaderCallback[id] as () => void)();
+		SFML_OnLoadSound = (id: number) => (this.loaderCallback[id] as () => void)();
 	}
 
-	public getSoundEffect(id: string, path?: string): SoundEffectAsset {
-		let asset = this.soundeffects[id];
+	public loadFont(name: string, path?: string): Promise<void> {
+		return new Promise<void>(resolve => {
+			const loaderId = this.loaderId++;
+			this.loaderCallback[loaderId] = () => {
+				resolve();
+				this.loaderCallback[loaderId] = undefined;
+			};
+			SFML_LoadFont(name, path || `./assets/fonts/${name}.ttf`, loaderId);
+		});
+	}
+
+	public getSoundEffect(name: string, path?: string): SoundEffectAsset {
+		const asset = this.soundeffects[name];
+		if (asset != null) {
+			return asset;
+		} else {
+			this.loadSoundEffect(name, path || `./assets/${name}.ogg`);
+			return this.soundeffects[name]!;
+		}
+	}
+
+	public loadSoundEffect(name: string, path: string): Promise<SoundEffectAsset> {
+		return new Promise<SoundEffectAsset>((resolve) => {
+			const asset = this.soundeffects[name];
+			if (asset != null) {
+				resolve(asset);
+			} else {
+				const loaderId = this.loaderId++;
+				this.loaderCallback[loaderId] = () => {
+					resolve(this.soundeffects[name]!);
+					this.loaderCallback[loaderId] = undefined;
+				};
+				this.soundeffects[name] = SFML_LoadSound(name, path, loaderId);
+			}
+			return Promise.resolve(asset);
+		});
+	}
+
+	public getImage(name: string, path?: string): ImageAsset {
+		const asset = this.images[name];
+		if (asset != null) {
+			return asset;
+		} else {
+			this.loadImage(name, path || `./assets/${name}.png`);
+			return this.images[name]!;
+		}
+	}
+
+	public async loadImage(name: string, path: string): Promise<ImageAsset> {
+		return new Promise<ImageAsset>((resolve) => {
+			const asset = this.images[name];
+			if (asset != null) {
+				resolve(asset);
+			} else {
+				const loaderId = this.loaderId++;
+				this.loaderCallback[loaderId] = (width, height) => {
+					resolve(this.images[name] = {
+						...this.images[name]!,
+						width,
+						height
+					});
+					this.loaderCallback[loaderId] = undefined;
+				};
+				this.images[name] = SFML_LoadImage(name, path || `./assets/${name}.png`, loaderId);
+			}
+		});
+	}
+
+	public getMusic(name: string, path?: string): MusicAsset {
+		let asset = this.music[name];
 		if (asset == null) {
-			asset = this.soundeffects[id] = SFML_LoadSound(id, path || `./assets/${id}.ogg`);
+			asset = this.music[name] = SFML_LoadMusic(name, path || `./assets/${name}.ogg`);
 		}
 		return asset;
 	}
 
-	public loadSoundEffect(id: string, path: string): Promise<SoundEffectAsset> {
-		let asset = this.soundeffects[id];
+	public async loadMusic(name: string, path: string): Promise<MusicAsset> {
+		let asset = this.music[name];
 		if (asset == null) {
-			asset = this.soundeffects[id] = SFML_LoadSound(id, path || `./assets/${id}.ogg`);
-		}
-		return Promise.resolve(asset);
-	}
-
-	public getImage(id: string, path?: string): ImageAsset {
-		let asset = this.images[id];
-		if (asset == null) {
-			asset = this.images[id] = SFML_LoadImage(id, path || `./assets/${id}.png`);
-		}
-		return asset;
-	}
-
-	public async loadImage(id: string, path: string): Promise<ImageAsset> {
-		let asset = this.images[id];
-		if (asset == null) {
-			asset = this.images[id] = SFML_LoadImage(id, path || `./assets/${id}.png`);
-		}
-		return Promise.resolve(asset);
-	}
-
-	public getMusic(id: string, path?: string): MusicAsset {
-		let asset = this.music[id];
-		if (asset == null) {
-			asset = this.music[id] = SFML_LoadMusic(id, path || `./assets/${id}.ogg`);
-		}
-		return asset;
-	}
-
-	public async loadMusic(id: string, path: string): Promise<MusicAsset> {
-		let asset = this.music[id];
-		if (asset == null) {
-			asset = this.music[id] = SFML_LoadMusic(id, path || `./assets/${id}.ogg`);
+			asset = this.music[name] = SFML_LoadMusic(name, path || `./assets/${name}.ogg`);
 		}
 		return Promise.resolve(asset);
 	}

@@ -96,8 +96,8 @@ public:
 	void push(std::uint8_t* blob, std::size_t length) {
 		JsValueRef buffer;
 		ChakraBytePtr bufferPtr;
-		std::size_t bufferLen;
-		JsCreateArrayBuffer(length, &buffer);
+		unsigned int bufferLen;
+		JsCreateArrayBuffer(static_cast<unsigned int>(length), &buffer);
 		JsGetArrayBufferStorage(buffer, &bufferPtr, &bufferLen);
 		std::memcpy(bufferPtr, blob, length);
 		JsAddRef(buffer, nullptr);
