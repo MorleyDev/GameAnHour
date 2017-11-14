@@ -23,6 +23,8 @@ const applyForce = (component: HardBodyComponent): HardBodyComponent => {
 	}
 };
 
+const bodyEntityIdMap: { [body: number]: EntityId | undefined } = { };
+
 const attachHardBodyToPhysics = (entityId: EntityId, component: HardBodyComponent): HardBodyComponent => {
 	const shape = Shape2.add(component.shape, component.position);
 	if (Array.isArray(shape)) {
@@ -38,6 +40,7 @@ const attachHardBodyToPhysics = (entityId: EntityId, component: HardBodyComponen
 	} else {
 		throw new Error();
 	}
+	bodyEntityIdMap[component._body] = entityId;
 	return component;
 };
 
@@ -56,6 +59,7 @@ const attachStaticBodyToPhysics = (entityId: EntityId, component: StaticBodyComp
 	} else {
 		throw new Error();
 	}
+	bodyEntityIdMap[component._body] = entityId;
 	return component;
 };
 
@@ -87,6 +91,7 @@ const syncComponent = (hardbody: HardBodyComponent): HardBodyComponent => {
 
 const detachPhysics = (id: EntityId, component: HardBodyComponent | StaticBodyComponent) => {
 	BOX2D_DestroyBody(component._body);
+	bodyEntityIdMap[component._body] = undefined;
 };
 
 export const box2dPhysicsEcsEvents: EntityComponentReducerEvents = createPhysicsEcsEvents(
@@ -101,12 +106,20 @@ export const box2dAdvancePhysicsEngine = (deltaTime: Seconds): PhysicsUpdateResu
 
 	const collisionStarts: Collision[] = Array( BOX2D_GetCollisionStartCount() );
 	for (let i = 0; i < collisionStarts.length; ++i) {
-		collisionStarts[i] = BOX2D_PullCollisionStart();
+		const collision = BOX2D_PullCollisionStart()!;
+		collisionStarts[i] = {
+			a: bodyEntityIdMap[collision.a]!,
+			b: bodyEntityIdMap[collision.b]!,
+		};
 	}
 
 	const collisionEnds: Collision[] = Array( BOX2D_GetCollisionEndCount() );
 	for (let i = 0; i < collisionEnds.length; ++i) {
-		collisionEnds[i] = BOX2D_PullCollisionEnd();
+		const collision = BOX2D_PullCollisionEnd()!;
+		collisionEnds[i] = {
+			a: bodyEntityIdMap[collision.a]!,
+			b: bodyEntityIdMap[collision.b]!,
+		};
 	}
 	return { collisionStarts, collisionEnds };
 };

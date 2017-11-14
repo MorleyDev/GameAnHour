@@ -5,6 +5,42 @@
 
 constexpr auto Box2dScaleFactory = 1.0 / 100.0;
 
+void Box2d_Collisions::BeginContact(b2Contact* contact) {
+	auto idA = reinterpret_cast<std::size_t>(contact->GetFixtureA()->GetBody()->GetUserData());
+	auto idB = reinterpret_cast<std::size_t>(contact->GetFixtureB()->GetBody()->GetUserData());
+	if (idA > idB) {
+		std::swap(idA, idB);
+	}
+	const auto pair = Box2d_CollisionPair{ idA, idB };
+
+	auto index = contactCounter.find(pair);
+	if (index == contactCounter.end()) {
+		contactCounter.insert(std::make_pair(pair, 1));
+		beginContacts.push_back(pair);
+	}
+	else {
+		index->second += 1;
+	}
+}
+
+void Box2d_Collisions::EndContact(b2Contact* contact) {
+	auto idA = reinterpret_cast<std::size_t>(contact->GetFixtureA()->GetBody()->GetUserData());
+	auto idB = reinterpret_cast<std::size_t>(contact->GetFixtureB()->GetBody()->GetUserData());
+	if (idA > idB) {
+		std::swap(idA, idB);
+	}
+	const auto pair = Box2d_CollisionPair{ idA, idB };
+
+	auto index = contactCounter.find(pair);
+	if (index != contactCounter.end()) {
+		index->second -= 1;
+		if (index->second == 0) {
+			contactCounter.erase(index);
+			endContacts.push_back(pair);
+		}
+	}
+}
+
 void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 	engine.setGlobalFunction("BOX2D_SetGravity", [&box2d](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0) * Box2dScaleFactory;
@@ -162,16 +198,20 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		return true;
 	}, 0);
 	engine.setGlobalFunction("BOX2D_GetCollisionEndCount", [&box2d](JavascriptEngine* ctx) {
-		ctx->push( static_cast<unsigned int>(box2d.collisions.beginContacts.size()) );
+		ctx->push( static_cast<unsigned int>(box2d.collisions.endContacts.size()) );
 		return true;
 	}, 0);
 	engine.setGlobalFunction("BOX2D_PullCollisionStart", [&box2d](JavascriptEngine* ctx) {
-		if (box2d.collisions.endContacts.empty()) {
+		if (box2d.collisions.beginContacts.empty()) {
 			return false;
 		}
-		auto col = box2d.collisions.endContacts.back();
-		box2d.collisions.endContacts.pop_back();
-		ctx->push(static_cast<unsigned int>(col));
+		auto col = box2d.collisions.beginContacts.back();
+		box2d.collisions.beginContacts.pop_back();
+		ctx->pushObject();
+		ctx->push(static_cast<unsigned int>(col.a));
+		ctx->putProp(-2, "a");
+		ctx->push(static_cast<unsigned int>(col.b));
+		ctx->putProp(-2, "b");
 		return true;
 	}, 0);
 	engine.setGlobalFunction("BOX2D_PullCollisionEnd", [&box2d](JavascriptEngine* ctx) {
@@ -179,8 +219,12 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 			return false;
 		}
 		auto col = box2d.collisions.endContacts.back();
-		box2d.collisions.beginContacts.pop_back();
-		ctx->push(static_cast<unsigned int>(col));
+		box2d.collisions.endContacts.pop_back();
+		ctx->pushObject();
+		ctx->push(static_cast<unsigned int>(col.a));
+		ctx->putProp(-2, "a");
+		ctx->push(static_cast<unsigned int>(col.b));
+		ctx->putProp(-2, "b");
 		return true;
 	}, 0);
 }

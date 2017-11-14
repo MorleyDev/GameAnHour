@@ -15,36 +15,25 @@ struct Box2d_Entity {
 	b2Body* body;
 };
 
+struct Box2d_CollisionPair {
+	std::size_t a;
+	std::size_t b;
+
+	bool operator==(const Box2d_CollisionPair& other) const {
+		return a == other.a && b == other.b;
+	}
+};
+namespace std {
+	template <> struct hash<Box2d_CollisionPair> { std::size_t operator()(const Box2d_CollisionPair& k) const { return k.a ^ (k.b << sizeof(std::size_t) * 4); } };
+}
+
 struct Box2d_Collisions : public b2ContactListener {
-	void BeginContact(b2Contact* contact) {
-		const auto id = reinterpret_cast<std::size_t>( contact->GetFixtureA()->GetBody()->GetUserData() );
+	void BeginContact(b2Contact* contact);
+	void EndContact(b2Contact* contact);
 
-		auto index = contactCounter.find(id);
-		if (index == contactCounter.end()) {
-			contactCounter.insert(std::make_pair(id, 1));
-			beginContacts.push_back(id);
-		}
-		else {
-			index->second += 1;
-		}
-	}
-
-	void EndContact(b2Contact* contact) {
-		const auto id = reinterpret_cast<std::size_t>(contact->GetFixtureA()->GetBody()->GetUserData());
-
-		auto index = contactCounter.find(id);
-		if (index != contactCounter.end()) {
-			index->second -= 1;
-			if (index->second == 0) {
-				contactCounter.erase(index);
-				endContacts.push_back(id);
-			}
-		}
-	}
-
-	std::unordered_map<std::size_t, std::size_t> contactCounter;
-	std::vector<std::size_t> beginContacts;
-	std::vector<std::size_t> endContacts;
+	std::unordered_map<Box2d_CollisionPair, std::size_t> contactCounter;
+	std::vector<Box2d_CollisionPair> beginContacts;
+	std::vector<Box2d_CollisionPair> endContacts;
 };
 
 struct Box2d {
