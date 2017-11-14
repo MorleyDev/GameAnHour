@@ -6,6 +6,7 @@
 
 #include <string>
 #include <functional>
+#include <memory>
 
 #include "ChakraTask.hpp"
 #include "../Profile/Profiler.hpp"
@@ -86,6 +87,21 @@ public:
 	}
 
 	void push() {
+	}
+
+	void push(std::vector<uint8_t> blob) {
+		push(blob.data(), blob.size());
+	}
+
+	void push(std::uint8_t* blob, std::size_t length) {
+		JsValueRef buffer;
+		ChakraBytePtr bufferPtr;
+		std::size_t bufferLen;
+		JsCreateArrayBuffer(length, &buffer);
+		JsGetArrayBufferStorage(buffer, &bufferPtr, &bufferLen);
+		std::memcpy(bufferPtr, blob, length);
+		JsAddRef(buffer, nullptr);
+		stack.push_back(buffer);
 	}
 
 	void push(const char *value) {

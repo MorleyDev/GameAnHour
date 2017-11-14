@@ -36,6 +36,15 @@ public:
 	void pushObject() { duk_push_bare_object(context); }
 	void pushUndefined() { duk_push_undefined(context); }
 	void push() { }
+
+	void push(std::vector<uint8_t> blob) {
+		push(blob.data(), blob.size());
+	}
+	void push(std::uint8_t* blob, std::size_t length) {
+		auto* bufferPtr = duk_push_fixed_buffer(context, length);
+		std::memcpy(bufferPtr, blob, length);
+	}
+
 	void push(const char *value) { duk_push_string(context, value); }
 	void push(std::string value) { duk_push_string(context, value.c_str()); }
 	void push(double value) { duk_push_number(context, value); }
