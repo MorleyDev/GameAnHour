@@ -1,9 +1,10 @@
 import { AssetLoader } from "./asset-loader.service";
-import { ImageAsset, SoundEffectAsset } from "./asset.model";
+import { ImageAsset, SoundEffectAsset, MusicAsset } from "./asset.model";
 
 export class SfmlAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
-	private audio: { [id: string]: SoundEffectAsset | undefined } = {};
+	private soundeffects: { [id: string]: SoundEffectAsset | undefined } = {};
+	private music: { [id: string]: MusicAsset | undefined } = {};
 
 	public loadFont(id: string, path?: string): Promise<void> {
 		SFML_LoadFont(id, path || `./assets/fonts/${id}.ttf`);
@@ -11,17 +12,17 @@ export class SfmlAssetLoader implements AssetLoader {
 	}
 
 	public getSoundEffect(id: string, path?: string): SoundEffectAsset {
-		let asset = this.audio[id];
+		let asset = this.soundeffects[id];
 		if (asset == null) {
-			asset = this.audio[id] = SFML_LoadSound(id, path || `./assets/${id}.ogg`);
+			asset = this.soundeffects[id] = SFML_LoadSound(id, path || `./assets/${id}.ogg`);
 		}
 		return asset;
 	}
 
 	public loadSoundEffect(id: string, path: string): Promise<SoundEffectAsset> {
-		let asset = this.audio[id];
+		let asset = this.soundeffects[id];
 		if (asset == null) {
-			asset = this.audio[id] = SFML_LoadSound(id, path || `./assets/${id}.ogg`);
+			asset = this.soundeffects[id] = SFML_LoadSound(id, path || `./assets/${id}.ogg`);
 		}
 		return Promise.resolve(asset);
 	}
@@ -38,6 +39,22 @@ export class SfmlAssetLoader implements AssetLoader {
 		let asset = this.images[id];
 		if (asset == null) {
 			asset = this.images[id] = SFML_LoadImage(id, path || `./assets/${id}.png`);
+		}
+		return Promise.resolve(asset);
+	}
+
+	public getMusic(id: string, path?: string): MusicAsset {
+		let asset = this.music[id];
+		if (asset == null) {
+			asset = this.music[id] = SFML_LoadMusic(id, path || `./assets/${id}.ogg`);
+		}
+		return asset;
+	}
+
+	public async loadMusic(id: string, path: string): Promise<MusicAsset> {
+		let asset = this.music[id];
+		if (asset == null) {
+			asset = this.music[id] = SFML_LoadMusic(id, path || `./assets/${id}.ogg`);
 		}
 		return Promise.resolve(asset);
 	}

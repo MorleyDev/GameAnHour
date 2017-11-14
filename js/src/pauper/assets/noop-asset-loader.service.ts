@@ -1,5 +1,5 @@
 import { AssetLoader } from "./asset-loader.service";
-import { ImageAsset, SoundEffectAsset } from "./asset.model";
+import { ImageAsset, SoundEffectAsset, MusicAsset } from "./asset.model";
 
 export class NoOpAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
@@ -22,6 +22,14 @@ export class NoOpAssetLoader implements AssetLoader {
 	}
 
 	public async loadImage(id: string, path: string): Promise<ImageAsset> {
+		return Promise.resolve({ } as any);
+	}
+
+	public getMusic(id: string, path?: string): MusicAsset {
+		return { } as any;
+	}
+
+	public loadMusic(id: string, path: string): Promise<MusicAsset> {
 		return Promise.resolve({ } as any);
 	}
 }

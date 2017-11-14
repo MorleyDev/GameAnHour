@@ -455,6 +455,31 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		activeSoundEffects.push_back(std::move(soundEffect));
 		return false;
 	}, 1);
+
+	engine.setGlobalFunction("SFML_PlayMusic", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		const auto loop = ctx->getargb(1);
+		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
+		music->setLoop(loop);
+		if (music->getStatus() != sf::SoundStream::Playing) {
+			music->play();
+		}
+		return false;
+	}, 2);
+	engine.setGlobalFunction("SFML_PauseMusic", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
+		if (music->getStatus() == sf::SoundStream::Playing) {
+			music->pause();
+		}
+		return false;
+	}, 1);
+	engine.setGlobalFunction("SFML_StopMusic", [&assetStore](JavascriptEngine* ctx) {
+		const auto name = ctx->getargstr(0);
+		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
+		music->stop();
+		return false;
+	}, 1);
 }
 
 void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window) {

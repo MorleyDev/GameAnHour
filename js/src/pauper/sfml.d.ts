@@ -35,6 +35,9 @@ declare function SFML_Push_Rotate(radians: number): void;
 declare function SFML_Pop(): void;
 
 declare function SFML_PlaySound(name: string): void;
+declare function SFML_PlayMusic(name: string, loop: boolean): void;
+declare function SFML_PauseMusic(name: string): void;
+declare function SFML_StopMusic(name: string): void;
 
 declare const SFML_Events: {
 	Closed: 0,
