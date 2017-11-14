@@ -41,12 +41,12 @@ const drivers = {
 
 const r = reducer(drivers as AppDrivers);
 const g = {
-	render,
+	render: render(drivers as AppDrivers),
 	postprocess,
 	reducer: r,
 	epic: epic(drivers as AppDrivers),
 	initialState,
-	bootstrap: bootstrap,
+	bootstrap: bootstrap(drivers as AppDrivers),
 };
 
 const postProcessSubject = new Subject<GameAction>();
@@ -89,7 +89,7 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 
 let prevState: GameState | null = null;
 let nextState: GameState = initialState;
-const app$ = bootstrap.pipe(
+const app$ = bootstrap(drivers as AppDrivers).pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 		fastScan(applyAction, initialState),
@@ -123,7 +123,7 @@ let nextFrame: FrameCollection = [];
 requestAnimationFrame(function doRender() {
 	if (prevState !== nextState) {
 		prevState = nextState;
-		nextFrame = profile("Render::State->Frame", () => render(nextState));
+		nextFrame = profile("Render::State->Frame", () => g.render(nextState));
 	}
 	profile("Render::Frame->Eff(SFML)", () => renderToSfml(nextFrame));
 	requestAnimationFrame(doRender);

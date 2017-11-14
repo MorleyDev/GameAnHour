@@ -20,7 +20,6 @@ export const epic =
 	(drivers: AppDrivers) =>
 		(action$: Observable<GameAction>) =>
 			merge<GameAction>(
-				fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()),
 				tabAwareInterval(20 * Millisecond, drivers)
 					.pipe(
 						mergeMap(() => [

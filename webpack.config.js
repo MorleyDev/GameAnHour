@@ -65,10 +65,6 @@ module.exports = {
 	devtool: isProd ? undefined : "inline-source-map",
 	entry: {
 		"index": "./src/index.ts",
-		"engine/golang/bootstrap": "./src/engine/golang/bootstrap.ts",
-		"engine/golang/epic": "./src/engine/golang/epic.ts",
-		"engine/golang/reducer": "./src/engine/golang/reducer.ts",
-		"engine/golang/render": "./src/engine/golang/render.ts",
 		"engine/sfml/index": "./src/engine/sfml/index.ts"
 	},
 	output: {

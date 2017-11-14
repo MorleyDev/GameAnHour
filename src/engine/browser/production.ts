@@ -56,7 +56,7 @@ const g = {
 	reducer: r,
 	epic: epic(drivers as AppDrivers),
 	initialState,
-	bootstrap: bootstrap
+	bootstrap: bootstrap(drivers as AppDrivers)
 };
 
 const postProcessSubject = new Subject<GameAction>();
@@ -98,12 +98,14 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 		.reduce(applyAction, newState);
 };
 
-const app$ = bootstrap.pipe(
+const renderer = render(drivers as AppDrivers);
+
+const app$ = g.bootstrap.pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 		fastScan(applyAction, initialState),
 		auditTime(10, animationFrame),
-		tap(frame => renderToCanvas({ canvas, context }, render(frame))),
+		tap(frame => renderToCanvas({ canvas, context }, renderer(frame))),
 		retryWhen(errs => errs.pipe(tap(err => console.error(err))))
 	))
 );
