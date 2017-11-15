@@ -6,6 +6,7 @@ std::shared_ptr<sf::Texture> SfmlAssetStore::image(std::string name, std::string
 	if (found != imageStore.end()) {
 		return found->second;
 	}
+	std::cout << "Warning: Loading image file " << name << " (" << path << ") synchronously" << std::endl;
 
 	auto texture = std::make_shared<sf::Texture>();
 	imageStore.insert(std::make_pair(name, texture));
@@ -23,6 +24,7 @@ std::shared_ptr<sf::Font> SfmlAssetStore::font(std::string name, std::string pat
 	if (found != fontStore.end()) {
 		return found->second;
 	}
+	std::cout << "Warning: Loading font file " << name << " (" << path << ") synchronously" << std::endl;
 
 	auto font = std::make_shared<sf::Font>();
 	if (!font->loadFromFile(path)) {
@@ -41,10 +43,12 @@ std::shared_ptr<sf::SoundBuffer> SfmlAssetStore::sound(std::string name, std::st
 		return found->second;
 	}
 
+	std::cout << "Warning: Loading sound file " << name << " (" << path << ") synchronously" << std::endl;
 	auto sound = std::make_shared<sf::SoundBuffer>();
 	if (!sound->loadFromFile(path)) {
 		std::cerr << "Could not load sound file " << name << " (" << path << ")" << std::endl;
 	}
+
 	soundStore.insert(std::make_pair(name, sound));
 	return sound;
 }

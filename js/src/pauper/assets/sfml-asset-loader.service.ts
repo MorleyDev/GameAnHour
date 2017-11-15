@@ -1,27 +1,29 @@
 import { AssetLoader } from "./asset-loader.service";
 import { ImageAsset, SoundEffectAsset, MusicAsset } from "./asset.model";
 
+let loaderId: number = 0;
+const loaderCallback: { [id: number]: (() => void) | ((width: number, height: number) => void) | undefined } = {};
+
+SFML_OnLoadImage = (id: number, width: number, height: number) => ((loaderCallback[id] as (width: number, height: number) => void) || ((w, h) => { }))(width, height);
+SFML_OnLoadFont = (id: number) => (loaderCallback[id] as () => void)();
+SFML_OnLoadSound = (id: number) => (loaderCallback[id] as () => void)();
+
 export class SfmlAssetLoader implements AssetLoader {
 	private images: { [id: string]: ImageAsset | undefined } = {};
 	private soundeffects: { [id: string]: SoundEffectAsset | undefined } = {};
 	private music: { [id: string]: MusicAsset | undefined } = {};
-	private loaderId: number = 0;
-	private loaderCallback: { [id: number]: (() => void) | ((width: number, height: number) => void) | undefined } = {};
 
 	constructor() {
-		SFML_OnLoadImage = (id: number, width: number, height: number) => ((this.loaderCallback[id] as (width: number, height: number) => void) || ((w, h) => { }))(width, height);
-		SFML_OnLoadFont = (id: number) => (this.loaderCallback[id] as () => void)();
-		SFML_OnLoadSound = (id: number) => (this.loaderCallback[id] as () => void)();
 	}
 
 	public loadFont(name: string, path?: string): Promise<void> {
 		return new Promise<void>(resolve => {
-			const loaderId = this.loaderId++;
-			this.loaderCallback[loaderId] = () => {
+			const id = loaderId++;
+			loaderCallback[id] = () => {
 				resolve();
-				this.loaderCallback[loaderId] = undefined;
+				loaderCallback[id] = undefined;
 			};
-			SFML_LoadFont(name, path || `./assets/fonts/${name}.ttf`, loaderId);
+			SFML_LoadFont(name, path || `./assets/fonts/${name}.ttf`, id);
 		});
 	}
 
@@ -41,12 +43,12 @@ export class SfmlAssetLoader implements AssetLoader {
 			if (asset != null) {
 				resolve(asset);
 			} else {
-				const loaderId = this.loaderId++;
-				this.loaderCallback[loaderId] = () => {
+				const id = loaderId++;
+				loaderCallback[id] = () => {
 					resolve(this.soundeffects[name]!);
-					this.loaderCallback[loaderId] = undefined;
+					loaderCallback[id] = undefined;
 				};
-				this.soundeffects[name] = SFML_LoadSound(name, path, loaderId);
+				this.soundeffects[name] = SFML_LoadSound(name, path, id);
 			}
 			return Promise.resolve(asset);
 		});
@@ -68,16 +70,16 @@ export class SfmlAssetLoader implements AssetLoader {
 			if (asset != null) {
 				resolve(asset);
 			} else {
-				const loaderId = this.loaderId++;
-				this.loaderCallback[loaderId] = (width, height) => {
+				const id = loaderId++;
+				loaderCallback[id] = (width, height) => {
 					resolve(this.images[name] = {
 						...this.images[name]!,
 						width,
 						height
 					});
-					this.loaderCallback[loaderId] = undefined;
+					loaderCallback[id] = undefined;
 				};
-				this.images[name] = SFML_LoadImage(name, path || `./assets/${name}.png`, loaderId);
+				this.images[name] = SFML_LoadImage(name, path || `./assets/${name}.png`, id);
 			}
 		});
 	}

@@ -5,13 +5,16 @@ export class WebAudioService implements AudioService {
 	private playingMusic: string[] = [];
 	private pausedMusic: string[] = [];
 
-	public playSoundEffect(audio: SoundEffectAsset): this {
-		this.getHowl(audio).play();
+	public playSoundEffect(audio: SoundEffectAsset, volume: number): this {
+		const howl = this.getHowl(audio);
+		howl.volume(volume);
+		howl.play();
 		return this;
 	}
 
-	public playMusic(audio: MusicAsset, loop: boolean): AudioService {
+	public playMusic(audio: MusicAsset, volume: number, loop: boolean): AudioService {
 		const howl = this.getHowl(audio);
+		howl.volume(volume);
 		howl.loop(loop);
 		if (!this.playingMusic.includes(audio.name)) {
 			howl.play();

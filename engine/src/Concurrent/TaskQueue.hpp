@@ -53,6 +53,7 @@ public:
 				break;
 			}
 			(*task)();
+			std::this_thread::yield();
 		}
 		return i;
 	}

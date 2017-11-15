@@ -6,6 +6,7 @@ type SfmlEvent
 	| { type: 11; parameters: [number /*x*/, number /*y*/] };
 
 declare function SFML_Close(): void;
+declare function SFML_SetSize(width: number, height: number): void;
 declare function SFML_SetVSync(enabled: boolean): void;
 
 declare function SFML_LoadFont(name: string, src: string, id: number): { readonly name: string; readonly src: string };
@@ -40,8 +41,8 @@ declare function SFML_Push_Scale(x: number, y: number): void;
 declare function SFML_Push_Rotate(radians: number): void;
 declare function SFML_Pop(): void;
 
-declare function SFML_PlaySound(name: string): void;
-declare function SFML_PlayMusic(name: string, loop: boolean): void;
+declare function SFML_PlaySound(name: string, volume: number): void;
+declare function SFML_PlayMusic(name: string, volume: number, loop: boolean): void;
 declare function SFML_PauseMusic(name: string): void;
 declare function SFML_StopMusic(name: string): void;
 

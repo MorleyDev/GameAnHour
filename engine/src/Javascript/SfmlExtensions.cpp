@@ -168,6 +168,12 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		window.close();
 		return false;
 	}, 0);
+	engine.setGlobalFunction("SFML_SetSize", [&window](JavascriptEngine* ctx) {
+		const auto w = ctx->getargn(0);
+		const auto h = ctx->getargn(1);
+		window.setSize(sf::Vector2u(static_cast<unsigned int>(w), static_cast<unsigned int>(h)));
+		return false;
+	}, 2);
 	engine.setGlobalFunction("SFML_Clear", [&window](JavascriptEngine* ctx) {
 		const auto r = ctx->getargf(0);
 		const auto g = ctx->getargf(1);
@@ -455,25 +461,29 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 	}, 2);
 	engine.setGlobalFunction("SFML_PlaySound", [&assetStore, &activeSoundEffects](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
+		const auto volume = ctx->getargf(1);
 
 		const auto sound = assetStore.sound(name, "./assets/sound/" + name + ".ogg");
 		auto soundEffect = std::make_unique<sf::Sound>();
 		soundEffect->setBuffer(*sound);
+		soundEffect->setVolume(static_cast<float>(volume * 100.0));
 		soundEffect->play();
 		activeSoundEffects.push_back(std::move(soundEffect));
 		return false;
-	}, 1);
+	}, 2);
 
 	engine.setGlobalFunction("SFML_PlayMusic", [&assetStore](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
-		const auto loop = ctx->getargb(1);
+		const auto volume = ctx->getargf(1);
+		const auto loop = ctx->getargb(2);
 		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
 		music->setLoop(loop);
+		music->setVolume(static_cast<float>(volume * 100.0));
 		if (music->getStatus() != sf::SoundStream::Playing) {
 			music->play();
 		}
 		return false;
-	}, 2);
+	}, 3);
 	engine.setGlobalFunction("SFML_PauseMusic", [&assetStore](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
