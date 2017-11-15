@@ -31,7 +31,26 @@ DukJavascriptEngine::DukJavascriptEngine(Profiler &profiler)
 }
 
 DukJavascriptEngine::~DukJavascriptEngine() {
-	duk_destroy_heap(context);
+	if (context) {
+		duk_destroy_heap(context);
+	}
+}
+
+DukJavascriptEngine::DukJavascriptEngine(DukJavascriptEngine&& other)
+	: argCountStack(std::move(other.argCountStack)),
+	context(std::exchange(other.context, nullptr)),
+	profiler(std::exchange(other.profiler, nullptr)) {
+}
+
+DukJavascriptEngine& DukJavascriptEngine::operator=(DukJavascriptEngine&& other) {
+	if (context) {
+		duk_destroy_heap(context);
+	}
+
+	argCountStack = std::move(other.argCountStack);
+	context = std::exchange(other.context, nullptr);
+	profiler = std::exchange(other.profiler, nullptr);
+	return *this;
 }
 
 void DukJavascriptEngine::add(std::string name, std::string script)

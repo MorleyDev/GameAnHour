@@ -1,82 +1,90 @@
+import { AssetLoader } from "../assets/asset-loader.service";
 import { Colour } from "../models/colour.model";
 import { Circle, Rectangle, Text2 } from "../models/shapes.model";
 import { Blit, Clear, Fill, Frame, FrameCollection, FrameCommandType, Origin, RenderTarget, Rotate, Scale, Stroke } from "./render-frame.model";
 
-export function renderToCanvas({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, frame: FrameCollection): void {
-	return frame.forEach((command: Frame) => RenderCommand({canvas, context}, command));
+type Target = {
+	readonly canvas: HTMLCanvasElement;
+	readonly context: CanvasRenderingContext2D;
+	readonly assets: AssetLoader;
+};
+
+export function renderToCanvas(target: Target, frame: FrameCollection): void {
+	return frame.forEach((command: Frame) => RenderCommand(target, command));
 }
 
-function RenderCommand({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Frame): void {
+function RenderCommand(target: Target, command: Frame): void {
 	const commandType = command[0];
 	if (!Array.isArray(commandType)) {
 		switch (commandType) {
 			case FrameCommandType.Clear:
-				return renderClear({ canvas, context }, command as Clear);
+				return renderClear(target, command as Clear);
 
 			case FrameCommandType.Origin:
-				return renderOrigin({ canvas, context }, command as Origin);
+				return renderOrigin(target, command as Origin);
 
 			case FrameCommandType.RenderTarget:
-				return renderRenderTarget({ canvas, context }, command as RenderTarget);
+				return renderRenderTarget(target, command as RenderTarget);
 
 			case FrameCommandType.Rotate:
-				return renderRotate({ canvas, context }, command as Rotate);
+				return renderRotate(target, command as Rotate);
 
 			case FrameCommandType.Scale:
-				return renderScale({ canvas, context }, command as Scale);
+				return renderScale(target, command as Scale);
 
 			case FrameCommandType.Fill:
-				return renderFill({ canvas, context }, command as Fill);
+				return renderFill(target, command as Fill);
 
 			case FrameCommandType.Stroke:
-				return renderStroke({ canvas, context }, command as Stroke);
+				return renderStroke(target, command as Stroke);
 
 			case FrameCommandType.Blit:
-				return renderBlit({ canvas, context }, command as Blit);
+				return renderBlit(target, command as Blit);
 		}
 	} else  {
-		return (command as FrameCollection).forEach(c => RenderCommand({canvas, context}, c));
+		return (command as FrameCollection).forEach(c => RenderCommand(target, c));
 	}
 }
 
-function renderOrigin({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Origin): void {
+function renderOrigin({ canvas, context, assets }: Target, command: Origin): void {
 	const origin = command[1];
 	context.translate(origin.x | 0, origin.y | 0);
-	renderToCanvas({ canvas, context }, command[2]);
+	renderToCanvas({ canvas, context, assets }, command[2]);
 	context.translate(-origin.x | 0, -origin.y | 0);
 }
 
-function renderRotate({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Rotate): void {
+function renderRotate({ canvas, context, assets }: Target, command: Rotate): void {
 	const rotation = command[1];
 	context.rotate(rotation);
-	renderToCanvas({ canvas, context }, command[2]);
+	renderToCanvas({ canvas, context, assets }, command[2]);
 	context.rotate(-rotation);
 }
 
-function renderScale({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Scale): void {
+function renderScale({ canvas, context, assets }: Target, command: Scale): void {
 	const scale = command[1];
 	context.scale(scale.x, scale.y);
-	renderToCanvas({ canvas, context }, command[2]);
+	renderToCanvas({ canvas, context, assets }, command[2]);
 	context.scale(1 / scale.x, 1 / scale.y);
 }
 
-function renderBlit({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, command: Blit): void {
-	const image = command[1] as HTMLImageElement | HTMLVideoElement;
+function renderBlit({ canvas, context, assets }: Target, command: Blit): void {
+	const image = command[1] as string;
 	const dst = command[2];
 	const src = command[3] as Rectangle | undefined;
+	const imgAsset = assets.getImage(image) as HTMLImageElement | HTMLVideoElement;
 
 	if (Rectangle.is(dst)) {
 		if (src != null) {
-			context.drawImage(image, src.x | 0, src.y | 0, src.width | 0, src.height | 0, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
+			context.drawImage(imgAsset, src.x | 0, src.y | 0, src.width | 0, src.height | 0, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
 		} else {
-			context.drawImage(image, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
+			context.drawImage(imgAsset, dst.x | 0, dst.y | 0, dst.width | 0, dst.height | 0);
 		}
 	} else {
-		context.drawImage(image, dst.x | 0, dst.y | 0);
+		context.drawImage(imgAsset, dst.x | 0, dst.y | 0);
 	}
 }
 
-function renderFill({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, fill: Fill): void {
+function renderFill({ canvas, context, assets }: Target, fill: Fill): void {
 	const shape = fill[1];
 	const colour = fill[2];
 
@@ -100,7 +108,7 @@ function renderFill({ canvas, context }: { readonly canvas: HTMLCanvasElement; r
 	}
 }
 
-function renderStroke({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, fill: Stroke): void {
+function renderStroke({ canvas, context, assets }: Target, fill: Stroke): void {
 	const shape = fill[1];
 	const colour = fill[2];
 
@@ -125,7 +133,7 @@ function renderStroke({ canvas, context }: { readonly canvas: HTMLCanvasElement;
 	context.closePath();
 }
 
-function renderClear({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, clear: Clear): void {
+function renderClear({ canvas, context, assets }: Target, clear: Clear): void {
 	context.setTransform(
 		1, 0, 0,
 		1, 0, 0
@@ -138,9 +146,9 @@ function renderClear({ canvas, context }: { readonly canvas: HTMLCanvasElement; 
 }
 
 // tslint:disable-next-line:readonly-keyword
-const canvasCache: { [_wh: string]: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D } | null | undefined } = {};
+const canvasCache: { [_wh: string]: Target | null | undefined } = {};
 
-function renderRenderTarget({ canvas, context }: { readonly canvas: HTMLCanvasElement; readonly context: CanvasRenderingContext2D }, [_, dst, frames, size]: RenderTarget): void {
+function renderRenderTarget({ canvas, context, assets }: Target, [_, dst, frames, size]: RenderTarget): void {
 	const width = (size == null ? dst.width : size.x) | 0;
 	const height = (size == null ? dst.height : size.y) | 0;
 	const key = `${width}${height}`;
@@ -151,7 +159,7 @@ function renderRenderTarget({ canvas, context }: { readonly canvas: HTMLCanvasEl
 		const newCanvas = document.createElement("canvas");
 		newCanvas.width = (size == null ? dst.width : size.x) | 0;
 		newCanvas.height = (size == null ? dst.height : size.y) | 0;
-		targetCanvas = { canvas: newCanvas, context: newCanvas.getContext("2d")! };
+		targetCanvas = { canvas: newCanvas, context: newCanvas.getContext("2d")!, assets };
 	}
 
 	renderToCanvas(targetCanvas, frames);

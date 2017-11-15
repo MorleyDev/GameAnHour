@@ -19,7 +19,7 @@ import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
 import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { Key } from "../../pauper/models/keys.model";
 import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
-import { profile, stats } from "../../pauper/profiler";
+import { profile, stats, statDump } from "../../pauper/profiler";
 import { FrameCollection } from "../../pauper/render/render-frame.model";
 import { renderToSfml } from "../../pauper/render/render-to-sfml.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
@@ -41,7 +41,7 @@ const drivers = {
 
 const r = reducer(drivers as AppDrivers);
 const g = {
-	render: render(drivers as AppDrivers),
+	render: render(),
 	postprocess,
 	reducer: r,
 	epic: epic(drivers as AppDrivers),
@@ -88,13 +88,17 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 };
 
 let prevState: GameState | null = null;
-let nextState: GameState = initialState;
 const app$ = bootstrap(drivers as AppDrivers).pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 		fastScan(applyAction, initialState),
 		auditTime(drivers.framerates.logicalRender, getLogicalScheduler(drivers as AppDrivers)),
-		tap(currentState => nextState = currentState),
+		tap(currentState => {
+			if (prevState !== currentState) {
+				WORKER_Emit(JSON.stringify({ type: "RenderStateToFrame", state: currentState, timestamp: Date.now() }));
+				prevState = currentState;
+			}
+		}),
 	))
 );
 const sub = app$.subscribe(
@@ -103,29 +107,21 @@ const sub = app$.subscribe(
 	() => { }
 );
 
-function statDump(): void {
-	const totalTime = Object.keys(stats)
-		.reduce((prev, statKey) => {
-			const stat = stats[statKey];
-			const averageTime = stat.total / stat.count;
-			return prev + averageTime;
-		}, 0);
-	Object.keys(stats)
-		.sort()
-		.forEach(statKey => {
-			const stat = stats[statKey];
-			const averageTime = stat.total / stat.count;
-			console.log(`Javascript#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.count}`);
-		});
-}
-
-let nextFrame: FrameCollection = [];
-requestAnimationFrame(function doRender() {
-	if (prevState !== nextState) {
-		prevState = nextState;
-		nextFrame = profile("Render::State->Frame", () => g.render(nextState));
+type WorkerEvent = {
+	type: "RenderFrame";
+	frame: FrameCollection;
+	timestamp: number;
+};
+let nextFrame: WorkerEvent = { type: "RenderFrame", frame: [], timestamp: 0 };
+WORKER_Receive = (msg: string) => {
+	const frame: WorkerEvent = JSON.parse(msg);
+	if (frame.timestamp > nextFrame.timestamp) {
+		nextFrame = frame;
 	}
-	profile("Render::Frame->Eff(SFML)", () => renderToSfml(nextFrame));
+};
+
+requestAnimationFrame(function doRender() {
+	profile("Render::Frame->Eff(SFML)", () => renderToSfml(drivers.loader, nextFrame.frame));
 	requestAnimationFrame(doRender);
 });
 
@@ -135,7 +131,7 @@ requestAnimationFrame(function poll() {
 			case SFML_Events.Closed:
 				SFML_Close();
 				sub.unsubscribe();
-				statDump();
+				statDump("MAIN");
 				break;
 			case SFML_Events.MouseButtonPressed:
 				drivers.mouse.mouseDown$.next([event.parameters[0], {

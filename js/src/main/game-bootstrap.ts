@@ -117,7 +117,7 @@ export const bootstrap = (drivers: AppDrivers): Observable<GameAction> => {
 		]),
 		fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()) as Observable<GameAction>,
 		fromPromise(drivers.loader!.loadMusic("background", "./assets/background.ogg").then(music => {
-			drivers.audio!.playMusic(music, 1.0, true);
+			drivers.audio!.playMusic(music, 0.25, true);
 			return { };
 		})).pipe(ignoreElements()) as Observable<GameAction>,
 		fromPromise(drivers.loader!.loadImage("background", "./assets/background.png")).pipe(ignoreElements()) as Observable<GameAction>

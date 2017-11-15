@@ -13,7 +13,7 @@ import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { GameState } from "./game.model";
 
-export const render = (drivers: AppDrivers) => {
+export const render = () => {
 	const entityRenderer = createEntitiesStateMap(["RenderedComponent", "HardBodyComponent"], (id: string, { rgb }: RenderedComponent, physics: HardBodyComponent) => {
 		return Origin(physics.position, [
 			Rotate(physics.rotation, [
@@ -39,7 +39,7 @@ export const render = (drivers: AppDrivers) => {
 
 	return (state: GameState) => [
 		Clear(Colour(0, 0, 0)),
-		Blit(drivers.loader!.getImage("background"), Rectangle(0, 0, 512, 512)),
+		Blit("background", Rectangle(0, 0, 512, 512)),
 
 		profile("Render::(RenderedComponent, StaticBodyComponent)->Frame", () => Array.from(staticEntityRenderer(state))),
 		profile("Render::(RenderedComponent, HardBodyComponent)->Frame", () => Array.from(entityRenderer(state))),

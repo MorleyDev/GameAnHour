@@ -1,10 +1,8 @@
 #include "Profiler.hpp"
-
-#include <iostream>
 #include <cmath>
 
-Profiler::Profiler()
-	: stats(), startTime(std::chrono::system_clock::now()) {
+Profiler::Profiler(std::string name)
+	: name(name), stats(), startTime(std::chrono::system_clock::now()) {
 }
 
 void Profiler::record(const char *name, std::chrono::duration<double> duration) {
@@ -29,7 +27,7 @@ Profile Profiler::profile(const char *name) {
 	return Profile(*this, name);
 }
 
-void Profiler::printdump() {
+void Profiler::iodump(std::ostream& output) {
 	const auto totalTimeDuration = getCurrentRunTime();
 	const auto profiledTimeDuration = getProfiledTimed();
 
@@ -41,9 +39,8 @@ void Profiler::printdump() {
 		auto avg = stat.second.total / stat.second.count;
 		auto min = stat.second.min;
 		auto max = stat.second.max;
-		std::cout << "Engine#" << stat.first << " | " << avg << " | ~" << std::floor((stat.second.total / totalTime) * 100) << "% | (" << min << " - " << max << ") | x" << stat.second.count << std::endl;
+		output << name << "#" << stat.first << " | " << avg << " | ~" << std::floor((stat.second.total / totalTime) * 100) << "% | (" << min << " - " << max << ") | x" << stat.second.count << std::endl;
 	}
-	std::cout << "Engine#Unknown" << " | " << unaccountedTime << " | ~" << std::floor((unaccountedTime / totalTime) * 100) << "% | (" << unaccountedTime << " - " << unaccountedTime << ")" << std::endl;
 }
 
 std::chrono::duration<double> Profiler::getProfiledTimed() {

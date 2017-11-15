@@ -12,14 +12,17 @@
 class DukJavascriptEngine
 {
 public:
-	static std::vector<std::function<duk_ret_t(duk_context*)>> globalFunctions;
+	static std::vector<std::function<duk_ret_t (duk_context*)>> globalFunctions;
 
 private:
 	std::vector<duk_int_t> argCountStack;
 	duk_context *context;
 	Profiler* profiler;
 
-	void getPropString(int index, std::string name) { duk_get_prop_string(context, index, name.c_str()); }
+	void getPropString(int index, std::string name) {
+		duk_get_prop_string(context, index, name.c_str());
+	}
+
 	void call(std::size_t nargs) {
 		if (duk_pcall(context, static_cast<duk_idx_t>(nargs)) != 0) {
 			const auto result = std::string(duk_safe_to_string(context, -1));
@@ -31,6 +34,12 @@ private:
 public:
 	explicit DukJavascriptEngine(Profiler& profiler);
 	~DukJavascriptEngine();
+
+	DukJavascriptEngine(const DukJavascriptEngine&) = delete;
+	DukJavascriptEngine& operator=(const DukJavascriptEngine&) = delete;
+
+	DukJavascriptEngine(DukJavascriptEngine&& other);
+	DukJavascriptEngine& operator=(DukJavascriptEngine&& other);
 
 	void pushGlobal() { duk_push_global_object(context); }
 	void pushObject() { duk_push_bare_object(context); }

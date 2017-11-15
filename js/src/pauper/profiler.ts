@@ -46,3 +46,19 @@ export const profile$ = (name: string): <T>(observable: Observable<T>) => Observ
 				}
 			};
 		}, () => o$);
+
+export function statDump(name: string): void {
+	const totalTime = Object.keys(stats)
+		.reduce((prev, statKey) => {
+			const stat = stats[statKey];
+			const averageTime = stat.total / stat.count;
+			return prev + averageTime;
+		}, 0);
+	Object.keys(stats)
+		.sort()
+		.forEach(statKey => {
+			const stat = stats[statKey];
+			const averageTime = stat.total / stat.count;
+			console.log(`${name}#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.count}`);
+		});
+}

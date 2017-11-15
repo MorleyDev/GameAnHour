@@ -31,7 +31,7 @@ add_executable(GameAnHour
     src/Javascript/ConsoleExtensions.cpp
     src/Javascript/SfmlExtensions.cpp
     src/Javascript/Box2dExtensions.cpp
-    src/Javascript/ReduxExtensions.cpp
+    src/Javascript/WorkerExtensions.cpp
     src/Profile/Profiler.cpp
 	src/Sfml/SfmlAssetStore.cpp
 	${CHAKRA_CPP_FILES})

@@ -6,13 +6,16 @@
 #include "../Concurrent/TaskQueue.hpp"
 #include "JavascriptEngine.hpp"
 
-extern void attachSfml(
-	JavascriptEngine &engine,
-	sf::RenderWindow &window,
-	std::vector<sf::Transform> &stack,
-	SfmlAssetStore &assetStore,
-	std::vector<std::unique_ptr<sf::Sound>> &activeSoundEffects
-);
-extern void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window);
+struct Sfml {
+	Sfml(std::string title, sf::VideoMode video, TaskQueue& tasks, TaskQueue& mainThreadTasks);
+
+	sf::RenderWindow window;
+	std::vector<sf::Transform> stack;
+	SfmlAssetStore assetStore;
+	std::vector<std::unique_ptr<sf::Sound>> activeSoundEffects;
+};
+
+extern void attachSfml(JavascriptEngine &engine, Sfml &sfml);
+extern void pollEvents(JavascriptEngine &engine, Sfml &sfml);
 
 #endif //DUKSFML_SFMLEXTENSIONS_HPP

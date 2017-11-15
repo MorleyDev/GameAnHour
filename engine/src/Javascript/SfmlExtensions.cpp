@@ -162,26 +162,34 @@ const char* sfmlScript =
 "    SFML_OnLoadSound = function () { };"
 "})();";
 
-void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<sf::Transform> &stack, SfmlAssetStore &assetStore, std::vector<std::unique_ptr<sf::Sound>> &activeSoundEffects) {
+Sfml::Sfml(std::string title, sf::VideoMode video, TaskQueue& tasks, TaskQueue& mainThreadTasks)
+: window(video, title),
+  assetStore(tasks, mainThreadTasks),
+  stack(),
+  activeSoundEffects() {
+	stack.push_back(sf::Transform::Identity);
+}
+
+void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 	engine.add("sfml", sfmlScript);
-	engine.setGlobalFunction("SFML_Close", [&window](JavascriptEngine* ctx) {
-		window.close();
+	engine.setGlobalFunction("SFML_Close", [&sfml](JavascriptEngine* ctx) {
+		sfml.window.close();
 		return false;
 	}, 0);
-	engine.setGlobalFunction("SFML_SetSize", [&window](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_SetSize", [&sfml](JavascriptEngine* ctx) {
 		const auto w = ctx->getargn(0);
 		const auto h = ctx->getargn(1);
-		window.setSize(sf::Vector2u(static_cast<unsigned int>(w), static_cast<unsigned int>(h)));
+		sfml.window.setSize(sf::Vector2u(static_cast<unsigned int>(w), static_cast<unsigned int>(h)));
 		return false;
 	}, 2);
-	engine.setGlobalFunction("SFML_Clear", [&window](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Clear", [&sfml](JavascriptEngine* ctx) {
 		const auto r = ctx->getargf(0);
 		const auto g = ctx->getargf(1);
 		const auto b = ctx->getargf(2);
-		window.clear(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b)));
+		sfml.window.clear(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b)));
 		return false;
 	}, 3);
-	engine.setGlobalFunction("SFML_Stroke_Circle", [&window, &stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Circle", [&sfml](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto radius = ctx->getargf(2);
@@ -197,10 +205,10 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		circleShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
 		circleShape.setOutlineThickness(1.0f);
 		circleShape.setOutlineColor(color);
-		window.draw(circleShape, sf::RenderStates(stack.back()));
+		sfml.window.draw(circleShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 7);
-	engine.setGlobalFunction("SFML_Stroke_Rectangle", [&window, &stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Rectangle", [&sfml](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto width = ctx->getargf(2);
@@ -216,10 +224,10 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		rectShape.setFillColor(sf::Color::Transparent);
 		rectShape.setOutlineThickness(1.0f);
 		rectShape.setOutlineColor(color);
-		window.draw(rectShape, sf::RenderStates(stack.back()));
+		sfml.window.draw(rectShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 8);
-	engine.setGlobalFunction("SFML_Stroke_Triangle", [&window, &stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Triangle", [&sfml](JavascriptEngine* ctx) {
 		const auto x1 = ctx->getargf(0);
 		const auto y1 = ctx->getargf(1);
 		const auto x2 = ctx->getargf(2);
@@ -237,10 +245,10 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		array[1] = sf::Vertex(sf::Vector2f(static_cast<float>(x2), static_cast<float>(y2)), color);
 		array[2] = sf::Vertex(sf::Vector2f(static_cast<float>(x3), static_cast<float>(y3)), color);
 		array[4] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
-		window.draw(array, sf::RenderStates(stack.back()));
+		sfml.window.draw(array, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 10);
-	engine.setGlobalFunction("SFML_Fill_Circle", [&window, &stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Circle", [&sfml](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto radius = ctx->getargf(2);
@@ -253,10 +261,10 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		circleShape.setOrigin(static_cast<float>(radius), static_cast<float>(radius));
 		circleShape.setPosition(static_cast<float>(x), static_cast<float>(y));
 		circleShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
-		window.draw(circleShape, sf::RenderStates(stack.back()));
+		sfml.window.draw(circleShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 7);
-	engine.setGlobalFunction("SFML_Fill_Rectangle", [&window, &stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Rectangle", [&sfml](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto width = ctx->getargf(2);
@@ -269,10 +277,10 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		sf::RectangleShape rectShape(sf::Vector2f(static_cast<float>(width), static_cast<float>(height)));
 		rectShape.setPosition(static_cast<float>(x), static_cast<float>(y));
 		rectShape.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
-		window.draw(rectShape, sf::RenderStates(stack.back()));
+		sfml.window.draw(rectShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 8);
-	engine.setGlobalFunction("SFML_Fill_Triangle", [&window, &stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Triangle", [&sfml](JavascriptEngine* ctx) {
 		const auto x1 = ctx->getargf(0);
 		const auto y1 = ctx->getargf(1);
 		const auto x2 = ctx->getargf(2);
@@ -289,10 +297,10 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		array[0] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
 		array[1] = sf::Vertex(sf::Vector2f(static_cast<float>(x2), static_cast<float>(y2)), color);
 		array[2] = sf::Vertex(sf::Vector2f(static_cast<float>(x3), static_cast<float>(y3)), color);
-		window.draw(array, sf::RenderStates(stack.back()));
+		sfml.window.draw(array, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 10);
-	engine.setGlobalFunction("SFML_Draw_Line", [&window, &stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Draw_Line", [&sfml](JavascriptEngine* ctx) {
 		const auto x1 = ctx->getargf(0);
 		const auto y1 = ctx->getargf(1);
 		const auto x2 = ctx->getargf(2);
@@ -306,10 +314,10 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		sf::VertexArray array(sf::PrimitiveType::Lines, 2);
 		array[0] = sf::Vertex(sf::Vector2f(static_cast<float>(x1), static_cast<float>(y1)), color);
 		array[1] = sf::Vertex(sf::Vector2f(static_cast<float>(x2), static_cast<float>(y2)), color);
-		window.draw(array, sf::RenderStates(stack.back()));
+		sfml.window.draw(array, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 8);
-	engine.setGlobalFunction("SFML_Fill_Text", [&window, &stack, &assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Text", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto text = ctx->getargstr(1);
 		const auto size = ctx->getargn(2);
@@ -319,15 +327,15 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		const auto g = ctx->getargf(6);
 		const auto b = ctx->getargf(7);
 		const auto a = ctx->getargf(8);
-		const auto font = assetStore.font(name, "./assets/fonts/" + name + ".ttf");
+		const auto font = sfml.assetStore.font(name, "./assets/fonts/" + name + ".ttf");
 
 		sf::Text t(text, *font, size);
 		t.setPosition(static_cast<float>(x), static_cast<float>(y));
 		t.setFillColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
-		window.draw(t, sf::RenderStates(stack.back()));
+		sfml.window.draw(t, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 9);
-	engine.setGlobalFunction("SFML_Stroke_Text", [&window, &stack, &assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Text", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto text = ctx->getargstr(1);
 		const auto size = ctx->getargn(2);
@@ -337,17 +345,17 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		const auto g = ctx->getargf(6);
 		const auto b = ctx->getargf(7);
 		const auto a = ctx->getargf(8);
-		const auto font = assetStore.font(name, "./assets/fonts/" + name + ".ttf");
+		const auto font = sfml.assetStore.font(name, "./assets/fonts/" + name + ".ttf");
 
 		sf::Text t(text, *font, size);
 		t.setPosition(static_cast<float>(x), static_cast<float>(y));
 		t.setFillColor(sf::Color::Transparent);
 		t.setOutlineColor(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b), static_cast<sf::Uint8>(std::floor(a * 255.0))));
-		window.draw(t, sf::RenderStates(stack.back()));
+		sfml.window.draw(t, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 9);
 
-	engine.setGlobalFunction("SFML_Blit", [&window, &stack, &assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Blit", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto srcX = ctx->getargn(1);
 		const auto srcY = ctx->getargn(2);
@@ -358,56 +366,56 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		const auto dstWidth = ctx->getargf(7);
 		const auto dstHeight = ctx->getargf(8);
 
-		const auto img = assetStore.image(name, "./assets/images/" + name + ".png");
+		const auto img = sfml.assetStore.image(name, "./assets/images/" + name + ".png");
 		sf::Sprite spr(*img, sf::IntRect(srcX, srcY, srcWidth, srcHeight));
 		spr.setPosition(static_cast<float>(dstX), static_cast<float>(dstY));
 		spr.setScale(static_cast<float>(dstWidth / srcWidth), static_cast<float>(dstHeight / srcHeight));
-		window.draw(spr, sf::RenderStates(stack.back()));
+		sfml.window.draw(spr, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 9);
 
-	engine.setGlobalFunction("SFML_Push_Translate", [&stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Push_Translate", [&sfml](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 
-		auto m = sf::Transform(stack.back());
+		auto m = sf::Transform(sfml.stack.back());
 		m.translate(static_cast<float>(x), static_cast<float>(y));
-		stack.push_back(m);
+		sfml.stack.push_back(m);
 		return false;
 	}, 2);
-	engine.setGlobalFunction("SFML_Push_Scale", [&stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Push_Scale", [&sfml](JavascriptEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		
-		auto m = sf::Transform(stack.back());
+		auto m = sf::Transform(sfml.stack.back());
 		m.scale(static_cast<float>(x), static_cast<float>(y));
-		stack.push_back(m);
+		sfml.stack.push_back(m);
 		return false;
 	}, 2);
-	engine.setGlobalFunction("SFML_Push_Rotate", [&stack](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Push_Rotate", [&sfml](JavascriptEngine* ctx) {
 		const auto radians = ctx->getargf(0);
 		
-		auto m = sf::Transform(stack.back());
+		auto m = sf::Transform(sfml.stack.back());
 		m.rotate(static_cast<float>(radians * 57.2958));
-		stack.push_back(m);
+		sfml.stack.push_back(m);
 		return false;
 	}, 1);
-	engine.setGlobalFunction("SFML_Pop", [&stack](JavascriptEngine* ctx) {
-		stack.pop_back();
+	engine.setGlobalFunction("SFML_Pop", [&sfml](JavascriptEngine* ctx) {
+		sfml.stack.pop_back();
 		return false;
 	}, 0);
-	engine.setGlobalFunction("SFML_SetVSync", [&window](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_SetVSync", [&sfml](JavascriptEngine* ctx) {
 		const auto enabled = ctx->getargb(0);
 
-		window.setVerticalSyncEnabled(enabled);
+		sfml.window.setVerticalSyncEnabled(enabled);
 		return false;
 	}, 1);
-	engine.setGlobalFunction("SFML_LoadImage", [&assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadImage", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
 		const auto id = ctx->getargn(2);
 
-		const auto img = assetStore.image(name, src, [id, ctx](std::shared_ptr<sf::Texture> texture) {
+		const auto img = sfml.assetStore.image(name, src, [id, ctx](std::shared_ptr<sf::Texture> texture) {
 			ctx->trigger("SFML_OnLoadImage", id, texture->getSize().x, texture->getSize().y);
 		});
 		ctx->pushObject();
@@ -421,12 +429,12 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		ctx->putProp(-2, "name");
 		return true;
 	}, 3);
-	engine.setGlobalFunction("SFML_LoadFont", [&assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadFont", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
 		const auto id = ctx->getargn(2);
 
-		const auto font = assetStore.font(name, src, [id, ctx](std::shared_ptr<sf::Font>) { ctx->trigger("SFML_OnLoadFont", id); });
+		const auto font = sfml.assetStore.font(name, src, [id, ctx](std::shared_ptr<sf::Font>) { ctx->trigger("SFML_OnLoadFont", id); });
 		ctx->pushObject();
 		ctx->push(name);
 		ctx->putProp(-2, "name");
@@ -434,12 +442,12 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		ctx->putProp(-2, "src");
 		return true;
 	}, 3);
-	engine.setGlobalFunction("SFML_LoadSound", [&assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadSound", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
 		const auto id = ctx->getargn(2);
 
-		const auto sound = assetStore.sound(name, src, [id, ctx](std::shared_ptr<sf::SoundBuffer>) { ctx->trigger("SFML_OnLoadSound", id); });
+		const auto sound = sfml.assetStore.sound(name, src, [id, ctx](std::shared_ptr<sf::SoundBuffer>) { ctx->trigger("SFML_OnLoadSound", id); });
 		ctx->pushObject();
 		ctx->push(name);
 		ctx->putProp(-2, "name");
@@ -447,11 +455,11 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		ctx->putProp(-2, "src");
 		return true;
 	}, 3);
-	engine.setGlobalFunction("SFML_LoadMusic", [&assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadMusic", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 
 		const auto src = ctx->getargstr(1);
-		const auto music = assetStore.music(name, src);
+		const auto music = sfml.assetStore.music(name, src);
 		ctx->pushObject();
 		ctx->push(name);
 		ctx->putProp(-2, "name");
@@ -459,24 +467,24 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		ctx->putProp(-2, "src");
 		return true;
 	}, 2);
-	engine.setGlobalFunction("SFML_PlaySound", [&assetStore, &activeSoundEffects](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_PlaySound", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto volume = ctx->getargf(1);
 
-		const auto sound = assetStore.sound(name, "./assets/sound/" + name + ".ogg");
+		const auto sound = sfml.assetStore.sound(name, "./assets/sound/" + name + ".ogg");
 		auto soundEffect = std::make_unique<sf::Sound>();
 		soundEffect->setBuffer(*sound);
 		soundEffect->setVolume(static_cast<float>(volume * 100.0));
 		soundEffect->play();
-		activeSoundEffects.push_back(std::move(soundEffect));
+		sfml.activeSoundEffects.push_back(std::move(soundEffect));
 		return false;
 	}, 2);
 
-	engine.setGlobalFunction("SFML_PlayMusic", [&assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_PlayMusic", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto volume = ctx->getargf(1);
 		const auto loop = ctx->getargb(2);
-		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
+		auto music = sfml.assetStore.music(name, "./assets/music/" + name + ".ogg");
 		music->setLoop(loop);
 		music->setVolume(static_cast<float>(volume * 100.0));
 		if (music->getStatus() != sf::SoundStream::Playing) {
@@ -484,25 +492,25 @@ void attachSfml(JavascriptEngine &engine, sf::RenderWindow &window, std::vector<
 		}
 		return false;
 	}, 3);
-	engine.setGlobalFunction("SFML_PauseMusic", [&assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_PauseMusic", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
-		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
+		auto music = sfml.assetStore.music(name, "./assets/music/" + name + ".ogg");
 		if (music->getStatus() == sf::SoundStream::Playing) {
 			music->pause();
 		}
 		return false;
 	}, 1);
-	engine.setGlobalFunction("SFML_StopMusic", [&assetStore](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_StopMusic", [&sfml](JavascriptEngine* ctx) {
 		const auto name = ctx->getargstr(0);
-		auto music = assetStore.music(name, "./assets/music/" + name + ".ogg");
+		auto music = sfml.assetStore.music(name, "./assets/music/" + name + ".ogg");
 		music->stop();
 		return false;
 	}, 1);
 }
 
-void pollEvents(JavascriptEngine &engine, sf::RenderWindow &window) {
+void pollEvents(JavascriptEngine &engine, Sfml &sfml) {
 	sf::Event event = {};
-	while (window.pollEvent(event)) {
+	while (sfml.window.pollEvent(event)) {
 		switch (event.type)	{
 		case sf::Event::Resized: {
 			engine.trigger("SFML_OnEvent", static_cast<int>(event.type), event.size.width, event.size.height);

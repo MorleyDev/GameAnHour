@@ -98,14 +98,14 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 		.reduce(applyAction, newState);
 };
 
-const renderer = render(drivers as AppDrivers);
+const renderer = render();
 
 const app$ = g.bootstrap.pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 		fastScan(applyAction, initialState),
 		auditTime(10, animationFrame),
-		tap(frame => renderToCanvas({ canvas, context }, renderer(frame))),
+		tap(frame => renderToCanvas({ canvas, context, assets: drivers.loader }, renderer(frame))),
 		retryWhen(errs => errs.pipe(tap(err => console.error(err))))
 	))
 );

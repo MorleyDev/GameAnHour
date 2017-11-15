@@ -46,7 +46,6 @@ declare function SFML_PlayMusic(name: string, volume: number, loop: boolean): vo
 declare function SFML_PauseMusic(name: string): void;
 declare function SFML_StopMusic(name: string): void;
 
-
 declare const SFML_Events: {
 	Closed: 0,
 	Resized: 1,

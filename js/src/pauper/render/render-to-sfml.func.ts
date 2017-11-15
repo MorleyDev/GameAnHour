@@ -1,85 +1,87 @@
 import { Colour } from "../models/colour.model";
 import { Circle, Rectangle, Text2 } from "../models/shapes.model";
 import { Blit, Clear, Fill, Frame, FrameCollection, FrameCommandType, Origin, RenderTarget, Rotate, Scale, Stroke } from "./render-frame.model";
+import { AssetLoader } from "../assets/asset-loader.service";
 
-export function renderToSfml(frame: FrameCollection): void {
-	frame.forEach(RenderCommand);
+export function renderToSfml(assets: AssetLoader, frame: FrameCollection): void {
+	frame.forEach(command => RenderCommand(assets, command));
 }
 
-function RenderCommand(command: Frame): void {
+function RenderCommand(assets: AssetLoader, command: Frame): void {
 	const commandType = command[0];
 	if (!Array.isArray(commandType)) {
 		switch (commandType) {
 			case FrameCommandType.Clear:
-				return renderClear(command as Clear);
+				return renderClear(assets, command as Clear);
 
 			case FrameCommandType.Origin:
-				return renderOrigin(command as Origin);
+				return renderOrigin(assets, command as Origin);
 
 			case FrameCommandType.RenderTarget:
-				return renderRenderTarget(command as RenderTarget);
+				return renderRenderTarget(assets, command as RenderTarget);
 
 			case FrameCommandType.Rotate:
-				return renderRotate(command as Rotate);
+				return renderRotate(assets, command as Rotate);
 
 			case FrameCommandType.Scale:
-				return renderScale(command as Scale);
+				return renderScale(assets, command as Scale);
 
 			case FrameCommandType.Fill:
-				return renderFill(command as Fill);
+				return renderFill(assets, command as Fill);
 
 			case FrameCommandType.Stroke:
-				return renderStroke(command as Stroke);
+				return renderStroke(assets, command as Stroke);
 
 			case FrameCommandType.Blit:
-				return renderBlit(command as Blit);
+				return renderBlit(assets, command as Blit);
 		}
 	} else {
-		return (command as FrameCollection).forEach(RenderCommand);
+		return (command as FrameCollection).forEach(cmd => RenderCommand(assets, cmd));
 	}
 }
 
-function renderOrigin(command: Origin): void {
+function renderOrigin(assets: AssetLoader, command: Origin): void {
 	const origin = command[1];
 	const children = command[2];
 	SFML_Push_Translate(origin.x | 0, origin.y | 0);
-	renderToSfml(children);
+	renderToSfml(assets, children);
 	SFML_Pop();
 }
 
-function renderRotate(command: Rotate): void {
+function renderRotate(assets: AssetLoader, command: Rotate): void {
 	const rotation = command[1];
 	const children = command[2];
 	SFML_Push_Rotate(rotation);
-	renderToSfml(children);
+	renderToSfml(assets, children);
 	SFML_Pop();
 }
 
-function renderScale(command: Scale): void {
+function renderScale(assets: AssetLoader, command: Scale): void {
 	const scale = command[1];
 	const children = command[2];
 	SFML_Push_Scale(scale.x, scale.y);
-	renderToSfml(children);
+	renderToSfml(assets, children);
 	SFML_Pop();
 }
 
-function renderBlit(command: Blit): void {
-	const image = command[1] as { readonly width: number; readonly height: number; readonly name: string  };
+function renderBlit(assets: AssetLoader, command: Blit): void {
+	const image = command[1];
 	const dst = command[2];
 	const src = command[3] as Rectangle | undefined;
+	const imgAsset = assets.getImage(image) as { readonly width: number; readonly height: number; readonly name: string  };
 
 	if (Rectangle.is(dst)) {
 		if (src != null) {
-			SFML_Blit(image.name, src.x | 0, src.y | 0, src.width | 0, src.height | 0, dst.x, dst.y, dst.width, dst.height);
+			SFML_Blit(imgAsset.name, src.x | 0, src.y | 0, src.width | 0, src.height | 0, dst.x, dst.y, dst.width, dst.height);
 		} else {
-			SFML_Blit(image.name, 0, 0, image.width, image.height, dst.x, dst.y, dst.width, dst.height);
+			SFML_Blit(imgAsset.name, 0, 0, imgAsset.width, imgAsset.height, dst.x, dst.y, dst.width, dst.height);
 		}
 	} else {
-		SFML_Blit(image.name, 0, 0, image.width, image.height, dst.x, dst.y, image.width, image.height);
+		SFML_Blit(imgAsset.name, 0, 0, imgAsset.width, imgAsset.height, dst.x, dst.y, imgAsset.width, imgAsset.height);
 	}
 }
 
-function renderFill(fill: Fill): void {
+function renderFill(assets: AssetLoader, fill: Fill): void {
 	const shape = fill[1];
 	const colour = fill[2];
 
@@ -98,7 +100,7 @@ function renderFill(fill: Fill): void {
 	}
 }
 
-function renderStroke(fill: Stroke): void {
+function renderStroke(assets: AssetLoader, fill: Stroke): void {
 	const shape = fill[1];
 	const colour = fill[2];
 
@@ -117,13 +119,13 @@ function renderStroke(fill: Stroke): void {
 	}
 }
 
-function renderClear(clear: Clear): void {
+function renderClear(assets: AssetLoader, clear: Clear): void {
 	const colour = (clear[1] as Colour | undefined) || Colour(0, 0, 0);
 
 	SFML_Clear(colour.r, colour.g, colour.b);
 }
 
 
-function renderRenderTarget([_, dst, frames, size]: RenderTarget): void {
+function renderRenderTarget(assets: AssetLoader, [_, dst, frames, size]: RenderTarget): void {
 	// TODO
 }

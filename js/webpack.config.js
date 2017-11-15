@@ -65,7 +65,8 @@ module.exports = {
 	devtool: isProd ? undefined : "inline-source-map",
 	entry: {
 		"index": "./src/index.ts",
-		"engine/sfml/index": "./src/engine/sfml/index.ts"
+		"engine/sfml/index": "./src/engine/sfml/index.ts",
+		"engine/sfml/worker": "./src/engine/sfml/worker.ts"
 	},
 	output: {
 		filename: "dist/[name].js"

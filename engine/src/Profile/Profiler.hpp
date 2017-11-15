@@ -1,12 +1,10 @@
-//
-// Created by jasonm on 06/11/2017.
-//
-
 #ifndef DUKSFML_PROFILER_HPP
 #define DUKSFML_PROFILER_HPP
 
 #include <chrono>
 #include <unordered_map>
+#include <ostream>
+#include <string>
 
 struct ProfilerStats {
 	double total;
@@ -44,9 +42,10 @@ class Profiler {
 private:
 	std::unordered_map<const char*, ProfilerStats> stats;
 	std::chrono::system_clock::time_point startTime;
+	std::string name;
 
 public:
-	Profiler();
+	explicit Profiler(std::string name);
 
 	template<typename TCallback> void profile(const char* name, TCallback callback) {
 		auto profileStartTime = std::chrono::system_clock::now();
@@ -58,10 +57,12 @@ public:
 	Profile profile(const char* name);
 
 	inline std::unordered_map<const char*, ProfilerStats> statdump() { return stats; };
-	void printdump();
+	void iodump(std::ostream& output);
 
 	std::chrono::duration<double> getProfiledTimed();
 	std::chrono::duration<double> getCurrentRunTime();
+
+	std::string getName() const { return name; }
 };
 
 inline Profile::~Profile() {

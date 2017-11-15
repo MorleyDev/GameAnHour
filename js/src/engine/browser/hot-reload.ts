@@ -25,7 +25,7 @@ import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
 // (window as any).fiddle = new RxFiddle(require("rxjs/Rx")).auto();
 
 type GameDefinition = {
-	render: (drivers: AppDrivers) =>(state: GameState) => FrameCollection;
+	render: () => (state: GameState) => FrameCollection;
 	reducer: (drivers: AppDrivers) => (state: GameState, action: GameAction) => GameState;
 	postprocess: (state: GameState) => { readonly state: GameState; readonly actions: ReadonlyArray<GameAction> };
 	epic: (drivers: AppDrivers) => (action$: Observable<GameAction>) => Observable<GameAction>;
@@ -113,7 +113,7 @@ const applyAction = (game: GameDefinition) => {
 const app$ = game$.pipe(
 	switchMap(game => {
 		const r = game.reducer(drivers as AppDrivers);
-		const render = game.render(drivers as AppDrivers);
+		const render = game.render();
 		return latestBootstrap.pipe(
 			reduce((state: GameState, action: GameAction) => r(state, action), initialState),
 			switchMap(state =>
@@ -122,7 +122,7 @@ const app$ = game$.pipe(
 				)
 			),
 			auditTime(10, animationFrame),
-			tap(frame => renderToCanvas({ canvas, context }, render(frame))),
+			tap(frame => renderToCanvas({ canvas, context, assets: drivers.loader }, render(frame))),
 		);
 	}),
 	devRememberState

@@ -38,8 +38,8 @@ export const Fill = (dst: Shape2, colour: Colour): Fill => [FrameCommandType.Fil
 export type Stroke = [FrameCommandType.Stroke, Shape2, Colour];
 export const Stroke = (dst: Shape2, colour: Colour): Stroke => [FrameCommandType.Stroke, dst, colour];
 
-export type Blit = [FrameCommandType.Blit, BlittableAsset, Point2] | [FrameCommandType.Blit, BlittableAsset, Rectangle, Rectangle];
-export const Blit = (image: BlittableAsset, dst: Point2 | Rectangle, src?: Rectangle): Blit => src != null ? [FrameCommandType.Blit, image, dst, src] : [FrameCommandType.Blit, image, dst];
+export type Blit = [FrameCommandType.Blit, string, Point2] | [FrameCommandType.Blit, string, Rectangle, Rectangle];
+export const Blit = (image: string, dst: Point2 | Rectangle, src?: Rectangle): Blit => src != null ? [FrameCommandType.Blit, image, dst, src] : [FrameCommandType.Blit, image, dst];
 
 export type RenderTarget = [FrameCommandType.RenderTarget, Rectangle, FrameCollection, Point2 | undefined];
 export const RenderTarget = (dst: Rectangle, frame: FrameCollection, size?: Point2): RenderTarget => [FrameCommandType.RenderTarget, dst, frame, size];
