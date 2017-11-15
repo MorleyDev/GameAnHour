@@ -1,6 +1,7 @@
 #include "ChakraJavascriptEngine.hpp"
 #include <fstream>
 #include <filesystem>
+#include <iostream>
 
 std::vector<std::string> globalFunctionNames;
 std::vector<std::function<JsValueRef (JsValueRef, bool, JsValueRef*, unsigned short)>> ChakraJavascriptEngine::globalFunctions;
@@ -175,6 +176,7 @@ void ChakraJavascriptEngine::checkFileSystem() {
 	std::for_each(files.begin(), files.end(), [this, &needReload](auto& file) {
 		auto newFileTime = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(file.first));
 		if (file.second != newFileTime) {
+			std::cout << profiler.getName() << " Detected file " << file.first << " has been updated. Reloading..." << std::endl;
 			needReload = true;
 		}
 	});
