@@ -43,22 +43,7 @@ const standardOptimisation = {
 	}, "ts-loader"]
 };
 const safeFullOptimisationDirectories = [
-	resolve(__dirname, "src/engine"),
-	resolve(__dirname, "src/main/components"),
-	resolve(__dirname, "src/main/game-bootstrap.ts"),
-	resolve(__dirname, "src/main/game-initial-state.ts"),
-	resolve(__dirname, "src/main/game-reducer.ts"),
-	resolve(__dirname, "src/main/game-render.ts"),
-	resolve(__dirname, "src/main/game-models.ts"),
-	resolve(__dirname, "src/pauper/assets"),
-	resolve(__dirname, "src/pauper/audio"),
-	resolve(__dirname, "src/pauper/maths"),
-	resolve(__dirname, "src/pauper/models"),
-	resolve(__dirname, "src/pauper/ecs"),
-	resolve(__dirname, "src/pauper/redux"),
-	resolve(__dirname, "src/pauper/render"),
-	resolve(__dirname, "src/pauper/rx-operators"),
-	resolve(__dirname, "src/pauper/utility")
+	resolve(__dirname, "src")
 ];
 
 module.exports = {
@@ -66,6 +51,7 @@ module.exports = {
 	entry: {
 		"index": "./src/index.ts",
 		"engine/sfml/index": "./src/engine/sfml/index.ts",
+		"engine/sfml/secondary": "./src/engine/sfml/secondary.ts",
 		"engine/sfml/worker": "./src/engine/sfml/worker.ts"
 	},
 	output: {

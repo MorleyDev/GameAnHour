@@ -11,7 +11,6 @@ import { bootstrap } from "../../main/game-bootstrap";
 import { epic } from "../../main/game-epic";
 import { initialState } from "../../main/game-initial-state";
 import { postprocess, reducer } from "../../main/game-reducer";
-import { render } from "../../main/game-render";
 import { GameAction, GameState } from "../../main/game.model";
 import { AppDrivers, getLogicalScheduler } from "../../pauper/app-drivers";
 import { SfmlAssetLoader } from "../../pauper/assets/sfml-asset-loader.service";
@@ -42,7 +41,6 @@ const drivers = {
 
 const r = reducer(drivers as AppDrivers);
 const g = {
-	render: render(),
 	postprocess,
 	reducer: r,
 	epic: epic(drivers as AppDrivers),
@@ -135,7 +133,7 @@ requestAnimationFrame(function poll() {
 			case SFML_Events.Closed:
 				SFML_Close();
 				sub.unsubscribe();
-				statDump("MAIN");
+				statDump("Primary");
 				break;
 			case SFML_Events.MouseButtonPressed:
 				drivers.mouse.mouseDown$.next([event.parameters[0], {
@@ -167,7 +165,9 @@ requestAnimationFrame(function poll() {
 });
 
 ENGINE_Reloading = () => { ENGINE_Stash(JSON.stringify(prevState || initialState)); };
-ENGINE_Reloaded = (state: string) => { hotreloadedState.next(JSON.parse(state)); };
+ENGINE_Reloaded = (state: string) => {
+	hotreloadedState.next(JSON.parse(state));
+};
 
 function sfmlKeyToKeyCode(key: number): Key {
 	switch (key) {

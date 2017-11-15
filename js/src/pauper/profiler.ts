@@ -59,6 +59,6 @@ export function statDump(name: string): void {
 		.forEach(statKey => {
 			const stat = stats[statKey];
 			const averageTime = stat.total / stat.count;
-			console.log(`${name}#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.count}`);
+			console.log(`${name}.js#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.count}`);
 		});
 }

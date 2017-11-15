@@ -20,27 +20,77 @@ int main() {
 	TaskQueue mainThreadTasks;
 	TaskQueue tasks;
 	std::atomic<bool> cancellationToken(false);
-	auto threads = spawnTaskProcessorPool(tasks, cancellationToken);
+
+	Profiler mainProfiler("Main");
+	Profiler secondaryProfiler("Secondary");
+
+	moodycamel::ConcurrentQueue<std::string> secondaryQueue;
+	moodycamel::ConcurrentQueue<std::string> workQueue;
 
 	const auto startTime = std::chrono::system_clock::now();
 
-	Profiler profiler("Engine");
 	Sfml sfml("GAM", sf::VideoMode(512, 512), tasks, mainThreadTasks);
 	Box2d box2d;
 
-	JavascriptEngine engine(profiler, [&sfml, &box2d](JavascriptEngine& engine) {
+	JavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d, &secondaryQueue](JavascriptEngine& engine) {
 		attachConsole(engine);
 		attachTimers(engine);
 		attachSfml(engine, sfml);
 		attachBox2d(engine, box2d);
+		engine.add("secondary", "SECONDARY_Receive = function () { }; SECONDARY_Join = function () { };");
+		engine.setGlobalFunction("SECONDARY_Emit", [&secondaryQueue](JavascriptEngine* engine) {
+			secondaryQueue.enqueue(engine->getargstr(0));
+			return false;
+		}, 1);
+	});
+	DukJavascriptEngine secondaryEngine(mainProfiler, [&mainThreadTasks, &primaryEngine](DukJavascriptEngine& engine) {
+		attachConsole(engine);
+		attachTimers(engine);
+		engine.add("secondary", "SECONDARY_Receive = function () { }; SECONDARY_Join = function () { };");
+		engine.setGlobalFunction("SECONDARY_Emit", [&mainThreadTasks, &primaryEngine](DukJavascriptEngine* ctx) {
+			auto msg = ctx->getargstr(0);
+			mainThreadTasks.push([msg, &primaryEngine]() { primaryEngine.trigger("SECONDARY_Receive", msg); });
+			return false;
+		}, 1);
 	});
 
-	moodycamel::ConcurrentQueue<std::string> workQueue;
-	auto workers = attachWorkers(engine, cancellationToken, mainThreadTasks, workQueue);
+	auto workers = attachWorkers(primaryEngine, cancellationToken, mainThreadTasks, workQueue);
+	auto threads = spawnTaskProcessorPool(tasks, cancellationToken);
+	std::unique_ptr<std::thread> secondaryThread;
 	try {
-		engine.load("./dist/engine/sfml/index.js");
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->load("./dist/engine/sfml/worker.js"); });
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->start(); });
+
+		secondaryEngine.load("./dist/engine/sfml/secondary.js");
+		secondaryThread = std::make_unique<std::thread>([&cancellationToken, &secondaryProfiler, &secondaryEngine, &secondaryQueue]() {
+			try {
+				auto previousTime = std::chrono::system_clock::now();
+				std::string msg;
+				while (!cancellationToken) {
+					auto currentTime = std::chrono::system_clock::now();
+					auto deltaTime = std::chrono::duration<double>(currentTime - previousTime).count() * 1000;
+					if (deltaTime > 0) {
+						secondaryProfiler.profile("Tick", [&]() { tick(secondaryEngine, deltaTime); });
+						secondaryProfiler.profile("Animate", [&]() { animate(secondaryEngine); });
+					}
+					else if (secondaryQueue.try_dequeue(msg)) {
+						secondaryEngine.trigger("SECONDARY_Receive", msg);
+					}
+					else {
+						secondaryEngine.checkFileSystem();
+						secondaryEngine.idle();
+						std::this_thread::yield();
+					}
+				}
+				secondaryEngine.trigger("SECONDARY_Join", secondaryProfiler.getName());
+			}
+			catch (const std::exception &err)
+			{
+				std::cerr << "UNHANDLED EXCEPTION IN SECONDARY THREAD: " << err.what() << std::endl;
+			}
+		});
+
+		primaryEngine.load("./dist/engine/sfml/index.js");
 
 		auto previousSecond = startTime;
 		auto previousTime = startTime;
@@ -53,17 +103,17 @@ int main() {
 			if (diffMilliseconds >= 1) {
 				previousTime = currentTime;
 
-				profiler.profile("Tick", [&]() { tick(engine, diffMilliseconds); });
-				profiler.profile("PollEvents", [&]() { pollEvents(engine, sfml); });
+				mainProfiler.profile("Tick", [&]() { tick(primaryEngine, diffMilliseconds); });
+				mainProfiler.profile("PollEvents", [&]() { pollEvents(primaryEngine, sfml); });
 			} else {
-				profiler.profile("Idle(Yield)", [&]() {
-					engine.idle();
+				mainProfiler.profile("Idle(Yield)", [&]() {
+					primaryEngine.idle();
 				});
 			}
 
 			if (std::chrono::duration<double>(currentTime - previousFrame).count() >= 0.005) {
-				profiler.profile("Animate", [&]() {
-					animate(engine);
+				mainProfiler.profile("Animate", [&]() {
+					animate(primaryEngine);
 					sfml.window.display();
 				});
 				++fps;
@@ -74,8 +124,8 @@ int main() {
 				fps = 0;
 
 				previousSecond = currentTime;
-				profiler.profile("Idle(Forced)", [&]() { engine.idle(); });
-				engine.checkFileSystem();
+				mainProfiler.profile("Idle(Forced)", [&]() { primaryEngine.idle(); });
+				primaryEngine.checkFileSystem();
 				std::this_thread::yield();
 			};
 
@@ -86,14 +136,14 @@ int main() {
 
 			mainThreadTasks.consume(100);
 		}
-		profiler.iodump(std::cout);
-
 		cancellationToken.store(true);
+		secondaryThread->join();
 		std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
-		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) {
-			worker->join();
-			worker->getProfiler().iodump(std::cout);
-		});
+		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->join(); });
+
+		mainProfiler.iodump(std::cout);
+		secondaryProfiler.iodump(std::cout);
+		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->getProfiler().iodump(std::cout); });
 	}
 	catch (const std::exception &err)
 	{
@@ -101,6 +151,7 @@ int main() {
 		cancellationToken.store(true);
 		std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->join(); });
+		if (secondaryThread) secondaryThread->join();
 		return 1;
 	}
 }
