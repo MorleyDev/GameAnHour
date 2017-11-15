@@ -3,7 +3,7 @@
 
 #include "../Concurrent/TaskQueue.hpp"
 #include "DukJavascriptEngine.hpp"
-#include "JavascriptEngine.hpp"
+#include "ChakraJavascriptEngine.hpp"
 #include <concurrentqueue.h>
 #include <string>
 #include <vector>
@@ -41,6 +41,12 @@ public:
 	}
 };
 
-extern std::vector<std::unique_ptr<JavascriptWorker>> attachWorkers(JavascriptEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue);
+extern void attachWorkers(DukJavascriptEngine& engine, moodycamel::ConcurrentQueue<std::string>& workQueue);
+extern std::vector<std::unique_ptr<JavascriptWorker>> spawnWorkers(DukJavascriptEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue);
+
+#ifdef GAM_CHAKRA_ENABLE
+extern void attachWorkers(ChakraJavascriptEngine& engine, moodycamel::ConcurrentQueue<std::string>& workQueue);
+extern std::vector<std::unique_ptr<JavascriptWorker>> spawnWorkers(ChakraJavascriptEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue);
+#endif//GAM_CHAKRA_ENABLE
 
 #endif//DUKSFML_WORKERENGINE_HPP

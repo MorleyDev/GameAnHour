@@ -41,14 +41,14 @@ void Box2d_Collisions::EndContact(b2Contact* contact) {
 	}
 }
 
-void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
-	engine.setGlobalFunction("BOX2D_SetGravity", [&box2d](JavascriptEngine* ctx) {
+template <typename TEngine> void _attachBox2d(TEngine &engine, Box2d &box2d) {
+	engine.setGlobalFunction("BOX2D_SetGravity", [&box2d](TEngine* ctx) {
 		const auto x = ctx->getargf(0) * Box2dScaleFactory;
 		const auto y = ctx->getargf(1) * Box2dScaleFactory;
 		box2d.world.SetGravity(b2Vec2(static_cast<float>(x), static_cast<float>(y)));
 		return false;
 	}, 2);
-	engine.setGlobalFunction("BOX2D_CreateBody_Box", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_CreateBody_Box", [&box2d](TEngine* ctx) {
 		const auto x = ctx->getargf(0) * Box2dScaleFactory;
 		const auto y = ctx->getargf(1) * Box2dScaleFactory;
 		const auto width = ctx->getargf(2) * Box2dScaleFactory;
@@ -77,7 +77,7 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		ctx->push(static_cast<int>(id));
 		return true;
 	}, 8);
-	engine.setGlobalFunction("BOX2D_CreateBody_Ball", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_CreateBody_Ball", [&box2d](TEngine* ctx) {
 		const auto x = ctx->getargf(0) * Box2dScaleFactory;
 		const auto y = ctx->getargf(1) * Box2dScaleFactory;
 		const auto radius = ctx->getargf(2) * Box2dScaleFactory;
@@ -106,7 +106,7 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		ctx->push(static_cast<int>(id));
 		return true;
 	}, 7);
-	engine.setGlobalFunction("BOX2D_CreateBody_Tri", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_CreateBody_Tri", [&box2d](TEngine* ctx) {
 		const auto x1 = ctx->getargf(0) * Box2dScaleFactory;
 		const auto y1 = ctx->getargf(1) * Box2dScaleFactory;
 		const auto x2 = ctx->getargf(2) * Box2dScaleFactory;
@@ -145,13 +145,13 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		return true;
 	}, 10);
 
-	engine.setGlobalFunction("BOX2D_Advance", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_Advance", [&box2d](TEngine* ctx) {
 		auto deltaTime = ctx->getargf(0);
 		box2d.world.Step(static_cast<float>(deltaTime), 6, 2);
 		return false;
 	}, 1);
 
-	engine.setGlobalFunction("BOX2D_GetBody", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_GetBody", [&box2d](TEngine* ctx) {
 		auto id = ctx->getargf(0);
 		auto entry = box2d.bodies.find(static_cast<std::size_t>(id));
 		if (entry == box2d.bodies.end()) {
@@ -184,7 +184,7 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		return true;
 	}, 1);
 
-	engine.setGlobalFunction("BOX2D_DestroyBody", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_DestroyBody", [&box2d](TEngine* ctx) {
 		auto bodyId = ctx->getargn(0);
 		auto entry = box2d.bodies.find(static_cast<std::size_t>(bodyId));
 		if (entry != box2d.bodies.end()) {
@@ -193,15 +193,15 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		}
 		return false;
 	}, 1);
-	engine.setGlobalFunction("BOX2D_GetCollisionStartCount", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_GetCollisionStartCount", [&box2d](TEngine* ctx) {
 		ctx->push( static_cast<unsigned int>(box2d.collisions.beginContacts.size()) );
 		return true;
 	}, 0);
-	engine.setGlobalFunction("BOX2D_GetCollisionEndCount", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_GetCollisionEndCount", [&box2d](TEngine* ctx) {
 		ctx->push( static_cast<unsigned int>(box2d.collisions.endContacts.size()) );
 		return true;
 	}, 0);
-	engine.setGlobalFunction("BOX2D_PullCollisionStart", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_PullCollisionStart", [&box2d](TEngine* ctx) {
 		if (box2d.collisions.beginContacts.empty()) {
 			return false;
 		}
@@ -214,7 +214,7 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		ctx->putProp(-2, "b");
 		return true;
 	}, 0);
-	engine.setGlobalFunction("BOX2D_PullCollisionEnd", [&box2d](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("BOX2D_PullCollisionEnd", [&box2d](TEngine* ctx) {
 		if (box2d.collisions.endContacts.empty()) {
 			return false;
 		}
@@ -228,3 +228,14 @@ void attachBox2d(JavascriptEngine &engine, Box2d &box2d) {
 		return true;
 	}, 0);
 }
+
+
+void attachBox2d(DukJavascriptEngine &engine, Box2d &box2d) {
+	_attachBox2d(engine, box2d);
+}
+
+#ifdef GAM_CHAKRA_ENABLE
+void attachBox2d(ChakraJavascriptEngine &engine, Box2d &box2d) {
+	_attachBox2d(engine, box2d);
+}
+#endif//GAM_CHAKRA_ENABLE

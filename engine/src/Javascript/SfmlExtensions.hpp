@@ -4,7 +4,11 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include "../Sfml/SfmlAssetStore.hpp"
 #include "../Concurrent/TaskQueue.hpp"
-#include "JavascriptEngine.hpp"
+
+#include "DukJavascriptEngine.hpp"
+#ifdef GAM_CHAKRA_ENABLE
+#include "ChakraJavascriptEngine.hpp"
+#endif//GAM_CHAKRA_ENABLE
 
 struct Sfml {
 	Sfml(std::string title, sf::VideoMode video, TaskQueue& tasks, TaskQueue& mainThreadTasks);
@@ -15,7 +19,12 @@ struct Sfml {
 	std::vector<std::unique_ptr<sf::Sound>> activeSoundEffects;
 };
 
-extern void attachSfml(JavascriptEngine &engine, Sfml &sfml);
-extern void pollEvents(JavascriptEngine &engine, Sfml &sfml);
+extern void attachSfml(DukJavascriptEngine &engine, Sfml &sfml);
+extern void pollEvents(DukJavascriptEngine &engine, Sfml &sfml);
+
+#ifdef GAM_CHAKRA_ENABLE
+extern void attachSfml(ChakraJavascriptEngine &engine, Sfml &sfml);
+extern void pollEvents(ChakraJavascriptEngine &engine, Sfml &sfml);
+#endif
 
 #endif //DUKSFML_SFMLEXTENSIONS_HPP

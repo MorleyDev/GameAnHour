@@ -32,55 +32,60 @@ int main() {
 	Sfml sfml("GAM", sf::VideoMode(512, 512), tasks, mainThreadTasks);
 	Box2d box2d;
 
-	JavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d, &secondaryQueue](JavascriptEngine& engine) {
+	DukJavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d, &secondaryQueue, &workQueue](DukJavascriptEngine& engine) {
 		attachConsole(engine);
 		attachTimers(engine);
 		attachSfml(engine, sfml);
 		attachBox2d(engine, box2d);
+		attachWorkers(engine, workQueue);
+
 		engine.add("secondary", "SECONDARY_Receive = function () { }; SECONDARY_Join = function () { };");
-		engine.setGlobalFunction("SECONDARY_Emit", [&secondaryQueue](JavascriptEngine* engine) {
+		engine.setGlobalFunction("SECONDARY_Emit", [&secondaryQueue](DukJavascriptEngine* engine) {
 			secondaryQueue.enqueue(engine->getargstr(0));
 			return false;
 		}, 1);
 	});
-	DukJavascriptEngine secondaryEngine(mainProfiler, [&mainThreadTasks, &primaryEngine](DukJavascriptEngine& engine) {
-		attachConsole(engine);
-		attachTimers(engine);
-		engine.add("secondary", "SECONDARY_Receive = function () { }; SECONDARY_Join = function () { };");
-		engine.setGlobalFunction("SECONDARY_Emit", [&mainThreadTasks, &primaryEngine](DukJavascriptEngine* ctx) {
-			auto msg = ctx->getargstr(0);
-			mainThreadTasks.push([msg, &primaryEngine]() { primaryEngine.trigger("SECONDARY_Receive", msg); });
-			return false;
-		}, 1);
-	});
 
-	auto workers = attachWorkers(primaryEngine, cancellationToken, mainThreadTasks, workQueue);
+	auto workers = spawnWorkers(primaryEngine, cancellationToken, mainThreadTasks, workQueue);
 	auto threads = spawnTaskProcessorPool(tasks, cancellationToken);
 	std::unique_ptr<std::thread> secondaryThread;
 	try {
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->load("./dist/engine/sfml/worker.js"); });
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->start(); });
+		primaryEngine.load("./dist/engine/sfml/primary.js");
 
-		secondaryEngine.load("./dist/engine/sfml/secondary.js");
-		secondaryThread = std::make_unique<std::thread>([&cancellationToken, &secondaryProfiler, &secondaryEngine, &secondaryQueue]() {
+		secondaryThread = std::make_unique<std::thread>([&cancellationToken, &secondaryProfiler, &box2d, &secondaryQueue, &mainThreadTasks, &primaryEngine, &workQueue]() {
+			JavascriptEngine secondaryEngine(secondaryProfiler, [&mainThreadTasks, &box2d, &primaryEngine, &workQueue](JavascriptEngine& engine) {
+				attachConsole(engine);
+				attachTimers(engine);
+				attachBox2d(engine, box2d);
+				attachWorkers(engine, workQueue);
+
+				engine.add("secondary", "SECONDARY_Receive = function () { }; SECONDARY_Join = function () { };");
+				engine.setGlobalFunction("SECONDARY_Emit", [&mainThreadTasks, &primaryEngine](JavascriptEngine* ctx) {
+					auto msg = ctx->getargstr(0);
+					mainThreadTasks.push([msg, &primaryEngine]() { primaryEngine.trigger("SECONDARY_Receive", msg); });
+					return false;
+				}, 1);
+			});
 			try {
+				secondaryEngine.load("./dist/engine/sfml/secondary.js");
+
 				auto previousTime = std::chrono::system_clock::now();
 				std::string msg;
 				while (!cancellationToken) {
 					auto currentTime = std::chrono::system_clock::now();
 					auto deltaTime = std::chrono::duration<double>(currentTime - previousTime).count() * 1000;
-					if (deltaTime > 0) {
+					if (deltaTime >= 1) {
 						secondaryProfiler.profile("Tick", [&]() { tick(secondaryEngine, deltaTime); });
 						secondaryProfiler.profile("Animate", [&]() { animate(secondaryEngine); });
 					}
-					else if (secondaryQueue.try_dequeue(msg)) {
+					while (!cancellationToken && secondaryQueue.try_dequeue(msg)) {
 						secondaryEngine.trigger("SECONDARY_Receive", msg);
 					}
-					else {
-						secondaryEngine.checkFileSystem();
-						secondaryEngine.idle();
-						std::this_thread::yield();
-					}
+					secondaryEngine.checkFileSystem();
+					secondaryEngine.idle();
+					std::this_thread::yield();
 				}
 				secondaryEngine.trigger("SECONDARY_Join", secondaryProfiler.getName());
 			}
@@ -90,7 +95,6 @@ int main() {
 			}
 		});
 
-		primaryEngine.load("./dist/engine/sfml/index.js");
 
 		auto previousSecond = startTime;
 		auto previousTime = startTime;

@@ -9,7 +9,10 @@
 #include <unordered_map>
 #include <memory>
 
-#include "JavascriptEngine.hpp"
+#include "DukJavascriptEngine.hpp"
+#ifdef GAM_CHAKRA_ENABLE
+#include "ChakraJavascriptEngine.hpp"
+#endif//GAM_CHAKRA_ENABLE
 
 struct Box2d_Entity {
 	b2Body* body;
@@ -48,6 +51,10 @@ struct Box2d {
 	std::size_t nextBodyId;
 };
 
-extern void attachBox2d(JavascriptEngine &engine, Box2d &box2d);
+extern void attachBox2d(DukJavascriptEngine &engine, Box2d &box2d);
+
+#ifdef GAM_CHAKRA_ENABLE
+extern void attachBox2d(ChakraJavascriptEngine &engine, Box2d &box2d);
+#endif//GAM_CHAKRA_ENABLE
 
 #endif //DUKSFML_BOX2DEXTENSIONS_HPP

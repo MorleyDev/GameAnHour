@@ -12,32 +12,44 @@ import { Mouse } from "./input/Mouse";
 import { PhysicsUpdateResult } from "./physics/update.model";
 import { SpecificReducer } from "./redux/reducer.type";
 
-export type AppDrivers = {
-	readonly keyboard?: Keyboard;
-	readonly mouse?: Mouse;
-	readonly audio?: AudioService;
-	readonly loader?: AssetLoader;
-
+export type PhysicsDrivers = {
 	readonly physics: {
 		events: EntityComponentReducerEvents;
 		reducer: <TState extends EntitiesState, TAction extends GenericAction>(onUpdate: (state: TState, result: PhysicsUpdateResult) => TState) => SpecificReducer<TState, TAction>;
 	};
+};
 
+export type AssetDrivers = {
+	readonly audio?: AudioService;
+	readonly loader?: AssetLoader;
+};
+
+export type InputDrivers = {
+	readonly keyboard?: Keyboard;
+	readonly mouse?: Mouse;
+};
+
+export type FrameRateDrivers = {
 	readonly framerates?: {
 		readonly logicalRender?: number;
 		readonly logicalTick?: number;
 	};
 
+};
+
+export type SchedulerDrivers = {
 	readonly schedulers?: {
 		logical?: IScheduler;
 		graphics?: IScheduler;
 	};
 };
 
-export function getLogicalScheduler(driver: AppDrivers): IScheduler {
+export type AppDrivers = PhysicsDrivers & AssetDrivers & InputDrivers & FrameRateDrivers & SchedulerDrivers;
+
+export function getLogicalScheduler(driver: SchedulerDrivers): IScheduler {
 	return (driver.schedulers && driver.schedulers.logical) || async;
 }
 
-export function getGraphicsScheduler(driver: AppDrivers): IScheduler {
+export function getGraphicsScheduler(driver: SchedulerDrivers): IScheduler {
 	return (driver.schedulers && driver.schedulers.graphics) || animationFrame;
 }

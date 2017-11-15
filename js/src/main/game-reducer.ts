@@ -1,21 +1,21 @@
-import { AppDrivers } from "../pauper/app-drivers";
+import { PhysicsDrivers } from "../pauper/app-drivers";
 import { createEntitiesStateFilter } from "../pauper/ecs/create-entities-state-filter.func";
 import { EntityId } from "../pauper/ecs/entity-base.type";
 import { AttachComponentAction, CreateEntityAction, DestroyEntityAction } from "../pauper/ecs/entity-component.actions";
 import { createEntityComponentReducer } from "../pauper/ecs/entity-component.reducer";
+import { Vector2 } from "../pauper/maths/vector.maths";
 import { Shape2 } from "../pauper/models/shapes.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
 import { FloatingScoreComponent } from "./components/FloatingScoreComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction, GameState } from "./game.model";
-import { Vector2 } from "../pauper/maths/vector.maths";
 
 const deadPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.position.y > 1000);
 const restingPhysicsEntities = createEntitiesStateFilter(["HardBodyComponent"], (component: HardBodyComponent) => component.restingTime >= 2);
 const fadedAwayTextBoxes = createEntitiesStateFilter(["FloatingScoreComponent"], (component: FloatingScoreComponent, currentTick: number) => currentTick > component.startingTick + component.lifespan);
 
-export const reducer = (drivers: AppDrivers) => {
+export const reducer = (drivers: PhysicsDrivers) => {
 	const physicsReducer = drivers.physics.reducer<GameState, GameAction>((state, result) => ({
 		...state,
 		effects: state.effects

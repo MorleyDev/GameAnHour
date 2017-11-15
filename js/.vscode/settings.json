@@ -1,5 +1,9 @@
 {
     "editor.insertSpaces": false,
     "editor.renderWhitespace": "all",
-    "typescriptHero.resolver.stringQuoteStyle": "\""
+    "typescriptHero.resolver.stringQuoteStyle": "\"",
+    "files.associations": {
+        "tuple": "cpp",
+        "xutility": "cpp"
+    }
 }

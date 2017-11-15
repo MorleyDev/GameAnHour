@@ -59,13 +59,7 @@ void JavascriptWorker::start() {
 	}) );
 }
 
-std::vector<std::unique_ptr<JavascriptWorker>> attachWorkers(JavascriptEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue) {
-	engine.add("workers", "WORKER_Receive = function () { }; WORKER_Join = function () { };");
-	engine.setGlobalFunction("WORKER_Emit", [&workQueue](JavascriptEngine* ctx) {
-		workQueue.enqueue(ctx->getargstr(0));
-		return false;
-	}, 1);
-
+template<typename TEngine> std::vector<std::unique_ptr<JavascriptWorker>> _spawnWorkers(TEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue) {
 	std::vector<std::unique_ptr<JavascriptWorker>> workers;
 	auto numberOfThreads = std::thread::hardware_concurrency() - 1;
 	if (numberOfThreads == 0) {
@@ -81,3 +75,29 @@ std::vector<std::unique_ptr<JavascriptWorker>> attachWorkers(JavascriptEngine& e
 	}
 	return workers;
 }
+
+template<typename TEngine> void _attachWorkers(TEngine& engine, moodycamel::ConcurrentQueue<std::string>& workQueue) {
+	engine.add("workers", "WORKER_Receive = function () { }; WORKER_Join = function () { };");
+	engine.setGlobalFunction("WORKER_Emit", [&workQueue](TEngine* ctx) {
+		workQueue.enqueue(ctx->getargstr(0));
+		return false;
+	}, 1);
+
+}
+void attachWorkers(DukJavascriptEngine& engine, moodycamel::ConcurrentQueue<std::string>& workQueue) {
+	_attachWorkers(engine, workQueue);
+}
+
+std::vector<std::unique_ptr<JavascriptWorker>> spawnWorkers(DukJavascriptEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue) {
+	return _spawnWorkers(engine, cancellationToken, mainTaskQueue, workQueue);
+}
+
+#ifdef GAM_CHAKRA_ENABLE
+void attachWorkers(ChakraJavascriptEngine& engine, moodycamel::ConcurrentQueue<std::string>& workQueue) {
+	return _attachWorkers(engine, workQueue);
+}
+std::vector<std::unique_ptr<JavascriptWorker>> spawnWorkers(ChakraJavascriptEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue) {
+	return _spawnWorkers(engine, cancellationToken, mainTaskQueue, workQueue);
+}
+
+#endif//GAM_CHAKRA_ENABLE

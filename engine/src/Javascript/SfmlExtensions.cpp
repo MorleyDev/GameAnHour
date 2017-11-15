@@ -170,26 +170,26 @@ Sfml::Sfml(std::string title, sf::VideoMode video, TaskQueue& tasks, TaskQueue& 
 	stack.push_back(sf::Transform::Identity);
 }
 
-void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
+template<typename TEngine> void _attachSfml(TEngine &engine, Sfml &sfml) {
 	engine.add("sfml", sfmlScript);
-	engine.setGlobalFunction("SFML_Close", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Close", [&sfml](TEngine* ctx) {
 		sfml.window.close();
 		return false;
 	}, 0);
-	engine.setGlobalFunction("SFML_SetSize", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_SetSize", [&sfml](TEngine* ctx) {
 		const auto w = ctx->getargn(0);
 		const auto h = ctx->getargn(1);
 		sfml.window.setSize(sf::Vector2u(static_cast<unsigned int>(w), static_cast<unsigned int>(h)));
 		return false;
 	}, 2);
-	engine.setGlobalFunction("SFML_Clear", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Clear", [&sfml](TEngine* ctx) {
 		const auto r = ctx->getargf(0);
 		const auto g = ctx->getargf(1);
 		const auto b = ctx->getargf(2);
 		sfml.window.clear(sf::Color(static_cast<sf::Uint8>(r), static_cast<sf::Uint8>(g), static_cast<sf::Uint8>(b)));
 		return false;
 	}, 3);
-	engine.setGlobalFunction("SFML_Stroke_Circle", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Circle", [&sfml](TEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto radius = ctx->getargf(2);
@@ -208,7 +208,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(circleShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 7);
-	engine.setGlobalFunction("SFML_Stroke_Rectangle", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Rectangle", [&sfml](TEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto width = ctx->getargf(2);
@@ -227,7 +227,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(rectShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 8);
-	engine.setGlobalFunction("SFML_Stroke_Triangle", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Triangle", [&sfml](TEngine* ctx) {
 		const auto x1 = ctx->getargf(0);
 		const auto y1 = ctx->getargf(1);
 		const auto x2 = ctx->getargf(2);
@@ -248,7 +248,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(array, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 10);
-	engine.setGlobalFunction("SFML_Fill_Circle", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Circle", [&sfml](TEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto radius = ctx->getargf(2);
@@ -264,7 +264,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(circleShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 7);
-	engine.setGlobalFunction("SFML_Fill_Rectangle", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Rectangle", [&sfml](TEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		const auto width = ctx->getargf(2);
@@ -280,7 +280,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(rectShape, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 8);
-	engine.setGlobalFunction("SFML_Fill_Triangle", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Triangle", [&sfml](TEngine* ctx) {
 		const auto x1 = ctx->getargf(0);
 		const auto y1 = ctx->getargf(1);
 		const auto x2 = ctx->getargf(2);
@@ -300,7 +300,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(array, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 10);
-	engine.setGlobalFunction("SFML_Draw_Line", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Draw_Line", [&sfml](TEngine* ctx) {
 		const auto x1 = ctx->getargf(0);
 		const auto y1 = ctx->getargf(1);
 		const auto x2 = ctx->getargf(2);
@@ -317,7 +317,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(array, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 8);
-	engine.setGlobalFunction("SFML_Fill_Text", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Fill_Text", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto text = ctx->getargstr(1);
 		const auto size = ctx->getargn(2);
@@ -335,7 +335,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.window.draw(t, sf::RenderStates(sfml.stack.back()));
 		return false;
 	}, 9);
-	engine.setGlobalFunction("SFML_Stroke_Text", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Stroke_Text", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto text = ctx->getargstr(1);
 		const auto size = ctx->getargn(2);
@@ -355,7 +355,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		return false;
 	}, 9);
 
-	engine.setGlobalFunction("SFML_Blit", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Blit", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto srcX = ctx->getargn(1);
 		const auto srcY = ctx->getargn(2);
@@ -374,7 +374,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		return false;
 	}, 9);
 
-	engine.setGlobalFunction("SFML_Push_Translate", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Push_Translate", [&sfml](TEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 
@@ -383,7 +383,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.stack.push_back(m);
 		return false;
 	}, 2);
-	engine.setGlobalFunction("SFML_Push_Scale", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Push_Scale", [&sfml](TEngine* ctx) {
 		const auto x = ctx->getargf(0);
 		const auto y = ctx->getargf(1);
 		
@@ -392,7 +392,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.stack.push_back(m);
 		return false;
 	}, 2);
-	engine.setGlobalFunction("SFML_Push_Rotate", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Push_Rotate", [&sfml](TEngine* ctx) {
 		const auto radians = ctx->getargf(0);
 		
 		auto m = sf::Transform(sfml.stack.back());
@@ -400,17 +400,17 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		sfml.stack.push_back(m);
 		return false;
 	}, 1);
-	engine.setGlobalFunction("SFML_Pop", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_Pop", [&sfml](TEngine* ctx) {
 		sfml.stack.pop_back();
 		return false;
 	}, 0);
-	engine.setGlobalFunction("SFML_SetVSync", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_SetVSync", [&sfml](TEngine* ctx) {
 		const auto enabled = ctx->getargb(0);
 
 		sfml.window.setVerticalSyncEnabled(enabled);
 		return false;
 	}, 1);
-	engine.setGlobalFunction("SFML_LoadImage", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadImage", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
 		const auto id = ctx->getargn(2);
@@ -429,7 +429,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		ctx->putProp(-2, "name");
 		return true;
 	}, 3);
-	engine.setGlobalFunction("SFML_LoadFont", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadFont", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
 		const auto id = ctx->getargn(2);
@@ -442,7 +442,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		ctx->putProp(-2, "src");
 		return true;
 	}, 3);
-	engine.setGlobalFunction("SFML_LoadSound", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadSound", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto src = ctx->getargstr(1);
 		const auto id = ctx->getargn(2);
@@ -455,7 +455,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		ctx->putProp(-2, "src");
 		return true;
 	}, 3);
-	engine.setGlobalFunction("SFML_LoadMusic", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_LoadMusic", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 
 		const auto src = ctx->getargstr(1);
@@ -467,7 +467,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		ctx->putProp(-2, "src");
 		return true;
 	}, 2);
-	engine.setGlobalFunction("SFML_PlaySound", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_PlaySound", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto volume = ctx->getargf(1);
 
@@ -480,7 +480,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		return false;
 	}, 2);
 
-	engine.setGlobalFunction("SFML_PlayMusic", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_PlayMusic", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		const auto volume = ctx->getargf(1);
 		const auto loop = ctx->getargb(2);
@@ -492,7 +492,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		}
 		return false;
 	}, 3);
-	engine.setGlobalFunction("SFML_PauseMusic", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_PauseMusic", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		auto music = sfml.assetStore.music(name, "./assets/music/" + name + ".ogg");
 		if (music->getStatus() == sf::SoundStream::Playing) {
@@ -500,7 +500,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 		}
 		return false;
 	}, 1);
-	engine.setGlobalFunction("SFML_StopMusic", [&sfml](JavascriptEngine* ctx) {
+	engine.setGlobalFunction("SFML_StopMusic", [&sfml](TEngine* ctx) {
 		const auto name = ctx->getargstr(0);
 		auto music = sfml.assetStore.music(name, "./assets/music/" + name + ".ogg");
 		music->stop();
@@ -508,7 +508,7 @@ void attachSfml(JavascriptEngine &engine, Sfml &sfml) {
 	}, 1);
 }
 
-void pollEvents(JavascriptEngine &engine, Sfml &sfml) {
+template<typename TEngine> void _pollEvents(TEngine &engine, Sfml &sfml) {
 	sf::Event event = {};
 	while (sfml.window.pollEvent(event)) {
 		switch (event.type)	{
@@ -559,3 +559,21 @@ void pollEvents(JavascriptEngine &engine, Sfml &sfml) {
 		}
 	}
 }
+
+void attachSfml(DukJavascriptEngine &engine, Sfml &sfml) {
+	_attachSfml(engine, sfml);
+}
+
+void pollEvents(DukJavascriptEngine &engine, Sfml &sfml) {
+	_pollEvents(engine, sfml);
+}
+
+#ifdef GAM_CHAKRA_ENABLE
+void attachSfml(ChakraJavascriptEngine &engine, Sfml &sfml) {
+	_attachSfml(engine, sfml);
+}
+
+void pollEvents(ChakraJavascriptEngine &engine, Sfml &sfml) {
+	_pollEvents(engine, sfml);
+}
+#endif

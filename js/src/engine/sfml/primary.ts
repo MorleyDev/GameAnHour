@@ -1,28 +1,25 @@
 import "@babel/polyfill";
 
-import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
-import { of } from "rxjs/observable/of";
-import { auditTime, concat, distinctUntilChanged, ignoreElements, reduce, scan, switchMap, tap } from "rxjs/operators";
-import { Subject } from "rxjs/Subject";
+import { concat, ignoreElements, reduce, tap } from "rxjs/operators";
 import { ReplaySubject } from "rxjs/ReplaySubject";
+import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "../../main/game-bootstrap";
 import { epic } from "../../main/game-epic";
 import { initialState } from "../../main/game-initial-state";
 import { postprocess, reducer } from "../../main/game-reducer";
 import { GameAction, GameState } from "../../main/game.model";
-import { AppDrivers, getLogicalScheduler } from "../../pauper/app-drivers";
+import { AppDrivers } from "../../pauper/app-drivers";
 import { SfmlAssetLoader } from "../../pauper/assets/sfml-asset-loader.service";
 import { SfmlAudioService } from "../../pauper/audio/sfml-audio.service";
 import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
 import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { Key } from "../../pauper/models/keys.model";
 import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
-import { profile, stats, statDump } from "../../pauper/profiler";
+import { profile, statDump } from "../../pauper/profiler";
 import { FrameCollection } from "../../pauper/render/render-frame.model";
 import { renderToSfml } from "../../pauper/render/render-to-sfml.func";
-import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
 
 const drivers = {
 	keyboard: new SubjectKeyboard(),
@@ -48,72 +45,35 @@ const g = {
 	bootstrap: bootstrap(drivers as AppDrivers),
 };
 
-const postProcessSubject = new Subject<GameAction>();
-const subject = new Subject<GameAction>();
+const actions = new Subject<GameAction>();
 
 const bootstrap$ = g.bootstrap.pipe(
-	tap((action: GameAction) => subject.next(action)),
+	tap((action: GameAction) => actions.next(action)),
 	ignoreElements()
 );
 
-const epicActions$ = g.epic(merge(subject, postProcessSubject)).pipe(
-	tap((action: GameAction) => subject.next(action)),
-	ignoreElements()
+const epicActions$ = g.epic(merge(actions)).pipe(
+	tap((action: GameAction) => actions.next(action))
 );
-
-const fastScan: (reducer: (state: GameState, action: GameAction) => GameState, initialState: GameState) => (input: Observable<GameAction>) => Observable<GameState> =
-	(reducer, initialState) => {
-		const applyAction = (state: GameState, action: GameAction): GameState => {
-			return profile(action.type, () => reducer(state, action));
-		};
-		const applyActions = (state: GameState, actions: ReadonlyArray<GameAction>) => actions.reduce(applyAction, state);
-
-		return self => self.pipe(
-			safeBufferTime(drivers.framerates.logicalTick, getLogicalScheduler(drivers as AppDrivers)),
-			scan(applyActions, initialState),
-			distinctUntilChanged()
-		);
-	};
-
-const applyAction = (state: GameState, action: GameAction): GameState => {
-	const nexGameState = g.reducer(state, action);
-	const { state: newState, actions: followup } = g.postprocess(nexGameState);
-	return followup
-		.map((action: GameAction) => {
-			postProcessSubject.next(action);
-			return action;
-		})
-		.reduce(applyAction, newState);
-};
+const epicSub = epicActions$.subscribe(action => {
+	SECONDARY_Emit(JSON.stringify({ type: "action", action }));
+});
 
 const hotreloadedState = new ReplaySubject<GameState>(1);
 
-let prevState: GameState | null = null;
-const app$ = bootstrap(drivers as AppDrivers).pipe(
+const sub = bootstrap(drivers as AppDrivers).pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
-	concat(hotreloadedState),
-	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
-		fastScan(applyAction, initialState),
-		auditTime(drivers.framerates.logicalRender, getLogicalScheduler(drivers as AppDrivers)),
-		tap(currentState => {
-			if (prevState !== currentState) {
-				WORKER_Emit(JSON.stringify({ type: "RenderStateToFrame", state: currentState, timestamp: Date.now() }));
-				prevState = currentState;
-			}
-		}),
-	))
-);
-const sub = app$.subscribe(
-	() => { },
-	(err: Error) => { console.error(`${err.name}: ${err.message}\n${err.stack}`); },
-	() => { }
-);
+	concat(hotreloadedState)
+).subscribe(state => {
+	SECONDARY_Emit(JSON.stringify({ type: "state", state }));
+}),
 
-type WorkerEvent = {
-	type: "RenderFrame";
-	frame: FrameCollection;
-	timestamp: number;
+SECONDARY_Receive = (msg: string) => {
+	const action: GameAction = JSON.parse(msg);
+	actions.next(action);
 };
+
+type WorkerEvent = { type: "RenderFrame"; frame: FrameCollection; timestamp: number };
 let nextFrame: WorkerEvent = { type: "RenderFrame", frame: [], timestamp: 0 };
 WORKER_Receive = (msg: string) => {
 	const frame: WorkerEvent = JSON.parse(msg);
@@ -133,6 +93,7 @@ requestAnimationFrame(function poll() {
 			case SFML_Events.Closed:
 				SFML_Close();
 				sub.unsubscribe();
+				epicSub.unsubscribe();
 				statDump("Primary");
 				break;
 			case SFML_Events.MouseButtonPressed:
@@ -163,11 +124,6 @@ requestAnimationFrame(function poll() {
 	}));
 	requestAnimationFrame(poll);
 });
-
-ENGINE_Reloading = () => { ENGINE_Stash(JSON.stringify(prevState || initialState)); };
-ENGINE_Reloaded = (state: string) => {
-	hotreloadedState.next(JSON.parse(state));
-};
 
 function sfmlKeyToKeyCode(key: number): Key {
 	switch (key) {
