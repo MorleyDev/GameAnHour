@@ -2,6 +2,8 @@
 
 #include <fstream>
 #include <iostream>
+#include <algorithm>
+#include <filesystem>
 
 std::vector<std::function<duk_ret_t(duk_context*)>> DukJavascriptEngine::globalFunctions;
 
@@ -11,8 +13,9 @@ duk_ret_t globalNativeFunction(duk_context *ctx) {
 	return DukJavascriptEngine::globalFunctions[magic](ctx);
 }
 
-DukJavascriptEngine::DukJavascriptEngine(Profiler &profiler)
-	: context(duk_create_heap_default()),
+DukJavascriptEngine::DukJavascriptEngine(Profiler &profiler, std::function<void(DukJavascriptEngine& engine)> extend)
+	: extend(extend),
+	context(duk_create_heap_default()),
 	profiler(&profiler) {
 	add(
 		"global",
@@ -28,6 +31,9 @@ DukJavascriptEngine::DukJavascriptEngine(Profiler &profiler)
 		"    })();"
 		"}"
 	);
+	extend(*this);
+	add("hotreload", "ENGINE_Reloading = function () { }; ENGINE_Reloaded = function () { };");
+	setGlobalFunction("ENGINE_Stash", [this](DukJavascriptEngine* ctx) { stashedState = ctx->getargstr(0); return false; }, 0);
 }
 
 DukJavascriptEngine::~DukJavascriptEngine() {
@@ -53,6 +59,16 @@ DukJavascriptEngine& DukJavascriptEngine::operator=(DukJavascriptEngine&& other)
 	return *this;
 }
 
+void DukJavascriptEngine::restart() {
+	if (context) {
+		duk_destroy_heap(context);
+	}
+	context = duk_create_heap_default();
+	extend(*this);
+	add("hotreload", "ENGINE_Reloading = function () { }; ENGINE_Reloaded = function () { };");
+	setGlobalFunction("ENGINE_Stash", [this](DukJavascriptEngine* ctx) { stashedState = ctx->getargstr(0); return false; }, 0);
+}
+
 void DukJavascriptEngine::add(std::string name, std::string script)
 {
 	const auto wrapped = std::string("function () {\n") + script + "\n}";
@@ -73,6 +89,25 @@ void DukJavascriptEngine::load(std::string filepath) {
 
 	std::string script((std::istreambuf_iterator<char>(engineCode)), std::istreambuf_iterator<char>());
 	add(filepath, script);
+	files[filepath] = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(filepath));
+}
+
+void DukJavascriptEngine::checkFileSystem() {
+	auto needReload = false;
+	std::for_each(files.begin(), files.end(), [this, &needReload](auto& file) {
+		auto newFileTime = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(file.first));
+		if (file.second != newFileTime) {
+			needReload = true;
+		}
+	});
+	if (!needReload) {
+		return;
+	}
+
+	trigger("ENGINE_Reloading");
+	restart();
+	std::for_each(files.begin(), files.end(), [this](auto& file) { load(file.first); });
+	trigger("ENGINE_Reloaded", std::exchange(stashedState, std::string("")));
 }
 
 void DukJavascriptEngine::setGlobalFunction(const char* name, std::function<bool(DukJavascriptEngine*)> function, int nargs) {

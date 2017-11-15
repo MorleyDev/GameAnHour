@@ -3,8 +3,9 @@ import "@babel/polyfill";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
-import { auditTime, distinctUntilChanged, ignoreElements, reduce, scan, switchMap, tap } from "rxjs/operators";
+import { auditTime, concat, distinctUntilChanged, ignoreElements, reduce, scan, switchMap, tap } from "rxjs/operators";
 import { Subject } from "rxjs/Subject";
+import { ReplaySubject } from "rxjs/ReplaySubject";
 
 import { bootstrap } from "../../main/game-bootstrap";
 import { epic } from "../../main/game-epic";
@@ -87,9 +88,12 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 		.reduce(applyAction, newState);
 };
 
+const hotreloadedState = new ReplaySubject<GameState>(1);
+
 let prevState: GameState | null = null;
 const app$ = bootstrap(drivers as AppDrivers).pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
+	concat(hotreloadedState),
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
 		fastScan(applyAction, initialState),
 		auditTime(drivers.framerates.logicalRender, getLogicalScheduler(drivers as AppDrivers)),
@@ -161,6 +165,9 @@ requestAnimationFrame(function poll() {
 	}));
 	requestAnimationFrame(poll);
 });
+
+ENGINE_Reloading = () => { ENGINE_Stash(JSON.stringify(prevState || initialState)); };
+ENGINE_Reloaded = (state: string) => { hotreloadedState.next(JSON.parse(state)); };
 
 function sfmlKeyToKeyCode(key: number): Key {
 	switch (key) {

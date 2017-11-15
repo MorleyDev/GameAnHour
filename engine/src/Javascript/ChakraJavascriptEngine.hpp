@@ -18,6 +18,10 @@ public:
 	static void GetAndThrowError(std::string name);
 	static std::string GetJsErrorAsString(JsErrorCode code);
 
+	std::string stashedState;
+	std::unordered_map<std::string, std::chrono::system_clock::time_point> files;
+
+	std::function<void(ChakraJavascriptEngine& engine)> extend;
 	std::vector<ChakraTask> taskQueue;
 	std::vector<ChakraTask> nextAnimationFrame;
 	std::vector<std::size_t> cancelledTasks;
@@ -65,7 +69,7 @@ private:
 	}
 
 public:
-	explicit ChakraJavascriptEngine(Profiler& profiler);
+	ChakraJavascriptEngine(Profiler& profiler, std::function<void(ChakraJavascriptEngine& engine)> extend);
 	~ChakraJavascriptEngine();
 
 	void pushGlobal() {
@@ -219,6 +223,9 @@ public:
 	void idle() {
 		JsIdle(nullptr);
 	}
+
+	void restart();
+	void checkFileSystem();
 };
 
 

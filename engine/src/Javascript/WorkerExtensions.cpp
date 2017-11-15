@@ -5,13 +5,14 @@
 
 JavascriptWorker::JavascriptWorker(std::string name, std::atomic<bool>& cancellationToken, moodycamel::ConcurrentQueue<std::string>& workQueue, std::function<void (std::string)> emitToMain)
 	: profiler(name),
-	engine(profiler),
+	engine(profiler, [](DukJavascriptEngine& engine) {
+		attachConsole(engine);
+		attachTimers(engine);
+	}),
 	cancellationToken(cancellationToken),
 	workQueue(workQueue),
 	emitToMain(emitToMain),
 	thread() {
-	attachConsole(engine);
-	attachTimers(engine);
 	engine.add("workers", "WORKER_Receive = function () { }; WORKER_Join = function () { };");
 	engine.setGlobalFunction("WORKER_Emit", [this](DukJavascriptEngine* ctx) {
 		this->emitToMain(ctx->getargstr(0));
@@ -42,6 +43,7 @@ void JavascriptWorker::start() {
 							animate(engine);
 						});
 					}
+					engine.checkFileSystem();
 					std::this_thread::sleep_for(std::chrono::milliseconds(5));
 				}
 				else {

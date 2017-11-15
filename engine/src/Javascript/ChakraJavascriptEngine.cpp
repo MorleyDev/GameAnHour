@@ -1,5 +1,6 @@
 #include "ChakraJavascriptEngine.hpp"
 #include <fstream>
+#include <filesystem>
 
 std::vector<std::string> globalFunctionNames;
 std::vector<std::function<JsValueRef (JsValueRef, bool, JsValueRef*, unsigned short)>> ChakraJavascriptEngine::globalFunctions;
@@ -80,12 +81,30 @@ JsValueRef CALLBACK chakraNativeFunction(JsValueRef callee, bool isConstructCall
 	return ChakraJavascriptEngine::globalFunctions[index](callee, isConstructCall, arguments, argumentCount);
 }
 
-ChakraJavascriptEngine::ChakraJavascriptEngine(Profiler& profiler)
+ChakraJavascriptEngine::ChakraJavascriptEngine(Profiler& profiler, std::function<void(ChakraJavascriptEngine& engine)> extend)
 	: profiler(profiler),
+	extend(extend),
 	currentSourceContext(0) {
 	JsCreateRuntime(JsRuntimeAttributeEnableIdleProcessing, nullptr, &runtime);
 	JsCreateContext(runtime, &context);
 	JsSetCurrentContext(context);
+
+	extend(*this);
+	add("hotreload", "ENGINE_Reloading = function () { }; ENGINE_Reloaded = function () { };");
+	setGlobalFunction("ENGINE_Stash", [this](ChakraJavascriptEngine* ctx) { stashedState = ctx->getargstr(0); return false; }, 0);
+}
+
+void ChakraJavascriptEngine::restart() {
+	JsDisposeRuntime(runtime);
+	currentSourceContext = 0;
+
+	JsCreateRuntime(JsRuntimeAttributeEnableIdleProcessing, nullptr, &runtime);
+	JsCreateContext(runtime, &context);
+	JsSetCurrentContext(context);
+
+	extend(*this);
+	add("hotreload", "ENGINE_Reloading = function () { }; ENGINE_Reloaded = function () { };");
+	setGlobalFunction("ENGINE_Stash", [this](ChakraJavascriptEngine* ctx) { stashedState = ctx->getargstr(0); return false; }, 0);
 }
 
 void ChakraJavascriptEngine::add(std::string name, std::string script) {
@@ -106,6 +125,7 @@ void ChakraJavascriptEngine::load(std::string filepath) {
 
 	std::string script((std::istreambuf_iterator<char>(engineCode)), std::istreambuf_iterator<char>());
 	add(filepath, script);
+	files[filepath] = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(filepath));
 }
 
 ChakraJavascriptEngine::~ChakraJavascriptEngine() {
@@ -148,4 +168,22 @@ void ChakraJavascriptEngine::setGlobalFunction(const char* name, std::function<b
 	if (setResult != JsNoError) {
 		throw std::runtime_error(std::string(name) + ": Error setting function on global object, " + ChakraJavascriptEngine::GetJsErrorAsString(setResult));
 	}
+}
+
+void ChakraJavascriptEngine::checkFileSystem() {
+	auto needReload = false;
+	std::for_each(files.begin(), files.end(), [this, &needReload](auto& file) {
+		auto newFileTime = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(file.first));
+		if (file.second != newFileTime) {
+			needReload = true;
+		}
+	});
+	if (!needReload) {
+		return;
+	}
+
+	trigger("ENGINE_Reloading");
+	restart();
+	std::for_each(files.begin(), files.end(), [this](auto& file) { load(file.first); });
+	trigger("ENGINE_Reloaded", std::exchange(stashedState, std::string("")));
 }

@@ -26,17 +26,17 @@ int main() {
 
 	Profiler profiler("Engine");
 	Sfml sfml("GAM", sf::VideoMode(512, 512), tasks, mainThreadTasks);
-
 	Box2d box2d;
-	JavascriptEngine engine(profiler);
-	attachConsole(engine);
-	attachTimers(engine);
-	attachSfml(engine, sfml);
-	attachBox2d(engine, box2d);
+
+	JavascriptEngine engine(profiler, [&sfml, &box2d](JavascriptEngine& engine) {
+		attachConsole(engine);
+		attachTimers(engine);
+		attachSfml(engine, sfml);
+		attachBox2d(engine, box2d);
+	});
 
 	moodycamel::ConcurrentQueue<std::string> workQueue;
 	auto workers = attachWorkers(engine, cancellationToken, mainThreadTasks, workQueue);
-
 	try {
 		engine.load("./dist/engine/sfml/index.js");
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->load("./dist/engine/sfml/worker.js"); });
@@ -75,6 +75,7 @@ int main() {
 
 				previousSecond = currentTime;
 				profiler.profile("Idle(Forced)", [&]() { engine.idle(); });
+				engine.checkFileSystem();
 				std::this_thread::yield();
 			};
 

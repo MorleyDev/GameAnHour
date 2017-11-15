@@ -15,6 +15,10 @@ public:
 	static std::vector<std::function<duk_ret_t (duk_context*)>> globalFunctions;
 
 private:
+	std::string stashedState;
+	std::unordered_map<std::string, std::chrono::system_clock::time_point> files;
+
+	std::function<void(DukJavascriptEngine& engine)> extend;
 	std::vector<duk_int_t> argCountStack;
 	duk_context *context;
 	Profiler* profiler;
@@ -32,7 +36,7 @@ private:
 	}
 
 public:
-	explicit DukJavascriptEngine(Profiler& profiler);
+	DukJavascriptEngine(Profiler& profiler, std::function<void (DukJavascriptEngine& engine)> extend);
 	~DukJavascriptEngine();
 
 	DukJavascriptEngine(const DukJavascriptEngine&) = delete;
@@ -74,6 +78,8 @@ public:
 	void setGlobalFunction(const char* name, std::function<bool(DukJavascriptEngine*)> function, int nargs);
 
 	void idle() {  }
+	void restart();
+	void checkFileSystem();
 
 	template <typename T, typename U, typename... NARGS> void push(T value, U next, NARGS... rest) {
 		push(value);
