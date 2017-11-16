@@ -4,11 +4,13 @@
 #include "../Concurrent/TaskQueue.hpp"
 #include "DukJavascriptEngine.hpp"
 #include "ChakraJavascriptEngine.hpp"
+
 #include <concurrentqueue.h>
 #include <string>
 #include <vector>
 #include <atomic>
 #include <memory>
+#include <cstring>
 
 class JavascriptWorker {
 private:

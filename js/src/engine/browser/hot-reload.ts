@@ -10,7 +10,7 @@ import { Subject } from "rxjs/Subject";
 import { bootstrap } from "../../main/game-bootstrap";
 import { initialState } from "../../main/game-initial-state";
 import { GameAction, GameState } from "../../main/game.model";
-import { AppDrivers, getLogicalScheduler } from "../../pauper/app-drivers";
+import { AppDrivers, getLogicalScheduler, AssetDrivers, SchedulerDrivers } from "../../pauper/app-drivers";
 import { WebAssetLoader } from "../../pauper/assets/web-asset-loader.service";
 import { WebAudioService } from "../../pauper/audio/web-audio.service";
 import { HtmlDocumentKeyboard } from "../../pauper/input/HtmlDocumentKeyboard";
@@ -20,6 +20,7 @@ import { profile } from "../../pauper/profiler";
 import { FrameCollection } from "../../pauper/render/render-frame.model";
 import { renderToCanvas } from "../../pauper/render/render-to-canvas.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
+import { async } from "rxjs/scheduler/async";
 
 // import RxFiddle from "rxfiddle";
 // (window as any).fiddle = new RxFiddle(require("rxjs/Rx")).auto();
@@ -55,13 +56,17 @@ const drivers = {
 	framerates: {
 		logicalTick: 10,
 		logicalRender: 10
+	},
+	schedulers: {
+		logical: async,
+		graphics: animationFrame
 	}
 };
 
 const debugHooks = { currenGameState: initialState, actions$: new Subject<any>() };
 (window as any).debugHooks = debugHooks;
 
-let latestBootstrap = bootstrap(drivers as AppDrivers);
+let latestBootstrap = bootstrap(drivers as AssetDrivers);
 
 const devRememberState = (module as any).hot
 	? tap((state: any) => {
@@ -83,7 +88,7 @@ const storeBackedScan: (reducer: (state: GameState, action: GameAction) => GameS
 
 		const store = createStore(reducer as any, initialState, c(applyMiddleware()));
 		return self => self.pipe(
-			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers as AppDrivers)),
+			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers as SchedulerDrivers)),
 			scan(applyActions, initialState),
 			distinctUntilChanged()
 		);

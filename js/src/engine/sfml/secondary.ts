@@ -13,6 +13,7 @@ import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
 import { profile, statDump } from "../../pauper/profiler";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
+import { async } from "rxjs/scheduler/async";
 
 const states = new ReplaySubject<GameState>(1);
 const actions = new Subject<GameAction>();
@@ -27,6 +28,10 @@ const drivers = {
 	physics: {
 		events: box2dPhysicsEcsEvents,
 		reducer: box2dPhysicsReducer
+	},
+	schedulers: {
+		logical: async,
+		graphics: async
 	}
 };
 

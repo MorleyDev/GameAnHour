@@ -7,6 +7,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <cstring>
 
 #include "ChakraTask.hpp"
 #include "../Profile/Profiler.hpp"

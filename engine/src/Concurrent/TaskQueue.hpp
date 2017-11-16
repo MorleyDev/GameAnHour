@@ -3,7 +3,6 @@
 
 #include <thread>
 #include <mutex>
-#include <optional>
 #include <concurrentqueue.h>
 #include <atomic>
 #include <iostream>

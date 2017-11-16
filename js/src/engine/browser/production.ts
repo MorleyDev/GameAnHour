@@ -4,6 +4,7 @@ import { of } from "rxjs/observable/of";
 import { auditTime, distinctUntilChanged, ignoreElements, reduce, retryWhen, scan, switchMap, tap } from "rxjs/operators";
 import { animationFrame } from "rxjs/scheduler/animationFrame";
 import { Subject } from "rxjs/Subject";
+import { async } from "rxjs/scheduler/async";
 
 import { bootstrap } from "../../main/game-bootstrap";
 import { epic } from "../../main/game-epic";
@@ -11,7 +12,7 @@ import { initialState } from "../../main/game-initial-state";
 import { postprocess, reducer } from "../../main/game-reducer";
 import { render } from "../../main/game-render";
 import { GameAction, GameState } from "../../main/game.model";
-import { AppDrivers, getLogicalScheduler } from "../../pauper/app-drivers";
+import { AppDrivers, getLogicalScheduler, PhysicsDrivers, AssetDrivers, InputDrivers, SchedulerDrivers } from "../../pauper/app-drivers";
 import { WebAssetLoader } from "../../pauper/assets/web-asset-loader.service";
 import { WebAudioService } from "../../pauper/audio/web-audio.service";
 import { HtmlDocumentKeyboard } from "../../pauper/input/HtmlDocumentKeyboard";
@@ -46,17 +47,21 @@ const drivers = {
 	framerates: {
 		logicalTick: 10,
 		logicalRender: 10
+	},
+	schedulers: {
+		logical: async,
+		graphics: animationFrame
 	}
 };
 
-const r = reducer(drivers as AppDrivers);
+const r = reducer(drivers as PhysicsDrivers);
 const g = {
 	render,
 	postprocess,
 	reducer: r,
-	epic: epic(drivers as AppDrivers),
+	epic: epic(drivers as PhysicsDrivers & AssetDrivers & InputDrivers),
 	initialState,
-	bootstrap: bootstrap(drivers as AppDrivers)
+	bootstrap: bootstrap(drivers as AssetDrivers)
 };
 
 const postProcessSubject = new Subject<GameAction>();
@@ -81,7 +86,7 @@ const fastScan: (reducer: (state: GameState, action: GameAction) => GameState, i
 		const applyActions = (state: GameState, actions: ReadonlyArray<GameAction>) => actions.reduce(applyAction, state);
 
 		return self => self.pipe(
-			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers as AppDrivers)),
+			safeBufferTime(logicalTickLimit, getLogicalScheduler(drivers as SchedulerDrivers)),
 			scan(applyActions, initialState),
 			distinctUntilChanged()
 		);

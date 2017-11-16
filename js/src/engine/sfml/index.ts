@@ -1,84 +1,136 @@
 import "@babel/polyfill";
 
+import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
-import { concat, ignoreElements, reduce, tap } from "rxjs/operators";
-import { ReplaySubject } from "rxjs/ReplaySubject";
+import { of } from "rxjs/observable/of";
+import { auditTime, distinctUntilChanged, ignoreElements, reduce, scan, switchMap, tap } from "rxjs/operators";
 import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "../../main/game-bootstrap";
 import { epic } from "../../main/game-epic";
 import { initialState } from "../../main/game-initial-state";
-import { reducer } from "../../main/game-reducer";
+import { postprocess, reducer } from "../../main/game-reducer";
+import { render } from "../../main/game-render";
 import { GameAction, GameState } from "../../main/game.model";
-import { AppDrivers, PhysicsDrivers, AssetDrivers, InputDrivers } from "../../pauper/app-drivers";
+import { AppDrivers, getLogicalScheduler, PhysicsDrivers, InputDrivers, AssetDrivers, SchedulerDrivers } from "../../pauper/app-drivers";
 import { SfmlAssetLoader } from "../../pauper/assets/sfml-asset-loader.service";
 import { SfmlAudioService } from "../../pauper/audio/sfml-audio.service";
 import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
 import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { Key } from "../../pauper/models/keys.model";
 import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
-import { profile, statDump } from "../../pauper/profiler";
+import { profile, stats } from "../../pauper/profiler";
 import { FrameCollection } from "../../pauper/render/render-frame.model";
 import { renderToSfml } from "../../pauper/render/render-to-sfml.func";
+import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
+import { async } from "rxjs/scheduler/async";
 
 const drivers = {
 	keyboard: new SubjectKeyboard(),
 	mouse: new SubjectMouse(),
 	audio: new SfmlAudioService(),
 	loader: new SfmlAssetLoader(),
+	framerates: {
+		logicalRender: 20,
+		logicalTick: 20
+	},
 	physics: {
 		events: box2dPhysicsEcsEvents,
 		reducer: box2dPhysicsReducer
+	},
+	schedulers: {
+		logical: async,
+		graphics: async
 	}
 };
 
 const r = reducer(drivers as PhysicsDrivers);
 const g = {
+	render: render(),
+	postprocess,
 	reducer: r,
-	epic: epic(drivers as PhysicsDrivers & AssetDrivers & InputDrivers),
+	epic: epic(drivers as PhysicsDrivers & InputDrivers & AssetDrivers),
 	initialState,
 	bootstrap: bootstrap(drivers as AssetDrivers),
 };
 
-const actions = new Subject<GameAction>();
+const postProcessSubject = new Subject<GameAction>();
+const subject = new Subject<GameAction>();
 
 const bootstrap$ = g.bootstrap.pipe(
-	tap((action: GameAction) => actions.next(action)),
+	tap((action: GameAction) => subject.next(action)),
 	ignoreElements()
 );
 
-const epicActions$ = g.epic(merge(actions)).pipe(
-	tap((action: GameAction) => actions.next(action))
+const epicActions$ = g.epic(merge(subject, postProcessSubject)).pipe(
+	tap((action: GameAction) => subject.next(action)),
+	ignoreElements()
 );
-const epicSub = epicActions$.subscribe(action => {
-	SECONDARY_Emit(JSON.stringify({ type: "action", action }));
-});
 
-const hotreloadedState = new ReplaySubject<GameState>(1);
+const fastScan: (reducer: (state: GameState, action: GameAction) => GameState, initialState: GameState) => (input: Observable<GameAction>) => Observable<GameState> =
+	(reducer, initialState) => {
+		const applyAction = (state: GameState, action: GameAction): GameState => {
+			return profile(action.type, () => reducer(state, action));
+		};
+		const applyActions = (state: GameState, actions: ReadonlyArray<GameAction>) => actions.reduce(applyAction, state);
 
-const sub = g.bootstrap.pipe(
-	reduce((state: GameState, action: GameAction) => g.reducer(state, action), g.initialState),
-	concat(hotreloadedState)
-).subscribe(state => {
-	SECONDARY_Emit(JSON.stringify({ type: "state", state }));
-}),
+		return self => self.pipe(
+			safeBufferTime(drivers.framerates.logicalTick, getLogicalScheduler(drivers as SchedulerDrivers)),
+			scan(applyActions, initialState),
+			distinctUntilChanged()
+		);
+	};
 
-SECONDARY_Receive = (msg: string) => {
-	const action: GameAction = JSON.parse(msg);
-	actions.next(action);
+const applyAction = (state: GameState, action: GameAction): GameState => {
+	const nexGameState = g.reducer(state, action);
+	const { state: newState, actions: followup } = g.postprocess(nexGameState);
+	return followup
+		.map((action: GameAction) => {
+			postProcessSubject.next(action);
+			return action;
+		})
+		.reduce(applyAction, newState);
 };
 
-type WorkerEvent = { type: "RenderFrame"; frame: FrameCollection; timestamp: number };
-let nextFrame: WorkerEvent = { type: "RenderFrame", frame: [], timestamp: 0 };
-WORKER_Receive = (msg: string) => {
-	const frame: WorkerEvent = JSON.parse(msg);
-	if (frame.timestamp > nextFrame.timestamp) {
-		nextFrame = frame;
-	}
-};
+let prevState: GameState | null = null;
+let nextState: GameState = initialState;
+const app$ = g.bootstrap.pipe(
+	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
+	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
+		fastScan(applyAction, g.initialState),
+		auditTime(drivers.framerates.logicalRender, getLogicalScheduler(drivers as SchedulerDrivers)),
+		tap(currentState => nextState = currentState),
+	))
+);
+const sub = app$.subscribe(
+	() => { },
+	(err: Error) => { console.error(`${err.name}: ${err.message}\n${err.stack}`); },
+	() => { }
+);
 
+function statDump(): void {
+	const totalTime = Object.keys(stats)
+		.reduce((prev, statKey) => {
+			const stat = stats[statKey];
+			const averageTime = stat.total / stat.count;
+			return prev + averageTime;
+		}, 0);
+	Object.keys(stats)
+		.sort()
+		.forEach(statKey => {
+			const stat = stats[statKey];
+			const averageTime = stat.total / stat.count;
+			console.log(`Javascript#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.count}`);
+		});
+}
+
+let nextFrame: FrameCollection = [];
 requestAnimationFrame(function doRender() {
-	profile("Render::Frame->Eff(SFML)", () => renderToSfml(drivers.loader, nextFrame.frame));
+	if (prevState !== nextState) {
+		prevState = nextState;
+		nextFrame = profile("Render::State->Frame", () => g.render(nextState));
+	}
+	profile("Render::Frame->Eff(SFML)", () => renderToSfml(drivers.loader, nextFrame));
 	requestAnimationFrame(doRender);
 });
 
@@ -88,8 +140,7 @@ requestAnimationFrame(function poll() {
 			case SFML_Events.Closed:
 				SFML_Close();
 				sub.unsubscribe();
-				epicSub.unsubscribe();
-				statDump("Primary");
+				statDump();
 				break;
 			case SFML_Events.MouseButtonPressed:
 				drivers.mouse.mouseDown$.next([event.parameters[0], {

@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 #include <string>
+#include <cstring>
 
 #include "../Profile/Profiler.hpp"
 

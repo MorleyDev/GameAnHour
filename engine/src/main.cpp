@@ -16,7 +16,87 @@
 #include <unordered_map>
 #include <vector>
 
+int main_synchronous();
+int main_concurrent();
+
 int main() {
+//	return main_synchronous();
+	return main_concurrent();
+}
+
+int main_synchronous() {
+	TaskQueue mainThreadTasks;
+	TaskQueue tasks;
+	Profiler mainProfiler("Main");
+
+	const auto startTime = std::chrono::system_clock::now();
+
+	Sfml sfml("GAM", sf::VideoMode(512, 512), tasks, mainThreadTasks);
+	Box2d box2d;
+
+	JavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d](JavascriptEngine& engine) {
+		attachConsole(engine);
+		attachTimers(engine);
+		attachSfml(engine, sfml);
+		attachBox2d(engine, box2d);
+	});
+	try {
+		auto previousSecond = startTime;
+		auto previousTime = startTime;
+		auto previousFrame = startTime - std::chrono::milliseconds(5);
+
+		auto fps = 0;
+		while (sfml.window.isOpen()) {
+			auto currentTime = std::chrono::system_clock::now();
+			auto diffMilliseconds = std::chrono::duration<double>(currentTime - previousTime).count() * 1000;
+			if (diffMilliseconds >= 1) {
+				previousTime = currentTime;
+
+				mainProfiler.profile("Tick", [&]() { tick(primaryEngine, diffMilliseconds); });
+				mainProfiler.profile("PollEvents", [&]() { pollEvents(primaryEngine, sfml); });
+			} else {
+				mainProfiler.profile("Idle(Yield)", [&]() {
+					primaryEngine.idle();
+				});
+				std::this_thread::yield();
+			}
+
+			if (std::chrono::duration<double>(currentTime - previousFrame).count() >= 0.005) {
+				mainProfiler.profile("Animate", [&]() {
+					animate(primaryEngine);
+					sfml.window.display();
+				});
+				++fps;
+			}
+
+			if (std::chrono::duration<double>(currentTime - previousSecond).count() >= 1) {
+				sfml.window.setTitle(std::string("FPS: ") + std::to_string(fps / std::chrono::duration<double>(currentTime - previousSecond).count()));
+				fps = 0;
+
+				previousSecond = currentTime;
+				mainProfiler.profile("Idle(Forced)", [&]() { primaryEngine.idle(); });
+				primaryEngine.checkFileSystem();
+				std::this_thread::yield();
+			};
+
+			const auto stoppedSound = std::find_if(sfml.activeSoundEffects.begin(), sfml.activeSoundEffects.end(), [](const std::unique_ptr<sf::Sound>& sound) { return sound->getStatus() == sf::SoundSource::Stopped; });
+			if (stoppedSound != sfml.activeSoundEffects.end()) {
+				sfml.activeSoundEffects.erase(stoppedSound);
+			}
+
+			mainThreadTasks.consume(100);
+		}
+		mainProfiler.iodump(std::cout);
+		return 0;
+	}
+	catch (const std::exception &err)
+	{
+		std::cerr << "UNHANDLED EXCEPTION: " << err.what() << std::endl;
+		return 1;
+	}
+}
+
+int main_concurrent() {
 	TaskQueue mainThreadTasks;
 	TaskQueue tasks;
 	std::atomic<bool> cancellationToken(false);
@@ -148,6 +228,8 @@ int main() {
 		mainProfiler.iodump(std::cout);
 		secondaryProfiler.iodump(std::cout);
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->getProfiler().iodump(std::cout); });
+
+		return 0;
 	}
 	catch (const std::exception &err)
 	{

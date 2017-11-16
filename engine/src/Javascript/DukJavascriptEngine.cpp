@@ -3,7 +3,10 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+
+#ifdef _MSC_VER
 #include <filesystem>
+#endif//_MSC_VER
 
 std::vector<std::function<duk_ret_t(duk_context*)>> DukJavascriptEngine::globalFunctions;
 
@@ -89,10 +92,13 @@ void DukJavascriptEngine::load(std::string filepath) {
 
 	std::string script((std::istreambuf_iterator<char>(engineCode)), std::istreambuf_iterator<char>());
 	add(filepath, script);
+#ifdef _MSC_VER
 	files[filepath] = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(filepath));
+#endif//_MSC_VER
 }
 
 void DukJavascriptEngine::checkFileSystem() {
+#ifdef _MSC_VER
 	auto needReload = false;
 	std::for_each(files.begin(), files.end(), [this, &needReload](auto& file) {
 		auto newFileTime = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(file.first));
@@ -109,6 +115,7 @@ void DukJavascriptEngine::checkFileSystem() {
 	restart();
 	std::for_each(files.begin(), files.end(), [this](auto& file) { load(file.first); });
 	trigger("ENGINE_Reloaded", std::exchange(stashedState, std::string("")));
+#endif//_MSC_VER
 }
 
 void DukJavascriptEngine::setGlobalFunction(const char* name, std::function<bool(DukJavascriptEngine*)> function, int nargs) {

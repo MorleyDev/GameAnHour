@@ -1,7 +1,9 @@
 #include "ChakraJavascriptEngine.hpp"
 #include <fstream>
-#include <filesystem>
 #include <iostream>
+#ifdef _MSC_VER
+#include <filesystem>
+#endif//_MSC_VER
 
 std::vector<std::string> globalFunctionNames;
 std::vector<std::function<JsValueRef (JsValueRef, bool, JsValueRef*, unsigned short)>> ChakraJavascriptEngine::globalFunctions;
@@ -126,7 +128,9 @@ void ChakraJavascriptEngine::load(std::string filepath) {
 
 	std::string script((std::istreambuf_iterator<char>(engineCode)), std::istreambuf_iterator<char>());
 	add(filepath, script);
+#ifdef _MSC_VER
 	files[filepath] = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(filepath));
+#endif
 }
 
 ChakraJavascriptEngine::~ChakraJavascriptEngine() {
@@ -172,6 +176,7 @@ void ChakraJavascriptEngine::setGlobalFunction(const char* name, std::function<b
 }
 
 void ChakraJavascriptEngine::checkFileSystem() {
+#ifdef _MSC_VER
 	auto needReload = false;
 	std::for_each(files.begin(), files.end(), [this, &needReload](auto& file) {
 		auto newFileTime = std::experimental::filesystem::last_write_time(std::experimental::filesystem::path(file.first));
@@ -188,4 +193,5 @@ void ChakraJavascriptEngine::checkFileSystem() {
 	restart();
 	std::for_each(files.begin(), files.end(), [this](auto& file) { load(file.first); });
 	trigger("ENGINE_Reloaded", std::exchange(stashedState, std::string("")));
+#endif//_MSC_VER
 }

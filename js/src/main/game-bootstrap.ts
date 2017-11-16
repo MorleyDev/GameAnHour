@@ -10,14 +10,14 @@ import { Point2 } from "../pauper/models/point/point.model";
 import { Circle, Rectangle } from "../pauper/models/shapes.model";
 import { Triangle2 } from "../pauper/models/triangle/triangle.model";
 import { StaticBodyComponent } from "../pauper/physics/component/StaticBodyComponent";
-import { AppDrivers } from "../pauper/app-drivers";
+import { AssetDrivers } from "../pauper/app-drivers";
 import { PegComponent } from "./components/PegComponent";
 import { RenderedComponent } from "./components/RenderedComponent";
 import { ScoreBucketComponent } from "./components/ScoreBucketComponent";
 import { SensorPhysicsComponent } from "./components/SensorPhysicsComponent";
 import { GameAction } from "./game.model";
 
-export const bootstrap = (drivers: AppDrivers): Observable<GameAction> => {
+export const bootstrap = (drivers: AssetDrivers): Observable<GameAction> => {
 	const Range = (start: number, amount: number): number[] => Array(amount).fill(0).map((_, i) => i + start);
 	const flatMap = <T, U>(array: T[], mapper: (item: T, index: number, whole: T[]) => U[]): U[] => array.reduce((arr, item, index) => arr.concat(mapper(item, index, array) as U[]), [] as U[]);
 
@@ -115,11 +115,11 @@ export const bootstrap = (drivers: AppDrivers): Observable<GameAction> => {
 			...createLeftWall(),
 			...createFloor()
 		]),
-		fromPromise(drivers.loader!.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()) as Observable<GameAction>,
-		fromPromise(drivers.loader!.loadMusic("background", "./assets/background.ogg").then(music => {
-			drivers.audio!.playMusic(music, 0.25, true);
+		fromPromise(drivers.loader.loadSoundEffect("boing", "./assets/boing.wav")).pipe(ignoreElements()) as Observable<GameAction>,
+		fromPromise(drivers.loader.loadMusic("background", "./assets/background.ogg").then(music => {
+			drivers.audio.playMusic(music, 0.25, true);
 			return { };
 		})).pipe(ignoreElements()) as Observable<GameAction>,
-		fromPromise(drivers.loader!.loadImage("background", "./assets/background.png")).pipe(ignoreElements()) as Observable<GameAction>
+		fromPromise(drivers.loader.loadImage("background", "./assets/background.png")).pipe(ignoreElements()) as Observable<GameAction>
 	);
 };

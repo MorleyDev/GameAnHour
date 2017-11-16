@@ -11,6 +11,7 @@ import { Keyboard } from "./input/Keyboard";
 import { Mouse } from "./input/Mouse";
 import { PhysicsUpdateResult } from "./physics/update.model";
 import { SpecificReducer } from "./redux/reducer.type";
+import { Observable } from "rxjs/Observable";
 
 export type PhysicsDrivers = {
 	readonly physics: {
@@ -20,27 +21,33 @@ export type PhysicsDrivers = {
 };
 
 export type AssetDrivers = {
-	readonly audio?: AudioService;
-	readonly loader?: AssetLoader;
+	readonly audio: AudioService;
+	readonly loader: AssetLoader;
 };
 
 export type InputDrivers = {
-	readonly keyboard?: Keyboard;
-	readonly mouse?: Mouse;
+	readonly keyboard: Keyboard;
+	readonly mouse: Mouse;
 };
 
 export type FrameRateDrivers = {
-	readonly framerates?: {
-		readonly logicalRender?: number;
-		readonly logicalTick?: number;
+	readonly framerates: {
+		readonly logicalRender: number;
+		readonly logicalTick: number;
 	};
 
 };
 
 export type SchedulerDrivers = {
-	readonly schedulers?: {
-		logical?: IScheduler;
-		graphics?: IScheduler;
+	readonly schedulers: {
+		logical: IScheduler;
+		graphics: IScheduler;
+	};
+};
+
+export type SystemDrivers = {
+	readonly system: {
+		readonly focus: Observable<boolean>;
 	};
 };
 
