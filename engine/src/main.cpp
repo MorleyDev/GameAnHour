@@ -4,6 +4,7 @@
 #include "Javascript/WorkerExtensions.hpp"
 #include "Javascript/SfmlExtensions.hpp"
 #include "Javascript/Box2dExtensions.hpp"
+#include "Javascript/UtilityExtensions.hpp"
 #include "Profile/Profiler.hpp"
 #include "Concurrent/TaskQueue.hpp"
 
@@ -16,35 +17,55 @@
 #include <unordered_map>
 #include <vector>
 
+int run(std::vector<std::string> arguments);
+
 int main_synchronous();
 int main_concurrent();
 
-int main() {
-//	return main_synchronous();
-	return main_concurrent();
+int main(int argc, char** argv) {
+	std::vector<std::string> args;
+	args.resize(argc);
+	for (auto i = 0; i < argc; ++i) args[i] = std::string(argv[i]);
+	return run(args);
+}
+
+int run(std::vector<std::string> arguments) {
+	if (std::find(arguments.begin(), arguments.end(), "--multithreaded") != arguments.end()) {
+		return main_concurrent();
+	}
+	else {
+		return main_synchronous();
+	}
 }
 
 int main_synchronous() {
 	TaskQueue mainThreadTasks;
 	TaskQueue tasks;
-	Profiler mainProfiler("Main");
 
-	const auto startTime = std::chrono::system_clock::now();
 
 	Sfml sfml("GAM", sf::VideoMode(512, 512), tasks, mainThreadTasks);
 	Box2d box2d;
 
+	Profiler mainProfiler("Engine");
 	JavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d](JavascriptEngine& engine) {
 		attachConsole(engine);
 		attachTimers(engine);
+		attachUtility(engine);
+
 		attachSfml(engine, sfml);
 		attachBox2d(engine, box2d);
 	});
+
+	std::atomic<bool> cancellationToken(false);
+	auto threads = spawnTaskProcessorPool(tasks, cancellationToken);
+
 	try {
+		primaryEngine.load("./dist/engine/sfml/index.js");
+
+		const auto startTime = std::chrono::system_clock::now();
 		auto previousSecond = startTime;
 		auto previousTime = startTime;
 		auto previousFrame = startTime - std::chrono::milliseconds(5);
-
 		auto fps = 0;
 		while (sfml.window.isOpen()) {
 			auto currentTime = std::chrono::system_clock::now();
@@ -55,28 +76,25 @@ int main_synchronous() {
 				mainProfiler.profile("Tick", [&]() { tick(primaryEngine, diffMilliseconds); });
 				mainProfiler.profile("PollEvents", [&]() { pollEvents(primaryEngine, sfml); });
 			} else {
-				mainProfiler.profile("Idle(Yield)", [&]() {
-					primaryEngine.idle();
-				});
+				mainProfiler.profile("Idle(Yield)", [&]() { primaryEngine.idle(); });
 				std::this_thread::yield();
 			}
 
 			if (std::chrono::duration<double>(currentTime - previousFrame).count() >= 0.005) {
-				mainProfiler.profile("Animate", [&]() {
-					animate(primaryEngine);
-					sfml.window.display();
-				});
-				++fps;
+				mainProfiler.profile("Animate", [&]() { animate(primaryEngine); sfml.window.display(); ++fps; });
+
+				previousFrame = currentTime;
 			}
 
 			if (std::chrono::duration<double>(currentTime - previousSecond).count() >= 1) {
 				sfml.window.setTitle(std::string("FPS: ") + std::to_string(fps / std::chrono::duration<double>(currentTime - previousSecond).count()));
 				fps = 0;
 
-				previousSecond = currentTime;
 				mainProfiler.profile("Idle(Forced)", [&]() { primaryEngine.idle(); });
 				primaryEngine.checkFileSystem();
 				std::this_thread::yield();
+
+				previousSecond = currentTime;
 			};
 
 			const auto stoppedSound = std::find_if(sfml.activeSoundEffects.begin(), sfml.activeSoundEffects.end(), [](const std::unique_ptr<sf::Sound>& sound) { return sound->getStatus() == sf::SoundSource::Stopped; });
@@ -86,12 +104,18 @@ int main_synchronous() {
 
 			mainThreadTasks.consume(100);
 		}
+		cancellationToken.store(true);
+
+		std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 		mainProfiler.iodump(std::cout);
 		return 0;
 	}
 	catch (const std::exception &err)
 	{
 		std::cerr << "UNHANDLED EXCEPTION: " << err.what() << std::endl;
+
+		cancellationToken.store(true);
+		std::for_each(threads.begin(), threads.end(), [](std::thread& thread) { thread.join(); });
 		return 1;
 	}
 }
@@ -115,9 +139,11 @@ int main_concurrent() {
 	DukJavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d, &secondaryQueue, &workQueue](DukJavascriptEngine& engine) {
 		attachConsole(engine);
 		attachTimers(engine);
+		attachUtility(engine);
+		attachWorkers(engine, workQueue);
+
 		attachSfml(engine, sfml);
 		attachBox2d(engine, box2d);
-		attachWorkers(engine, workQueue);
 
 		engine.add("secondary", "SECONDARY_Receive = function () { }; SECONDARY_Join = function () { };");
 		engine.setGlobalFunction("SECONDARY_Emit", [&secondaryQueue](DukJavascriptEngine* engine) {
@@ -138,6 +164,8 @@ int main_concurrent() {
 			JavascriptEngine secondaryEngine(secondaryProfiler, [&mainThreadTasks, &box2d, &primaryEngine, &workQueue](JavascriptEngine& engine) {
 				attachConsole(engine);
 				attachTimers(engine);
+				attachUtility(engine);
+
 				attachBox2d(engine, box2d);
 				attachWorkers(engine, workQueue);
 
@@ -196,21 +224,21 @@ int main_concurrent() {
 			}
 
 			if (std::chrono::duration<double>(currentTime - previousFrame).count() >= 0.005) {
-				mainProfiler.profile("Animate", [&]() {
-					animate(primaryEngine);
-					sfml.window.display();
-				});
+				mainProfiler.profile("Animate", [&]() { animate(primaryEngine); sfml.window.display(); });
 				++fps;
+
+				previousFrame = currentTime;
 			}
 
 			if (std::chrono::duration<double>(currentTime - previousSecond).count() >= 1) {
 				sfml.window.setTitle(std::string("FPS: ") + std::to_string(fps / std::chrono::duration<double>(currentTime - previousSecond).count()));
 				fps = 0;
 
-				previousSecond = currentTime;
 				mainProfiler.profile("Idle(Forced)", [&]() { primaryEngine.idle(); });
 				primaryEngine.checkFileSystem();
 				std::this_thread::yield();
+
+				previousSecond = currentTime;
 			};
 
 			const auto stoppedSound = std::find_if(sfml.activeSoundEffects.begin(), sfml.activeSoundEffects.end(), [](const std::unique_ptr<sf::Sound>& sound) { return sound->getStatus() == sf::SoundSource::Stopped; });

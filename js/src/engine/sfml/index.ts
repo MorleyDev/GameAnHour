@@ -3,7 +3,9 @@ import "@babel/polyfill";
 import { Observable } from "rxjs/Observable";
 import { merge } from "rxjs/observable/merge";
 import { of } from "rxjs/observable/of";
-import { auditTime, distinctUntilChanged, ignoreElements, reduce, scan, switchMap, tap } from "rxjs/operators";
+import { auditTime, distinctUntilChanged, ignoreElements, reduce, scan, switchMap, tap, concat } from "rxjs/operators";
+import { animationFrame } from "rxjs/scheduler/animationFrame";
+import { async } from "rxjs/scheduler/async";
 import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "../../main/game-bootstrap";
@@ -12,18 +14,18 @@ import { initialState } from "../../main/game-initial-state";
 import { postprocess, reducer } from "../../main/game-reducer";
 import { render } from "../../main/game-render";
 import { GameAction, GameState } from "../../main/game.model";
-import { AppDrivers, getLogicalScheduler, PhysicsDrivers, InputDrivers, AssetDrivers, SchedulerDrivers } from "../../pauper/app-drivers";
+import { AssetDrivers, getLogicalScheduler, InputDrivers, PhysicsDrivers, SchedulerDrivers } from "../../pauper/app-drivers";
 import { SfmlAssetLoader } from "../../pauper/assets/sfml-asset-loader.service";
 import { SfmlAudioService } from "../../pauper/audio/sfml-audio.service";
 import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
 import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { Key } from "../../pauper/models/keys.model";
 import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
-import { profile, stats } from "../../pauper/profiler";
+import { profile, stats, statDump } from "../../pauper/profiler";
 import { FrameCollection } from "../../pauper/render/render-frame.model";
 import { renderToSfml } from "../../pauper/render/render-to-sfml.func";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
-import { async } from "rxjs/scheduler/async";
+import { ReplaySubject } from "rxjs/ReplaySubject";
 
 const drivers = {
 	keyboard: new SubjectKeyboard(),
@@ -40,7 +42,7 @@ const drivers = {
 	},
 	schedulers: {
 		logical: async,
-		graphics: async
+		graphics: animationFrame
 	}
 };
 
@@ -92,12 +94,14 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 		.reduce(applyAction, newState);
 };
 
+const hotreload = new ReplaySubject<GameState>(1);
 let prevState: GameState | null = null;
 let nextState: GameState = initialState;
 const app$ = g.bootstrap.pipe(
-	reduce((state: GameState, action: GameAction) => g.reducer(state, action), initialState),
+	reduce((state: GameState, action: GameAction) => g.reducer(state, action), g.initialState),
+	concat(hotreload),
 	switchMap(initialState => merge(epicActions$, subject, of({ type: "@@INIT" } as GameAction)).pipe(
-		fastScan(applyAction, g.initialState),
+		fastScan(applyAction, initialState),
 		auditTime(drivers.framerates.logicalRender, getLogicalScheduler(drivers as SchedulerDrivers)),
 		tap(currentState => nextState = currentState),
 	))
@@ -107,22 +111,6 @@ const sub = app$.subscribe(
 	(err: Error) => { console.error(`${err.name}: ${err.message}\n${err.stack}`); },
 	() => { }
 );
-
-function statDump(): void {
-	const totalTime = Object.keys(stats)
-		.reduce((prev, statKey) => {
-			const stat = stats[statKey];
-			const averageTime = stat.total / stat.count;
-			return prev + averageTime;
-		}, 0);
-	Object.keys(stats)
-		.sort()
-		.forEach(statKey => {
-			const stat = stats[statKey];
-			const averageTime = stat.total / stat.count;
-			console.log(`Javascript#${statKey} | ${averageTime} | ~${((averageTime / totalTime) * 100) | 0}% | (${stat.min} - ${stat.max}) | x${stat.count}`);
-		});
-}
 
 let nextFrame: FrameCollection = [];
 requestAnimationFrame(function doRender() {
@@ -140,7 +128,7 @@ requestAnimationFrame(function poll() {
 			case SFML_Events.Closed:
 				SFML_Close();
 				sub.unsubscribe();
-				statDump();
+				statDump("Javascript");
 				break;
 			case SFML_Events.MouseButtonPressed:
 				drivers.mouse.mouseDown$.next([event.parameters[0], {
@@ -278,3 +266,5 @@ function sfmlKeyToKeyCode(key: number): Key {
 		// case SFML_Keys.RAlt: ;
 	}
 }
+ENGINE_Reloading = () => ENGINE_Stash(JSON.stringify(nextState));
+ENGINE_Reloaded = (state: string) => hotreload.next(JSON.parse(state));

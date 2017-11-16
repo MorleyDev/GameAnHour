@@ -1,6 +1,6 @@
 import { BaseComponent } from "../../pauper/ecs/component-base.type";
-import { Colour } from "../../pauper/models/colour.model";
+import { RGBA, RGB } from "../../pauper/models/colour.model";
 
-export type RenderedComponent = BaseComponent<"RenderedComponent", { readonly rgb: Colour }>;
+export type RenderedComponent = BaseComponent<"RenderedComponent", { readonly rgb: RGB }>;
 
-export const RenderedComponent = (red: number, green: number, blue: number) => BaseComponent("RenderedComponent", { rgb: Colour(red, green, blue) });
+export const RenderedComponent = (red: number, green: number, blue: number) => BaseComponent("RenderedComponent", { rgb: RGB(red, green, blue) });

@@ -3,6 +3,8 @@ import "@babel/polyfill";
 import { merge } from "rxjs/observable/merge";
 import { concat, ignoreElements, reduce, tap } from "rxjs/operators";
 import { ReplaySubject } from "rxjs/ReplaySubject";
+import { animationFrame } from "rxjs/scheduler/animationFrame";
+import { async } from "rxjs/scheduler/async";
 import { Subject } from "rxjs/Subject";
 
 import { bootstrap } from "../../main/game-bootstrap";
@@ -10,7 +12,7 @@ import { epic } from "../../main/game-epic";
 import { initialState } from "../../main/game-initial-state";
 import { reducer } from "../../main/game-reducer";
 import { GameAction, GameState } from "../../main/game.model";
-import { AppDrivers, PhysicsDrivers, AssetDrivers, InputDrivers } from "../../pauper/app-drivers";
+import { AssetDrivers, InputDrivers, PhysicsDrivers } from "../../pauper/app-drivers";
 import { SfmlAssetLoader } from "../../pauper/assets/sfml-asset-loader.service";
 import { SfmlAudioService } from "../../pauper/audio/sfml-audio.service";
 import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
@@ -29,6 +31,10 @@ const drivers = {
 	physics: {
 		events: box2dPhysicsEcsEvents,
 		reducer: box2dPhysicsReducer
+	},
+	schedulers: {
+		logical: async,
+		graphics: animationFrame
 	}
 };
 
@@ -56,11 +62,13 @@ const epicSub = epicActions$.subscribe(action => {
 
 const hotreloadedState = new ReplaySubject<GameState>(1);
 
+let startingState: GameState | null = null;
 const sub = g.bootstrap.pipe(
 	reduce((state: GameState, action: GameAction) => g.reducer(state, action), g.initialState),
 	concat(hotreloadedState)
 ).subscribe(state => {
 	SECONDARY_Emit(JSON.stringify({ type: "state", state }));
+	startingState = state;
 }),
 
 SECONDARY_Receive = (msg: string) => {
@@ -227,3 +235,13 @@ function sfmlKeyToKeyCode(key: number): Key {
 		// case SFML_Keys.RAlt: ;
 	}
 }
+
+ENGINE_Reloading = () => {
+	ENGINE_Stash(JSON.stringify(startingState));
+};
+ENGINE_Reloaded = (state: string) => {
+	const gameState: GameState | null = JSON.parse(state);
+	if (gameState != null) {
+		hotreloadedState.next(gameState);
+	}
+};

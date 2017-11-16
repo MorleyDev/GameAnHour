@@ -1,6 +1,7 @@
 #include "WorkerExtensions.hpp"
 #include "TimerExtensions.hpp"
 #include "ConsoleExtensions.hpp"
+#include "UtilityExtensions.hpp"
 #include <iostream>
 
 JavascriptWorker::JavascriptWorker(std::string name, std::atomic<bool>& cancellationToken, moodycamel::ConcurrentQueue<std::string>& workQueue, std::function<void (std::string)> emitToMain)
@@ -8,6 +9,8 @@ JavascriptWorker::JavascriptWorker(std::string name, std::atomic<bool>& cancella
 	engine(profiler, [this](DukJavascriptEngine& engine) {
 		attachConsole(engine);
 		attachTimers(engine);
+		attachUtility(engine);
+
 		engine.add("workers", "WORKER_Receive = function () { }; WORKER_Join = function () { };");
 		engine.setGlobalFunction("WORKER_Emit", [this](DukJavascriptEngine* ctx) {
 			this->emitToMain(ctx->getargstr(0));
@@ -27,7 +30,7 @@ JavascriptWorker::~JavascriptWorker() {
 }
 
 void JavascriptWorker::start() {
-	thread = std::move( std::make_unique<std::thread>([this]() {
+	thread = std::make_unique<std::thread>([this]() {
 		try {
 			std::string action;
 			auto previousTime = std::chrono::system_clock::now();
@@ -56,7 +59,7 @@ void JavascriptWorker::start() {
 		{
 			std::cerr << "UNHANDLED EXCEPTION IN WORKER THREAD: " << err.what() << std::endl;
 		}
-	}) );
+	});
 }
 
 template<typename TEngine> std::vector<std::unique_ptr<JavascriptWorker>> _spawnWorkers(TEngine& engine, std::atomic<bool>& cancellationToken, TaskQueue& mainTaskQueue, moodycamel::ConcurrentQueue<std::string>& workQueue) {

@@ -1,7 +1,7 @@
 import { createEntitiesStateMap } from "../pauper/ecs/create-entities-state-map.func";
 import { exponentialInterpolation } from "../pauper/maths/interpolation.maths";
 import { Vector2 } from "../pauper/maths/vector.maths";
-import { Colour } from "../pauper/models/colour.model";
+import { RGBA } from "../pauper/models/colour.model";
 import { Text2, Rectangle } from "../pauper/models/shapes.model";
 import { Seconds } from "../pauper/models/time.model";
 import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
@@ -17,14 +17,14 @@ export const render = () => {
 	const entityRenderer = createEntitiesStateMap(["RenderedComponent", "HardBodyComponent"], (id: string, { rgb }: RenderedComponent, physics: HardBodyComponent) => {
 		return Origin(physics.position, [
 			Rotate(physics.rotation, [
-				Fill(physics.shape, Colour(rgb.r, rgb.g, rgb.b, exponentialInterpolation(Math.E)(1, 0)(Math.max(1, physics.restingTime) - 1) ** 2))
+				Fill(physics.shape, RGBA(rgb.r, rgb.g, rgb.b, exponentialInterpolation(Math.E)(1, 0)(Math.max(1, physics.restingTime) - 1) ** 2))
 			])
 		]);
 	});
 
-	const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "StaticBodyComponent"], (id: string, { rgb }: RenderedComponent, { position, shape }: StaticBodyComponent) => {
+	const staticEntityRenderer = createEntitiesStateMap(["RenderedComponent", "StaticBodyComponent"], (id: string, c: RenderedComponent, { position, shape }: StaticBodyComponent) => {
 		return Origin(position, [
-			Fill(shape, rgb)
+			Fill(shape, c.rgb)
 		]);
 	});
 
@@ -33,18 +33,18 @@ export const render = () => {
 		const position = Vector2.linearInterpolation(physics.startPosition, physics.endPosition)(interpolateTo);
 
 		return [
-			Fill(Text2(`${physics.score}`, position.x, position.y, 24, "sans-serif"), Colour(255, 255, 255, exponentialInterpolation(Math.E)(1, 0)(interpolateTo)))
+			Fill(Text2(`${physics.score}`, position.x, position.y, 24, "sans-serif"), RGBA(255, 255, 255, exponentialInterpolation(Math.E)(1, 0)(interpolateTo)))
 		];
 	});
 
 	return (state: GameState) => [
-		Clear(Colour(0, 0, 0)),
+		Clear(RGBA(0, 0, 0)),
 		Blit("background", Rectangle(0, 0, 512, 512)),
 
 		profile("Render::(RenderedComponent, StaticBodyComponent)->Frame", () => Array.from(staticEntityRenderer(state))),
 		profile("Render::(RenderedComponent, HardBodyComponent)->Frame", () => Array.from(entityRenderer(state))),
 		profile("Render::(FloatingScoreComponent)->Frame", () => Array.from(scoreTextRenderer(state, state.runtime))),
 
-		Fill(Text2(`Score: ${state.score}`, 20, 15, 24, "sans-serif"), Colour(255, 0, 0))
+		Fill(Text2(`Score: ${state.score}`, 20, 15, 24, "sans-serif"), RGBA(255, 0, 0))
 	];
 };

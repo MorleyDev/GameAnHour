@@ -1,5 +1,5 @@
 import { AssetLoader } from "../assets/asset-loader.service";
-import { Colour } from "../models/colour.model";
+import { RGBA, RGB } from "../models/colour.model";
 import { Circle, Rectangle, Text2 } from "../models/shapes.model";
 import { Blit, Clear, Fill, Frame, FrameCollection, FrameCommandType, Origin, RenderTarget, Rotate, Scale, Stroke } from "./render-frame.model";
 
@@ -140,8 +140,8 @@ function renderClear({ canvas, context, assets }: Target, clear: Clear): void {
 	);
 	context.clearRect(0, 0, canvas.width | 0, canvas.height | 0);
 
-	const colour = clear[1] as Colour | undefined;
-	context.fillStyle = colour ? getRGBA(colour) : "black";
+	const colour = clear[1] as RGB | undefined;
+	context.fillStyle = colour ? getRGB(colour) : "black";
 	context.fillRect(0, 0, canvas.width | 0, canvas.height | 0);
 }
 
@@ -167,6 +167,10 @@ function renderRenderTarget({ canvas, context, assets }: Target, [_, dst, frames
 	canvasCache[key] = targetCanvas;
 }
 
-function getRGBA(colour: Colour): string {
-	return `rgba(${colour.r | 0}, ${colour.g | 0}, ${colour.b | 0}, ${colour.a})`;
+function getRGBA(colour: RGB & { a?: number }): string {
+	return colour.a != null ? `rgba(${colour.r | 0}, ${colour.g | 0}, ${colour.b | 0}, ${colour.a})` : getRGB(colour);
+}
+
+function getRGB(colour: RGB): string {
+	return `rgb(${colour.r | 0}, ${colour.g | 0}, ${colour.b | 0})`;
 }

@@ -50,6 +50,7 @@ module.exports = {
 	devtool: isProd ? undefined : "inline-source-map",
 	entry: {
 		"index": "./src/index.ts",
+		"engine/sfml/index": "./src/engine/sfml/index.ts",
 		"engine/sfml/primary": "./src/engine/sfml/primary.ts",
 		"engine/sfml/secondary": "./src/engine/sfml/secondary.ts",
 		"engine/sfml/worker": "./src/engine/sfml/worker.ts"

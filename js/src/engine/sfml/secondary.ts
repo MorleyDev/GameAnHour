@@ -3,6 +3,7 @@ import "@babel/polyfill";
 import { Observable } from "rxjs/Observable";
 import { auditTime, distinctUntilChanged, scan, switchMap, tap } from "rxjs/operators";
 import { ReplaySubject } from "rxjs/ReplaySubject";
+import { async } from "rxjs/scheduler/async";
 import { Subject } from "rxjs/Subject";
 
 import { postprocess, reducer } from "../../main/game-reducer";
@@ -13,7 +14,6 @@ import { SubjectMouse } from "../../pauper/input/SubjectMouse";
 import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
 import { profile, statDump } from "../../pauper/profiler";
 import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
-import { async } from "rxjs/scheduler/async";
 
 const states = new ReplaySubject<GameState>(1);
 const actions = new Subject<GameAction>();
@@ -88,4 +88,14 @@ const sub = states.pipe(
 SECONDARY_Join = (name: string): void => {
 	sub.unsubscribe();
 	statDump(name);
+};
+
+ENGINE_Reloading = () => {
+	ENGINE_Stash(JSON.stringify(prevState));
+};
+ENGINE_Reloaded = (state: string) => {
+	const gameState: GameState | null = JSON.parse(state);
+	if (gameState != null) {
+		states.next(gameState);
+	}
 };
