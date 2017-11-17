@@ -2,8 +2,12 @@
 #define DUKSFML_WORKERENGINE_HPP
 
 #include "../Concurrent/TaskQueue.hpp"
+
 #include "DukJavascriptEngine.hpp"
+#ifdef GAM_CHAKRA_ENABLE
 #include "ChakraJavascriptEngine.hpp"
+#endif
+#include "JavascriptEngine.hpp"
 
 #include <concurrentqueue.h>
 #include <string>
@@ -15,7 +19,7 @@
 class JavascriptWorker {
 private:
 	Profiler profiler;
-	DukJavascriptEngine engine;
+	JavascriptEngine engine;
 	std::atomic<bool>& cancellationToken;
 	moodycamel::ConcurrentQueue<std::string>& workQueue;
 	std::unique_ptr<std::thread> thread;
@@ -28,7 +32,9 @@ public:
 	void start();
 
 	void load(std::string filepath) {
+		engine.bindToThread();
 		engine.load(filepath);
+		engine.releaseCurrentThread();
 	}
 
 	void join() {

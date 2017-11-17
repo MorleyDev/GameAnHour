@@ -46,6 +46,9 @@ public:
 	DukJavascriptEngine(DukJavascriptEngine&& other);
 	DukJavascriptEngine& operator=(DukJavascriptEngine&& other);
 
+	void bindToThread() { }
+	void releaseCurrentThread() { }
+
 	void pushGlobal() { duk_push_global_object(context); }
 	void pushObject() { duk_push_bare_object(context); }
 	void pushUndefined() { duk_push_undefined(context); }

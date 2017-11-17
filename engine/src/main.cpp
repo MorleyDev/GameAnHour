@@ -136,7 +136,7 @@ int main_concurrent() {
 	Sfml sfml("GAM", sf::VideoMode(512, 512), tasks, mainThreadTasks);
 	Box2d box2d;
 
-	DukJavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d, &secondaryQueue, &workQueue](DukJavascriptEngine& engine) {
+	JavascriptEngine primaryEngine(mainProfiler, [&sfml, &box2d, &secondaryQueue, &workQueue](JavascriptEngine& engine) {
 		attachConsole(engine);
 		attachTimers(engine);
 		attachUtility(engine);
@@ -146,11 +146,12 @@ int main_concurrent() {
 		attachBox2d(engine, box2d);
 
 		engine.add("secondary", "SECONDARY_Receive = function () { }; SECONDARY_Join = function () { };");
-		engine.setGlobalFunction("SECONDARY_Emit", [&secondaryQueue](DukJavascriptEngine* engine) {
+		engine.setGlobalFunction("SECONDARY_Emit", [&secondaryQueue](JavascriptEngine* engine) {
 			secondaryQueue.enqueue(engine->getargstr(0));
 			return false;
 		}, 1);
 	});
+	primaryEngine.releaseCurrentThread();
 
 	auto workers = spawnWorkers(primaryEngine, cancellationToken, mainThreadTasks, workQueue);
 	auto threads = spawnTaskProcessorPool(tasks, cancellationToken);
@@ -158,6 +159,8 @@ int main_concurrent() {
 	try {
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->load("./dist/engine/sfml/worker.js"); });
 		std::for_each(workers.begin(), workers.end(), [](std::unique_ptr<JavascriptWorker>& worker) { worker->start(); });
+
+		primaryEngine.bindToThread();
 		primaryEngine.load("./dist/engine/sfml/primary.js");
 
 		secondaryThread = std::make_unique<std::thread>([&cancellationToken, &secondaryProfiler, &box2d, &secondaryQueue, &mainThreadTasks, &primaryEngine, &workQueue]() {
