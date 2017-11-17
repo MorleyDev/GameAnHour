@@ -2,7 +2,7 @@ import { add, magnitudeSquared, multiply, normalise, subtract } from "../../math
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { is as isLine2 } from "../line/line.model.is";
-import { lineLine2ToRectangle, lineLine2ToTriangle2 } from "../line/line.model.lineTo";
+import { findShortestLine, lineLine2ToRectangle, lineLine2ToTriangle2 } from "../line/line.model.lineTo";
 import { Line2Type } from "../line/line.model.type";
 import { Point2Type } from "../point/point.model.type";
 import { Shape2Type } from "../shapes.model.type";
@@ -30,13 +30,12 @@ export function lineTo(lhs: RectangleType, rhs: Shape2Type): Line2Type {
 
 export function lineRectangleToTriangle(lhs: RectangleType, rhs: Triangle2Type): Line2Type {
 	const { left, right, top, bottom } = lines(lhs);
-	return [lineLine2ToTriangle2(left, rhs), lineLine2ToTriangle2(right, rhs), lineLine2ToTriangle2(top, rhs), lineLine2ToTriangle2(bottom, rhs)]
-		.map(line => ({
-			segment: line,
-			length2: magnitudeSquared(subtract(line[1], line[0]))
-		}))
-		.reduce((prev, curr) => prev.length2 < curr.length2 ? prev : curr)
-		.segment;
+	return findShortestLine([
+		lineLine2ToTriangle2(left, rhs),
+		lineLine2ToTriangle2(right, rhs),
+		lineLine2ToTriangle2(top, rhs),
+		lineLine2ToTriangle2(bottom, rhs)
+	]);
 }
 
 export function lineRectangleToRectangle(lhs: RectangleType, rhs: RectangleType): Line2Type {

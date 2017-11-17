@@ -1,30 +1,31 @@
 import { Point2Type } from "./point.model.type";
+import { map } from "../../iterable/operators";
 
 export function getTopLeft(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.min(..._points.map(point => point.x)),
-		y: Math.min(..._points.map(point => point.y))
+		x:  Math.min(...map((point: Point2Type) => point.x)(_points)),
+		y: Math.min(...map((point: Point2Type) => point.y)(_points)),
 	};
 }
 
 export function getTopRight(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.max(..._points.map(point => point.x)),
-		y: Math.min(..._points.map(point => point.y))
+		x:  Math.max(...map((point: Point2Type) => point.x)(_points)),
+		y: Math.min(...map((point: Point2Type) => point.y)(_points)),
 	};
 }
 
 export function getBottomLeft(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.max(..._points.map(point => point.x)),
-		y: Math.min(..._points.map(point => point.y))
+		x:  Math.max(...map((point: Point2Type) => point.x)(_points)),
+		y: Math.min(...map((point: Point2Type) => point.y)(_points)),
 	};
 }
 
 export function getBottomRight(..._points: Point2Type[]): Point2Type {
 	return {
-		x:  Math.max(..._points.map(point => point.x)),
-		y: Math.max(..._points.map(point => point.y))
+		x:  Math.max(...map((point: Point2Type) => point.x)(_points)),
+		y: Math.max(...map((point: Point2Type) => point.y)(_points)),
 	};
 }
 

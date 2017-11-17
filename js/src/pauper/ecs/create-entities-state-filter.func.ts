@@ -19,7 +19,8 @@ export function createEntitiesStateFilter(withComponents: ReadonlyArray<string>,
 				}
 
 				const entity = state.entities[entityId]!;
-				if ((filter as any)(...innerGetComponentsOfEntity(entity), ..._extra)) {
+				const components = Array.from(innerGetComponentsOfEntity(entity));
+				if ((filter as any)(...components, ..._extra)) {
 					yield entityId;
 				}
 			}

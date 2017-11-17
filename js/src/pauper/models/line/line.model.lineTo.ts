@@ -1,3 +1,4 @@
+import { fold, map } from "../../iterable/operators";
 import { add, divide, magnitudeSquared, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
@@ -10,6 +11,7 @@ import { is as isTri2 } from "../triangle/triangle.model.is";
 import { Triangle2Type } from "../triangle/triangle.model.type";
 import { is as isLine2 } from "./line.model.is";
 import { Line2Type } from "./line.model.type";
+import { pipe } from "rxjs/util/pipe";
 
 export function lineTo(lhs: Line2Type, rhs: Shape2Type): Line2Type {
 	if (isLine2(rhs)) {
@@ -26,31 +28,29 @@ export function lineTo(lhs: Line2Type, rhs: Shape2Type): Line2Type {
 }
 
 export function lineLine2ToTriangle2(lhs: Line2Type, rhs: Triangle2Type): Line2Type {
-	return [
+	return findShortestLine([
 		lineLine2ToLine2(lhs, [rhs[0], rhs[1]]),
 		lineLine2ToLine2(lhs, [rhs[1], rhs[0]]),
 		lineLine2ToLine2(lhs, [rhs[2], rhs[0]])
-	].map(line => ({
-		segment: line,
-		length2: magnitudeSquared(subtract(line[1], line[0]))
-	}))
-		.reduce((prev, curr) => prev.length2 < curr.length2 ? prev : curr)
-		.segment;
+	]);
+}
+
+export function findShortestLine(lines: Iterable<Line2Type>): Line2Type {
+	return pipe(
+		map((line: Line2Type) => ({ segment: line, length2: magnitudeSquared(subtract(line[1], line[0])) })),
+		fold((prev, curr) => prev.length2 < curr.length2 ? prev : curr),
+		line => line.segment
+	)(lines);
 }
 
 export function lineLine2ToRectangle(lhs: Line2Type, rhs: RectangleType): Line2Type {
 	const lineSet = lines(rhs);
-	return [
+	return findShortestLine([
 		lineLine2ToLine2(lhs, lineSet.top),
 		lineLine2ToLine2(lhs, lineSet.bottom),
 		lineLine2ToLine2(lhs, lineSet.left),
 		lineLine2ToLine2(lhs, lineSet.right)
-	].map(line => ({
-		segment: line,
-		length2: magnitudeSquared(subtract(line[1], line[0]))
-	}))
-		.reduce((prev, curr) => prev.length2 < curr.length2 ? prev : curr)
-		.segment;
+	]);
 }
 
 export function lineLine2ToLine2(lhs: Line2Type, rhs: Line2Type): Line2Type {
