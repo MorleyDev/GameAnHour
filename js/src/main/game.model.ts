@@ -5,7 +5,6 @@ import { Seconds } from "../pauper/models/time.model";
 
 export type GameState
 	= EntitiesState
-	& { readonly score: number }
 	& { readonly effects: ReadonlyArray<GameAction>; readonly runtime: Seconds };
 
 export type GameAction
@@ -13,6 +12,5 @@ export type GameAction
 	| { readonly type: "@@TICK"; readonly deltaTime: Seconds }
 	| { readonly type: "@@COLLISION_START"; readonly collision: { a: EntityId; b: EntityId } }
 	| { readonly type: "@@COLLISION_END"; readonly collision: { a: EntityId; b: EntityId } }
-	| { readonly type: "BALL_FINISHED"; readonly ball: EntityId }
 	| { readonly type: "PlaySoundEffect"; readonly sound: string }
 	| EntityComponentAction;
