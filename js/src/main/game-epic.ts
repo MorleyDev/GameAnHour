@@ -6,6 +6,7 @@ import { filter, ignoreElements, map, mergeMap } from "rxjs/operators";
 import { AssetDrivers, InputDrivers, PhysicsDrivers } from "../pauper/app-drivers";
 import { Millisecond } from "../pauper/models/time.model";
 import { GameAction } from "./game.model";
+import { MouseButton } from "../pauper/models/mouse-button.model";
 
 export const epic =
 	(drivers: PhysicsDrivers & InputDrivers & AssetDrivers) =>
@@ -21,5 +22,9 @@ export const epic =
 				map(sound => drivers.loader.getSoundEffect(sound)),
 				map(sound => drivers.audio.playSoundEffect(sound, 0.1)),
 				ignoreElements()
-			)
+			),
+			drivers.mouse.mouseDown(MouseButton.Left)
+				.pipe(
+					map(({ x, y }) => ({ type: "PlayerTryJumpAction", position: { x: x - 256, y: y - 256 } }))
+				)
 		);

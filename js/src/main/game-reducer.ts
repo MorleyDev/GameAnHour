@@ -1,6 +1,10 @@
+import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
+import { PlayerComponent } from "./component/types";
 import { PhysicsDrivers } from "../pauper/app-drivers";
 import { createEntityComponentReducer } from "../pauper/ecs/entity-component.reducer";
-import { GameAction, GameState } from "./game.model";
+import { GameAction, GameState, PlayerTryJumpAction } from "./game.model";
+import { createEntityReducer } from "../pauper/ecs/create-entity-reducer.func";
+import { Vector2 } from "../pauper/maths/vector.maths";
 
 export const reducer = (drivers: PhysicsDrivers) => {
 	const physicsReducer = drivers.physics.reducer<GameState, GameAction>((state, result) => ({
@@ -12,6 +16,11 @@ export const reducer = (drivers: PhysicsDrivers) => {
 
 	const entityComponentReducer = createEntityComponentReducer(drivers.physics.events);
 
+	const playerTryJumpReducer = createEntityReducer<GameState, PlayerTryJumpAction>(["PlayerComponent", "HardBodyComponent"], (state, action, player: PlayerComponent, body: HardBodyComponent) => [
+		player,
+		({ ...body, pendingForces: body.pendingForces.concat({ location: body.position, force: Vector2.multiply(Vector2.normalise( Vector2.subtract(body.position, action.position) ), 7.5) }) })
+	]);
+
 	return (state: GameState, action: GameAction): GameState => {
 		switch (action.type) {
 			case "@@TICK":
@@ -20,6 +29,9 @@ export const reducer = (drivers: PhysicsDrivers) => {
 					runtime: state.runtime + action.deltaTime,
 					effects: state.effects
 				};
+
+			case "PlayerTryJumpAction":
+				return playerTryJumpReducer(state, action);
 
 			case "@@COLLISION_START":
 			case "@@COLLISION_END":
