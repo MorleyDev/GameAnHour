@@ -1,7 +1,8 @@
+import { map } from "@morleydev/functional-pipe/iterable/operators";
+
 import { bounding as point2Bounding, boundingTLBR as point2BoundingTLBR } from "../point/point.model.bounding";
 import { Point2Type } from "../point/point.model.type";
 import { RectangleType } from "./rectangle.model.type";
-import { map } from "../../iterable/operators";
 
 export function boundingTLBR(..._rects: RectangleType[]): { readonly topLeft: Point2Type; readonly bottomRight: Point2Type } {
 	return point2BoundingTLBR(

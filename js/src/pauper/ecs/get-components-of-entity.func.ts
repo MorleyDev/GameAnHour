@@ -1,6 +1,5 @@
 import { BaseComponent } from "./component-base.type";
 import { BaseEntity } from "./entity-base.type";
-import { map } from "../iterable/operators";
 
 type EntitiesStateFilter
 	= ((component: BaseComponent<string, any>, ..._extra: any[]) => boolean)

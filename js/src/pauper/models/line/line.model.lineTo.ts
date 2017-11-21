@@ -1,4 +1,6 @@
-import { fold, map } from "../../iterable/operators";
+import { $$ } from "@morleydev/functional-pipe";
+import { fold, map } from "@morleydev/functional-pipe/iterable/operators";
+
 import { add, divide, magnitudeSquared, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
@@ -11,7 +13,6 @@ import { is as isTri2 } from "../triangle/triangle.model.is";
 import { Triangle2Type } from "../triangle/triangle.model.type";
 import { is as isLine2 } from "./line.model.is";
 import { Line2Type } from "./line.model.type";
-import { pipe } from "rxjs/util/pipe";
 
 export function lineTo(lhs: Line2Type, rhs: Shape2Type): Line2Type {
 	if (isLine2(rhs)) {
@@ -36,11 +37,11 @@ export function lineLine2ToTriangle2(lhs: Line2Type, rhs: Triangle2Type): Line2T
 }
 
 export function findShortestLine(lines: Iterable<Line2Type>): Line2Type {
-	return pipe(
-		map((line: Line2Type) => ({ segment: line, length2: magnitudeSquared(subtract(line[1], line[0])) })),
-		fold((prev, curr) => prev.length2 < curr.length2 ? prev : curr),
-		line => line.segment
-	)(lines);
+	return $$(lines)
+		.$(map(line => ({ segment: line, length2: magnitudeSquared(subtract(line[1], line[0])) })))
+		.$(fold((prev, curr) => prev.length2 < curr.length2 ? prev : curr))
+		.$(line => line.segment)
+		.$$();
 }
 
 export function lineLine2ToRectangle(lhs: Line2Type, rhs: RectangleType): Line2Type {

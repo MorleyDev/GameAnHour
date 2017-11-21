@@ -1,5 +1,6 @@
+import { map } from "@morleydev/functional-pipe/iterable/operators";
+
 import { Point2Type } from "./point.model.type";
-import { map } from "../../iterable/operators";
 
 export function getTopLeft(..._points: Point2Type[]): Point2Type {
 	return {
