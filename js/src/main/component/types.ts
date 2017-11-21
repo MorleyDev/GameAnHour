@@ -35,6 +35,7 @@ export const CreateTopWall = (): GameAction[] => {
 		AttachComponentAction(entityId, StaticBodyComponent(Point2(0, -256), Rectangle(-256, -512, 512, 512)))
 	];
 };
+
 export const CreateBottomWall = (): GameAction[] => {
 	const entityId = EntityId();
 

@@ -2,8 +2,9 @@ const webpack = require("webpack");
 const isProd = process.argv.indexOf("--env.prod") >= 0;
 const { resolve } = require("path");
 
-// Full optimisation is dangerous due to the loop optimiser
-const fullOptimisation = {
+// Full optimisation can potentially introduce breaks due to the loop optimiser if a
+// .map is called that isn't a built-in Array.prototype.map
+const fullyOptimisedTranspilation = {
 	test: /\.(j|t)sx?$/,
 	use: [{
 		loader: "babel-loader",
@@ -24,7 +25,7 @@ const fullOptimisation = {
 };
 
 // Standard will not remove .map and .forEach, so is safer, but less performant
-const standardOptimisation = {
+const standardTranspilation = {
 	test: /\.(j|t)sx?$/,
 	use: [{
 		loader: "babel-loader",
@@ -42,9 +43,21 @@ const standardOptimisation = {
 		}
 	}, "ts-loader"]
 };
-const safeFullOptimisationDirectories = [
-	resolve(__dirname, "src")
-];
+const safeFullOptimisationDirectories = [ resolve(__dirname, "src") ];
+
+// Minimal is pure javascript transpiling for when consuming ES6 libraries
+const minimalTranspilation = {
+	test: /\.jsx?$/,
+	use: [{
+		loader: "babel-loader",
+		options: {
+			presets: [
+				["@babel/preset-env", { loose: true }],
+				["@babel/stage-3", { loose: true }]
+			]
+		}
+	}]
+};
 
 module.exports = {
 	devtool: isProd ? undefined : "inline-source-map",
@@ -64,14 +77,18 @@ module.exports = {
 	module: {
 		rules: [
 			{
-				...fullOptimisation,
+				...fullyOptimisedTranspilation,
 				include: safeFullOptimisationDirectories
 			},
 			{
-				...standardOptimisation,
+				...standardTranspilation,
 				exclude: [resolve(__dirname, "node_modules")].concat(safeFullOptimisationDirectories)
+			},
+			{
+				...minimalTranspilation,
+				include: [resolve(__dirname, "node_modules")]
 			}
-		]//.concat(isProd ? [{ ...standardOptimisation, include: [resolve(__dirname, "node_modules")] }] : [])
+		]
 	},
 	devServer: {
 		hot: true,

@@ -227,6 +227,22 @@ template <typename TEngine> void _attachBox2d(TEngine &engine, Box2d &box2d) {
 		ctx->putProp(-2, "b");
 		return true;
 	}, 0);
+	engine.setGlobalFunction("BOX2D_ApplyForce", [&box2d](TEngine* ctx) {
+		const auto bodyId = ctx->getargn(0);
+		const auto locationX = ctx->getargf(1);
+		const auto locationY = ctx->getargf(2);
+		const auto forceX = ctx->getargf(3);
+		const auto forceY = ctx->getargf(4);
+		const auto entry = box2d.bodies.find(static_cast<std::size_t>(bodyId));
+		if (entry != box2d.bodies.end()) {
+			entry->second->body->ApplyForce(
+				b2Vec2(static_cast<float>(forceX), static_cast<float>(forceY)),
+				b2Vec2(static_cast<float>(locationX), static_cast<float>(locationY)),
+				true
+			);
+		}
+		return false;
+	}, 5);
 }
 
 

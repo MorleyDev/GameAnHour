@@ -14,7 +14,7 @@ const applyForce = (component: HardBodyComponent): HardBodyComponent => {
 		return component;
 	} else {
 		for (const f of component.pendingForces) {
-			// TODO
+			BOX2D_ApplyForce(component._body, f.location.x, f.location.y, f.force.x, f.force.y);
 		}
 		return {
 			...component,
