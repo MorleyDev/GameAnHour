@@ -6,13 +6,13 @@
 
 JavascriptWorker::JavascriptWorker(std::string name, std::atomic<bool>& cancellationToken, moodycamel::ConcurrentQueue<std::string>& workQueue, std::function<void (std::string)> emitToMain)
 	: profiler(name),
-	engine(profiler, [this](DukJavascriptEngine& engine) {
+	engine(profiler, [this](JavascriptEngine& engine) {
 		attachConsole(engine);
 		attachTimers(engine);
 		attachUtility(engine);
 
 		engine.add("workers", "WORKER_Receive = function () { }; WORKER_Join = function () { };");
-		engine.setGlobalFunction("WORKER_Emit", [this](DukJavascriptEngine* ctx) {
+		engine.setGlobalFunction("WORKER_Emit", [this](JavascriptEngine* ctx) {
 			this->emitToMain(ctx->getargstr(0));
 			return false;
 		}, 1);
@@ -31,6 +31,7 @@ JavascriptWorker::~JavascriptWorker() {
 
 void JavascriptWorker::start() {
 	thread = std::make_unique<std::thread>([this]() {
+		engine.bindToThread();
 		try {
 			std::string action;
 			auto previousTime = std::chrono::system_clock::now();
@@ -71,9 +72,7 @@ template<typename TEngine> std::vector<std::unique_ptr<JavascriptWorker>> _spawn
 
 	for (auto i = 0u; i < numberOfThreads; ++i) {
 		workers.emplace_back(std::make_unique<JavascriptWorker>("Worker" + std::to_string(i), cancellationToken, workQueue, [&engine, &mainTaskQueue](std::string msg) {
-			mainTaskQueue.push([&engine, msg]() {
-				engine.trigger("WORKER_Receive", msg);
-			});
+			mainTaskQueue.push([&engine, msg]() { engine.trigger("WORKER_Receive", msg); });
 		}));
 	}
 	return workers;
@@ -87,6 +86,7 @@ template<typename TEngine> void _attachWorkers(TEngine& engine, moodycamel::Conc
 	}, 1);
 
 }
+
 void attachWorkers(DukJavascriptEngine& engine, moodycamel::ConcurrentQueue<std::string>& workQueue) {
 	_attachWorkers(engine, workQueue);
 }

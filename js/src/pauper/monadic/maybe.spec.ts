@@ -1,6 +1,6 @@
 import { test } from "tap";
 
-import { hasValue, Just, match, Maybe, None, withDefault } from "./maybe";
+import { hasValue, Just, match, Maybe, None, toArray, toIterable, withDefault } from "./maybe";
 
 /* tslint:disable */
 
@@ -36,10 +36,30 @@ test("pauper/utility/maybe", test => {
 		test.equal(result, "25");
 		test.end();
 	});
-	test.test("match :: (Just X) (X -> Y) (Unit -> Z) -> Z", test => {
+	test.test("match :: (None) (X -> Y) (Unit -> Z) -> Z", test => {
 		const none: Maybe<string> = None as Maybe<string>;
 		const result = match(none, x => parseInt(x), () => "458");
 		test.equal(result, "458");
+		test.end();
+	});
+	test.test("toArray :: (Just X) -> Array<X>", test => {
+		const just: Maybe<string> = Just("256");
+		test.deepEqual(toArray(just), ["256"]);
+		test.end();
+	});
+	test.test("toArray :: (None) -> Array<X>", test => {
+		const none: Maybe<string> = None as Maybe<string>;
+		test.deepEqual(toArray(none), []);
+		test.end();
+	});
+	test.test("toIterable :: (Just X) -> Iterable<X>", test => {
+		const just: Maybe<string> = Just("256");
+		test.deepEqual(Array.from(toIterable(just)), ["256"]);
+		test.end();
+	});
+	test.test("toIterable :: (None) -> Iterable<X>", test => {
+		const none: Maybe<string> = None as Maybe<string>;
+		test.deepEqual(Array.from(toIterable(none)), []);
 		test.end();
 	});
 	test.end();

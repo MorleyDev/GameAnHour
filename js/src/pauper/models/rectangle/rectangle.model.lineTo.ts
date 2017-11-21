@@ -1,4 +1,4 @@
-import { add, magnitudeSquared, multiply, normalise, subtract } from "../../maths/vector.maths.func";
+import { add, multiply, normalise, subtract } from "../../maths/vector.maths.func";
 import { is as isCircle } from "../circle/circle.model.is";
 import { CircleType } from "../circle/circle.model.type";
 import { is as isLine2 } from "../line/line.model.is";

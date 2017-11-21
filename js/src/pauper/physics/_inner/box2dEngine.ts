@@ -50,6 +50,7 @@ const attachStaticBodyToPhysics = (entityId: EntityId, component: StaticBodyComp
 		if (shape.length === 3) {
 			component._body = BOX2D_CreateBody_Tri(shape[0].x, shape[0].y, shape[1].x, shape[1].y, shape[2].x, shape[2].y, true, 0, 1, 0);
 		} else {
+			throw new Error();
 			// TODO: return Bodies.fromVertices(centre.x, centre.y, [shape.map(({ x, y }) => Vector.create(x, y))], props);
 		}
 	} else if (Rectangle.is(shape)) {
@@ -67,6 +68,7 @@ const syncComponent = (hardbody: HardBodyComponent): HardBodyComponent => {
 	if (hardbody._body == null) {
 		return hardbody;
 	}
+
 	const body = BOX2D_GetBody(hardbody._body);
 	const speedSquared = body.velocityX * body.velocityX + body.velocityY * body.velocityY;
 	const angularSpeedSquared = body.angularVelocity * body.angularVelocity;

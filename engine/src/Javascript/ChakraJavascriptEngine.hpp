@@ -73,6 +73,13 @@ public:
 	ChakraJavascriptEngine(Profiler& profiler, std::function<void(ChakraJavascriptEngine& engine)> extend);
 	~ChakraJavascriptEngine();
 
+	void bindToThread() {
+		JsSetCurrentContext(context);
+	}
+	void releaseCurrentThread() {
+		JsSetCurrentContext(0);
+	}
+
 	void pushGlobal() {
 		JsValueRef v;
 		JsGetGlobalObject(&v);

@@ -7,13 +7,13 @@ import { RectangleType } from "./rectangle.model.type";
 export function boundingTLBR(..._rects: RectangleType[]): { readonly topLeft: Point2Type; readonly bottomRight: Point2Type } {
 	return point2BoundingTLBR(
 		..._rects,
-		...map((rect: RectangleType) => ({ x: rect.x + rect.width, y: rect.y + rect.height }))(_rects)
+		..._rects.map(rect => ({ x: rect.x + rect.width, y: rect.y + rect.height }))
 	);
 }
 
 export function bounding(..._rects: RectangleType[]): RectangleType {
 	return point2Bounding(
 		..._rects,
-		...map((rect: RectangleType) => ({ x: rect.x + rect.width, y: rect.y + rect.height }))(_rects)
+		..._rects.map(rect => ({ x: rect.x + rect.width, y: rect.y + rect.height }))
 	);
 }
