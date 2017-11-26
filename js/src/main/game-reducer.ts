@@ -1,10 +1,10 @@
-import { HardBodyComponent } from "../pauper/physics/component/HardBodyComponent";
+import { HardBodyComponent } from "@morleydev/pauper/physics/component/HardBodyComponent";
 import { PlayerComponent } from "./component/types";
-import { PhysicsDrivers } from "../pauper/app-drivers";
-import { createEntityComponentReducer } from "../pauper/ecs/entity-component.reducer";
+import { PhysicsDrivers } from "@morleydev/pauper/app-drivers";
+import { createEntityComponentReducer } from "@morleydev/pauper/ecs/entity-component.reducer";
 import { GameAction, GameState, PlayerTryJumpAction } from "./game.model";
-import { createEntityReducer } from "../pauper/ecs/create-entity-reducer.func";
-import { Vector2 } from "../pauper/maths/vector.maths";
+import { createEntityReducer } from "@morleydev/pauper/ecs/create-entity-reducer.func";
+import { Vector2 } from "@morleydev/pauper/maths/vector.maths";
 
 export const reducer = (drivers: PhysicsDrivers) => {
 	const physicsReducer = drivers.physics.reducer<GameState, GameAction>((state, result) => ({

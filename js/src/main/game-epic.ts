@@ -3,10 +3,10 @@ import { interval } from "rxjs/observable/interval";
 import { merge } from "rxjs/observable/merge";
 import { filter, ignoreElements, map, mergeMap } from "rxjs/operators";
 
-import { AssetDrivers, InputDrivers, PhysicsDrivers } from "../pauper/app-drivers";
-import { Millisecond } from "../pauper/models/time.model";
+import { AssetDrivers, InputDrivers, PhysicsDrivers } from "@morleydev/pauper/app-drivers";
+import { Millisecond } from "@morleydev/pauper/models/time.model";
 import { GameAction } from "./game.model";
-import { MouseButton } from "../pauper/models/mouse-button.model";
+import { MouseButton } from "@morleydev/pauper/models/mouse-button.model";
 
 export const epic =
 	(drivers: PhysicsDrivers & InputDrivers & AssetDrivers) =>

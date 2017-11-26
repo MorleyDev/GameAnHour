@@ -1,12 +1,12 @@
-import { BaseComponent } from "../../pauper/ecs/component-base.type";
-import { EntityId } from "../../pauper/ecs/entity-base.type";
-import { AttachComponentAction, CreateEntityAction } from "../../pauper/ecs/entity-component.actions";
-import { Circle } from "../../pauper/models/circle/circle.model";
-import { Point2 } from "../../pauper/models/point/point.model";
-import { HardBodyComponent } from "../../pauper/physics/component/HardBodyComponent";
+import { BaseComponent } from "@morleydev/pauper/ecs/component-base.type";
+import { EntityId } from "@morleydev/pauper/ecs/entity-base.type";
+import { AttachComponentAction, CreateEntityAction } from "@morleydev/pauper/ecs/entity-component.actions";
+import { Circle } from "@morleydev/pauper/models/circle/circle.model";
+import { Point2 } from "@morleydev/pauper/models/point/point.model";
+import { HardBodyComponent } from "@morleydev/pauper/physics/component/HardBodyComponent";
 import { GameAction } from "../game.model";
-import { StaticBodyComponent } from "../../pauper/physics/component/StaticBodyComponent";
-import { Rectangle } from "../../pauper/models/rectangle/rectangle.model";
+import { StaticBodyComponent } from "@morleydev/pauper/physics/component/StaticBodyComponent";
+import { Rectangle } from "@morleydev/pauper/models/rectangle/rectangle.model";
 
 export type PlayerComponent = BaseComponent<"PlayerComponent", { }>;
 export const PlayerComponent = (): PlayerComponent => BaseComponent("PlayerComponent", { });

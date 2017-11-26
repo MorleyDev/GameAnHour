@@ -12,14 +12,14 @@ import { initialState } from "../../main/game-initial-state";
 import { postprocess, reducer } from "../../main/game-reducer";
 import { render } from "../../main/game-render";
 import { GameAction, GameState } from "../../main/game.model";
-import { AppDrivers, getLogicalScheduler, PhysicsDrivers, AssetDrivers, InputDrivers, SchedulerDrivers } from "../../pauper/app-drivers";
-import { WebAssetLoader } from "../../pauper/assets/web-asset-loader.service";
-import { WebAudioService } from "../../pauper/audio/web-audio.service";
-import { HtmlDocumentKeyboard } from "../../pauper/input/HtmlDocumentKeyboard";
-import { HtmlElementMouse } from "../../pauper/input/HtmlElementMouse";
-import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "../../pauper/physics/_inner/matterEngine";
-import { renderToCanvas } from "../../pauper/render/render-to-canvas.func";
-import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
+import { AppDrivers, getLogicalScheduler, PhysicsDrivers, AssetDrivers, InputDrivers, SchedulerDrivers } from "@morleydev/pauper/app-drivers";
+import { WebAssetLoader } from "@morleydev/pauper/assets/web-asset-loader.service";
+import { WebAudioService } from "@morleydev/pauper/audio/web-audio.service";
+import { HtmlDocumentKeyboard } from "@morleydev/pauper/input/HtmlDocumentKeyboard";
+import { HtmlElementMouse } from "@morleydev/pauper/input/HtmlElementMouse";
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "@morleydev/pauper/physics/_inner/matterEngine";
+import { renderToCanvas } from "@morleydev/pauper/render/render-to-canvas.func";
+import { safeBufferTime } from "@morleydev/pauper/rx-operators/safeBufferTime";
 
 const canvas = document.getElementById("render-target") as HTMLCanvasElement | null;
 if (canvas == null) {

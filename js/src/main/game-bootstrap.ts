@@ -4,7 +4,7 @@ import { fromPromise } from "rxjs/observable/fromPromise";
 import { merge } from "rxjs/observable/merge";
 import { ignoreElements } from "rxjs/operators";
 
-import { AssetDrivers } from "../pauper/app-drivers";
+import { AssetDrivers } from "@morleydev/pauper/app-drivers";
 import { CreateBackWall, CreateBottomWall, CreateFrontWall, CreatePlayer, CreateTopWall } from "./component/types";
 import { GameAction } from "./game.model";
 

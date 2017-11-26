@@ -1,7 +1,7 @@
 import "@babel/polyfill";
 
-import { isBrowser } from "./pauper/utility/is-browser";
-import { isProduction } from "./pauper/utility/is-production";
+import { isBrowser } from "@morleydev/pauper/utility/is-browser";
+import { isProduction } from "@morleydev/pauper/utility/is-production";
 
 if (isBrowser) {
 	if (!isProduction && (module as any).hot) {

@@ -8,12 +8,13 @@ import { Subject } from "rxjs/Subject";
 
 import { postprocess, reducer } from "../../main/game-reducer";
 import { GameAction, GameState } from "../../main/game.model";
-import { getLogicalScheduler, PhysicsDrivers, SchedulerDrivers } from "../../pauper/app-drivers";
-import { SubjectKeyboard } from "../../pauper/input/SubjectKeyboard";
-import { SubjectMouse } from "../../pauper/input/SubjectMouse";
-import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "../../pauper/physics/_inner/box2dEngine";
-import { profile, statDump } from "../../pauper/profiler";
-import { safeBufferTime } from "../../pauper/rx-operators/safeBufferTime";
+import { getLogicalScheduler, PhysicsDrivers, SchedulerDrivers } from "@morleydev/pauper/app-drivers";
+import { SubjectKeyboard } from "@morleydev/pauper/input/SubjectKeyboard";
+import { SubjectMouse } from "@morleydev/pauper/input/SubjectMouse";
+import { box2dPhysicsEcsEvents, box2dPhysicsReducer } from "@morleydev/pauper/physics/_inner/box2dEngine";
+import { profile, statDump } from "@morleydev/pauper/profiler";
+import { safeBufferTime } from "@morleydev/pauper/rx-operators/safeBufferTime";
+import { secondary, worker, engine } from "@morleydev/pauper/engine/engine";
 
 const states = new ReplaySubject<GameState>(1);
 const actions = new Subject<GameAction>();
@@ -56,19 +57,19 @@ const applyAction = (state: GameState, action: GameAction): GameState => {
 	const { state: newState, actions: followup } = postprocess(nexGameState);
 	return followup
 		.map((action: GameAction) => {
-			SECONDARY_Emit(JSON.stringify(action));
+			secondary.send(JSON.stringify(action));
 			return action;
 		})
 		.reduce(applyAction, newState);
 };
-SECONDARY_Receive = (event: string): void => {
+secondary.receive$.subscribe((event: string): void => {
 	const e: { type: "state"; state: GameState } | { type: "action"; action: GameAction } = JSON.parse(event);
 	if (e.type === "state") {
 		states.next(e.state);
 	} else {
 		actions.next(e.action);
 	}
-};
+});
 
 let prevState: GameState | null = null;
 const sub = states.pipe(
@@ -77,7 +78,7 @@ const sub = states.pipe(
 		auditTime(drivers.framerates.logicalRender, getLogicalScheduler(drivers as SchedulerDrivers)),
 		tap(currentState => {
 			if (prevState !== currentState) {
-				WORKER_Emit(JSON.stringify({ type: "RenderStateToFrame", state: currentState, timestamp: Date.now() }));
+				worker.send(JSON.stringify({ type: "RenderStateToFrame", state: currentState, timestamp: Date.now() }));
 				prevState = currentState;
 			}
 		})
@@ -85,17 +86,15 @@ const sub = states.pipe(
 ).subscribe(() => {
 });
 
-SECONDARY_Join = (name: string): void => {
+secondary.onJoin((name: string): void => {
 	sub.unsubscribe();
 	statDump(name);
-};
+});
 
-ENGINE_Reloading = () => {
-	ENGINE_Stash(JSON.stringify(prevState));
-};
-ENGINE_Reloaded = (state: string) => {
+engine.hotreload.onStash(() => JSON.stringify(prevState));
+engine.hotreload.receive$.subscribe((state: string) => {
 	const gameState: GameState | null = JSON.parse(state);
 	if (gameState != null) {
 		states.next(gameState);
 	}
-};
+});

@@ -1,6 +1,6 @@
 import { $$ } from "@morleydev/functional-pipe";
 
-import { EntitiesState } from "../pauper/ecs/entities.state";
+import { EntitiesState } from "@morleydev/pauper/ecs/entities.state";
 import { GameState } from "./game.model";
 
 export const initialState: GameState = $$({ })

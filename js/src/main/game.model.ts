@@ -1,8 +1,8 @@
-import { EntitiesState } from "../pauper/ecs/entities.state";
-import { EntityId } from "../pauper/ecs/entity-base.type";
-import { EntityComponentAction } from "../pauper/ecs/entity-component.actions";
-import { Point2 } from "../pauper/models/shapes.model";
-import { Seconds } from "../pauper/models/time.model";
+import { EntitiesState } from "@morleydev/pauper/ecs/entities.state";
+import { EntityId } from "@morleydev/pauper/ecs/entity-base.type";
+import { EntityComponentAction } from "@morleydev/pauper/ecs/entity-component.actions";
+import { Point2 } from "@morleydev/pauper/models/shapes.model";
+import { Seconds } from "@morleydev/pauper/models/time.model";
 
 export type GameState
 	= EntitiesState
