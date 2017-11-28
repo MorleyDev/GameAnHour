@@ -15,14 +15,21 @@ void ChakraJavascriptEngine::GetAndThrowError(std::string name) {
 	JsValueRef error;
 	JsPropertyIdRef messageId;
 	JsValueRef messageRef;
+	JsPropertyIdRef stackId;
+	JsValueRef stackRef;
 	JsGetAndClearException(&error);
 	JsGetPropertyIdFromName(L"message", &messageId);
 	JsGetProperty(error, messageId, &messageRef);
+	JsGetPropertyIdFromName(L"stack", &stackId);
+	JsGetProperty(error, stackId, &stackRef);
 	JsStringToPointer(messageRef, &wcharptr, &wlength);
 	std::wstring wmessage(wcharptr, wlength);
 	std::string message(wmessage.begin(), wmessage.end());
 
-	throw std::runtime_error(name + ": Unexpected error running script. " + message);
+	JsStringToPointer(stackRef, &wcharptr, &wlength);
+	std::wstring wstack(wcharptr, wlength);
+	std::string stack(wstack.begin(), wstack.end());
+	throw std::runtime_error(name + ": Unexpected error running script. " + message + "\n" + stack);
 }
 
 std::string ChakraJavascriptEngine::GetJsErrorAsString(JsErrorCode code) {

@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@morleydev/functional-pipe": "1.0.2",
-    "@morleydev/pauper": "1.0.3",
+    "@morleydev/pauper": "1.0.5",
     "rxjs": "5.5.2"
   }
 }
