@@ -14,7 +14,8 @@
         "forceConsistentCasingInFileNames": true,
         "sourceMap": true,
         "allowJs": true,
-        "strict": true
+        "strict": true,
+        "jsx": "react"
     },
     "exclude": [
         "webpack.config.js",
