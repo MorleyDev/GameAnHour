@@ -1,12 +1,30 @@
 import "@babel/polyfill";
 
-import *  as React from "react";
+import * as React from "react";
 
 import { Frame, FrameCollection } from "@morleydev/pauper/render/render-frame.model";
+import { map, scan } from "rxjs/operators";
+import { matterJsPhysicsEcsEvents, matterJsPhysicsReducer } from "@morleydev/pauper/physics/_inner/matterEngine";
 
+import { AppDrivers } from "@morleydev/pauper/app-drivers";
 import { Game } from "../../main/game-render";
+import { GameAction } from "../../main/game-action";
+import { GameApp } from "../../main/GameApp";
+import { GameState } from "../../main/game-state";
+import { HtmlDocumentKeyboard } from "@morleydev/pauper/input/HtmlDocumentKeyboard";
+import { HtmlElementMouse } from "@morleydev/pauper/input/HtmlElementMouse";
 import { ReactRenderer } from "@morleydev/pauper/render/jsx/render";
+import { Subscription } from "rxjs/Subscription";
 import { WebAssetLoader } from "@morleydev/pauper/assets/web-asset-loader.service";
+import { WebAudioService } from "@morleydev/pauper/audio/web-audio.service";
+import { animationFrame } from "rxjs/scheduler/animationFrame";
+import { async } from "rxjs/scheduler/async";
+import { bootstrap } from "../../main/game-bootstrap";
+import { concat } from "rxjs/observable/concat";
+import { createReducer } from "../../main/game-reducer";
+import { initialState } from "../../main/game-initial-state";
+import { interval } from "rxjs/observable/interval";
+import { merge } from "rxjs/observable/merge";
 import { renderToCanvas } from "@morleydev/pauper/render/render-to-canvas.func";
 
 const canvas = document.getElementById("render-target") as HTMLCanvasElement | null;
@@ -23,9 +41,29 @@ if (element == null) {
 	throw new Error("Could not find #canvas-container");
 }
 
+const drivers = {
+	keyboard: new HtmlDocumentKeyboard(document),
+	mouse: new HtmlElementMouse(canvas),
+	audio: new WebAudioService(),
+	loader: new WebAssetLoader(),
+	framerates: {
+		logicalRender: 20,
+		logicalTick: 20
+	},
+	physics: {
+		events: matterJsPhysicsEcsEvents,
+		reducer: matterJsPhysicsReducer
+	},
+	schedulers: {
+		logical: async,
+		graphics: animationFrame
+	}
+};
+
 const assets = new WebAssetLoader();
 
-const renderer = new ReactRenderer(<Game />);
+const renderer = new ReactRenderer(<GameApp drivers={drivers as any} initialState={initialState} />);
+
 requestAnimationFrame(function draw() {
 	const frame: FrameCollection = renderer.frame() as FrameCollection;
 	renderToCanvas({ canvas, context, assets }, frame);
